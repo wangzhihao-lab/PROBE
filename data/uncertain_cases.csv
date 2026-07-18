@@ -1,0 +1,10 @@
+package,version,owner,repo,current_class,reason
+firebase,12.9.0-canary.e4b2890fd,firebase,firebase-js-sdk,UNCERTAIN,multiple publish workflows with conflicting classes: firebase__firebase-js-sdk__release-pr.yml=UNCERTAIN; firebase__firebase-js-sdk__release-staging.yml=A
+firebase,12.12.0,firebase,firebase-js-sdk,UNCERTAIN,multiple publish workflows with conflicting classes: firebase__firebase-js-sdk__release-pr.yml=UNCERTAIN; firebase__firebase-js-sdk__release-staging.yml=A
+firebase,12.8.0,firebase,firebase-js-sdk,UNCERTAIN,multiple publish workflows with conflicting classes: firebase__firebase-js-sdk__release-pr.yml=UNCERTAIN; firebase__firebase-js-sdk__release-staging.yml=A
+@firebase/database,1.1.3-20260505131936,firebase,firebase-js-sdk,UNCERTAIN,multiple publish workflows with conflicting classes: firebase__firebase-js-sdk__release-pr.yml=UNCERTAIN; firebase__firebase-js-sdk__release-staging.yml=A
+@firebase/database-types,1.0.20,firebase,firebase-js-sdk,UNCERTAIN,multiple publish workflows with conflicting classes: firebase__firebase-js-sdk__release-pr.yml=UNCERTAIN; firebase__firebase-js-sdk__release-staging.yml=A
+@firebase/functions,0.13.3-20260317152345,firebase,firebase-js-sdk,UNCERTAIN,multiple publish workflows with conflicting classes: firebase__firebase-js-sdk__release-pr.yml=UNCERTAIN; firebase__firebase-js-sdk__release-staging.yml=A
+@firebase/messaging,0.12.23-canary.bc2b2cdea,firebase,firebase-js-sdk,UNCERTAIN,multiple publish workflows with conflicting classes: firebase__firebase-js-sdk__release-pr.yml=UNCERTAIN; firebase__firebase-js-sdk__release-staging.yml=A
+ts-api-utils,2.1.1,JoshuaKGoldberg,ts-api-utils,UNCERTAIN,publish detected but neither id-token nor NPM_TOKEN visible (composite/external action) (strong-keyword); id-token scope=none [JoshuaKGoldberg__ts-api-utils__release-pr.yml]
+@firebase/app-check,0.11.0-canary.58ddd6e54,firebase,firebase-js-sdk,UNCERTAIN,multiple publish workflows with conflicting classes: firebase__firebase-js-sdk__release-pr.yml=UNCERTAIN; firebase__firebase-js-sdk__release-staging.yml=A

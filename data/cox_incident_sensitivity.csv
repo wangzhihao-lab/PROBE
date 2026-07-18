@@ -1,0 +1,10 @@
+covariate,HR_main,p_main,HR_incident,p_incident,HR_pct_change,sign_flip
+log_weekly_downloads,0.98,0.4135,0.991,0.7948,1.1,False
+log_age_days,0.626,0.0,0.602,0.0,-3.9,False
+log_maintainers,1.139,0.0146,1.207,0.0276,6.0,False
+owner_is_org,1.142,0.2585,0.796,0.1891,-30.3,True
+has_dependabot_int,1.401,0.0001,1.839,0.0,31.3,False
+has_issue_template_int,1.911,0.0,1.517,0.0067,-20.6,False
+is_scoped_int,0.85,0.0931,0.732,0.0182,-13.9,False
+tier_top,1.398,0.0416,1.056,0.8079,-24.5,False
+tier_mid,1.473,0.0038,1.248,0.2291,-15.3,False

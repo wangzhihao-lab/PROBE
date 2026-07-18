@@ -1,0 +1,501 @@
+package,version,class,reason,rater
+@types/sinon,21.0.1,E,GHA has no publish workflow; no other CI,rater_A
+axios,0.30.3,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=workflow [axios__axios__publish.yml],rater_A
+framer-motion,12.27.5,C,GHA has no publish; circleci config present,rater_A
+qs,6.7.4,E,GHA has no publish workflow; no other CI,rater_A
+@grpc/grpc-js,1.14.3,E,GHA has no publish workflow; no other CI,rater_A
+ora,9.2.0,E,GHA has no publish workflow; no other CI,rater_A
+jest-util,30.4.0,E,GHA has no publish workflow; no other CI,rater_A
+eslint-config-xo-space,0.36.0,E,GHA has no publish workflow; no other CI,rater_A
+minipass,7.1.3,E,GHA has no publish workflow; no other CI,rater_A
+camelcase-keys,10.0.2,E,GHA has no publish workflow; no other CI,rater_A
+@angular-devkit/architect,0.2102.2,E,GHA has no publish workflow; no other CI,rater_A
+@babel/plugin-transform-modules-umd,8.0.0-rc.4,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+recharts,3.7.0,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [recharts__recharts__npm-publish.yml],rater_A
+lodash,4.18.0,E,GHA has no publish workflow; no other CI,rater_A
+git-semver-tags,8.0.1,A,NPM_TOKEN env + no id-token:write (classic publish) (filename-hint+token); id-token scope=none; publish-job unresolved (YAML fallback) [conventional-changelog__conventional-changelog__release.yml],rater_A
+firebase,12.9.0-canary.e4b2890fd,A,multiple publish workflows with conflicting classes: firebase__firebase-js-sdk__release-pr.yml=UNCERTAIN; firebase__firebase-js-sdk__release-staging.yml=A; PI-adjudicated 2026-05-16 from UNCERTAIN to A,rater_A
+terser,5.46.2,E,GHA has no publish workflow; no other CI,rater_A
+react-datepicker,9.1.0,E,GHA has no publish workflow; no other CI,rater_A
+jest-worker,30.3.0,E,GHA has no publish workflow; no other CI,rater_A
+redis,5.11.0,A,NPM_TOKEN env + no id-token:write (classic publish) (filename-hint+token); id-token scope=none; publish-job unresolved (YAML fallback) [redis__node-redis__release.yml],rater_A
+bn.js,5.2.3,E,GHA has no publish workflow; no other CI,rater_A
+jiti,2.7.0,E,GHA has no publish workflow; no other CI,rater_A
+@storybook/addon-essentials,8.6.17,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+@jest/types,30.4.0,E,GHA has no publish workflow; no other CI,rater_A
+file-entry-cache,11.1.3,E,GHA has no publish workflow; no other CI,rater_A
+eslint-plugin-cypress,6.2.0,E,GHA has no publish workflow; no other CI,rater_A
+@angular/platform-browser,21.2.4,E,GHA has no publish workflow; no other CI,rater_A
+esquery,1.7.0,E,GHA has no publish workflow; no other CI,rater_A
+@babel/plugin-proposal-export-default-from,8.0.0-rc.3,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+es-module-lexer,2.1.0,E,GHA has no publish workflow; no other CI,rater_A
+ajv,8.18.0,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [ajv-validator__ajv__publish.yml],rater_A
+typescript,6.0.0-dev.20260321,A,"NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [microsoft__TypeScript__nightly.yaml,microsoft__TypeScript__insiders.yaml]",rater_A
+serve-static,2.2.1,E,GHA has no publish workflow; no other CI,rater_A
+jest-haste-map,30.4.1,E,GHA has no publish workflow; no other CI,rater_A
+slice-ansi,8.0.0,E,GHA has no publish workflow; no other CI,rater_A
+bfj,9.1.3,F,no/non-github repo url,rater_A
+react-toastify,11.1.0,E,GHA has no publish workflow; no other CI,rater_A
+bufferutil,4.1.0,E,GHA has no publish workflow; no other CI,rater_A
+@babel/core,8.0.0-rc.4,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+pretty-format,30.4.0,E,GHA has no publish workflow; no other CI,rater_A
+sortablejs,1.15.7,C,no GHA; circleci config present,rater_A
+jest-snapshot,30.4.0,E,GHA has no publish workflow; no other CI,rater_A
+postcss,8.5.8,E,GHA has no publish workflow; no other CI,rater_A
+react-syntax-highlighter,16.1.1,C,GHA has no publish; circleci config present,rater_A
+fast-xml-parser,5.5.4,E,GHA has no publish workflow; no other CI,rater_A
+@ant-design/colors,8.0.1,E,GHA has no publish workflow; no other CI,rater_A
+fs-extra,11.3.4,E,GHA has no publish workflow; no other CI,rater_A
+@azure/storage-blob,12.32.0-alpha.20260310.1,E,GHA has no publish workflow; no other CI,rater_A
+cjs-module-lexer,2.2.0,E,GHA has no publish workflow; no other CI,rater_A
+utf-8-validate,6.0.6,E,GHA has no publish workflow; no other CI,rater_A
+c8,11.0.0,E,GHA has no publish workflow; no other CI,rater_A
+anser,2.3.4,E,no GHA workflows; no .circleci/.gitlab-ci,rater_A
+is-descriptor,0.1.8,E,GHA has no publish workflow; no other CI,rater_A
+module-alias,2.3.4,E,GHA has no publish workflow; no other CI,rater_A
+yauzl,3.2.1,E,GHA has no publish workflow; no other CI,rater_A
+@ant-design/icons,6.2.1,E,GHA has no publish workflow; no other CI,rater_A
+electron-to-chromium,1.5.323,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=workflow [Kilian__electron-to-chromium__publish.yml],rater_A
+react-virtualized-auto-sizer,2.0.1,E,GHA has no publish workflow; no other CI,rater_A
+jest-runner,30.3.0,E,GHA has no publish workflow; no other CI,rater_A
+@nestjs/platform-express,12.0.0-alpha.1,C,GHA has no publish; circleci config present,rater_A
+@types/pg,8.18.0,E,GHA has no publish workflow; no other CI,rater_A
+@babel/plugin-proposal-function-sent,8.0.0-rc.4,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+terser-webpack-plugin,5.3.17,B,id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=workflow [webpack__minimizer-webpack-plugin__release.yml],rater_A
+libphonenumber-js,1.13.0,F,no/non-github repo url,rater_A
+jest-runtime,30.4.1,E,GHA has no publish workflow; no other CI,rater_A
+content-disposition,1.1.0,E,GHA has no publish workflow; no other CI,rater_A
+mocha,12.0.0-beta-7,B,id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=workflow [mochajs__mocha__release-please.yml],rater_A
+npm,10.9.7,E,GHA has no publish workflow; no other CI,rater_A
+@storybook/addon-controls,8.6.15,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+jest,30.4.2,E,GHA has no publish workflow; no other CI,rater_A
+eslint-webpack-plugin,6.0.0,E,GHA has no publish workflow; no other CI,rater_A
+minimatch,10.2.3,E,GHA has no publish workflow; no other CI,rater_A
+babel-plugin-polyfill-regenerator,0.6.8,E,GHA has no publish workflow; no other CI,rater_A
+jest-junit,17.0.0,E,GHA has no publish workflow; no other CI,rater_A
+copy-webpack-plugin,14.0.0,E,GHA has no publish workflow; no other CI,rater_A
+webpack,5.104.0,B,id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=workflow [webpack__webpack__release.yml],rater_A
+@storybook/react-vite,0.0.0-pr-34080-sha-088d952e,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+@babel/helper-plugin-utils,8.0.0-rc.1,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+workerpool,10.0.2,E,GHA has no publish workflow; no other CI,rater_A
+@aws-sdk/credential-provider-node,3.972.34,E,GHA has no publish workflow; no other CI,rater_A
+react-window,2.2.5-alpha.1,E,GHA has no publish workflow; no other CI,rater_A
+rollup,2.80.0,B,id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=job [rollup__rollup__build-and-tests.yml],rater_A
+test-exclude,8.0.0,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [istanbuljs__test-exclude__release-please.yml],rater_A
+@types/jquery,4.0.0,E,GHA has no publish workflow; no other CI,rater_A
+testem,3.18.0,E,GHA has no publish workflow; no other CI,rater_A
+update-browserslist-db,1.2.3,E,GHA has no publish workflow; no other CI,rater_A
+protobufjs,8.0.3,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=workflow [protobufjs__protobuf.js__release.yaml],rater_A
+@storybook/builder-webpack5,0.0.0-pr-34707-sha-66dc6ff5,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+@radix-ui/react-dropdown-menu,2.1.17-rc.1766004502650,A,"NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [radix-ui__primitives__publish-stable.yml,radix-ui__primitives__publish-snapshot.yml]",rater_A
+follow-redirects,1.16.0,E,GHA has no publish workflow; no other CI,rater_A
+conf,15.1.0,E,GHA has no publish workflow; no other CI,rater_A
+socks,2.8.8,E,GHA has no publish workflow; no other CI,rater_A
+lodash-es,4.17.22,E,GHA has no publish workflow; no other CI,rater_A
+glob,13.0.6,E,GHA has no publish workflow; no other CI,rater_A
+eslint,10.0.0-beta.0,E,GHA has no publish workflow; no other CI,rater_A
+@storybook/addon-actions,0.0.0-pr-33843-sha-df25ab64,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+sanitize-html,2.17.1,E,GHA has no publish workflow; no other CI,rater_A
+@radix-ui/react-accordion,1.2.13-rc.1766004502650,A,"NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [radix-ui__primitives__publish-stable.yml,radix-ui__primitives__publish-snapshot.yml]",rater_A
+class-validator,0.15.1,E,GHA has no publish workflow; no other CI,rater_A
+ejs,4.0.1,E,GHA has no publish workflow; no other CI,rater_A
+metro,0.83.4,E,GHA has no publish workflow; no other CI,rater_A
+conventional-changelog-conventionalcommits,9.2.0,A,NPM_TOKEN env + no id-token:write (classic publish) (filename-hint+token); id-token scope=none; publish-job unresolved (YAML fallback) [conventional-changelog__conventional-changelog__release.yml],rater_A
+node-releases,2.0.36,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=workflow [chicoxyzzy__node-releases__nightly-sync.yml],rater_A
+@ckeditor/ckeditor5-easy-image,0.0.0-nightly-next-20260130.0,C,no GHA; circleci config present,rater_A
+@babel/preset-typescript,8.0.0-rc.4,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+@storybook/builder-vite,0.0.0-pr-34730-sha-035fd1c7,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+node-forge,1.4.0,E,GHA has no publish workflow; no other CI,rater_A
+pixelmatch,7.1.1,E,GHA has no publish workflow; no other CI,rater_A
+firebase-admin,13.6.1,E,GHA has no publish workflow; no other CI,rater_A
+wrap-ansi,10.0.0,E,GHA has no publish workflow; no other CI,rater_A
+@xmldom/xmldom,0.9.9,E,GHA has no publish workflow; no other CI,rater_A
+@types/estree,1.0.9,E,GHA has no publish workflow; no other CI,rater_A
+sinon,22.0.0,E,GHA has no publish workflow; no other CI,rater_A
+react-icons,5.6.0,E,GHA has no publish workflow; no other CI,rater_A
+filesize,11.0.17,E,GHA has no publish workflow; no other CI,rater_A
+flat-cache,6.1.21,E,GHA has no publish workflow; no other CI,rater_A
+file-type,21.3.4,E,GHA has no publish workflow; no other CI,rater_A
+core-js,3.48.0,E,GHA has no publish workflow; no other CI,rater_A
+@ckeditor/ckeditor5-cloud-services,0.0.0-nightly-20260131.0,C,no GHA; circleci config present,rater_A
+jest-environment-jsdom,30.4.0,E,GHA has no publish workflow; no other CI,rater_A
+@types/qs,6.15.1,E,GHA has no publish workflow; no other CI,rater_A
+@angular-devkit/schematics,20.3.21,E,GHA has no publish workflow; no other CI,rater_A
+@mapbox/node-pre-gyp,2.0.4-pre.0,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=job-no-id-token [mapbox__node-pre-gyp__release.yml],rater_A
+send,1.2.1,E,GHA has no publish workflow; no other CI,rater_A
+body-parser,1.20.5,E,GHA has no publish workflow; no other CI,rater_A
+jwks-rsa,1.12.5,B,"id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (filename-hint+token); id-token scope=raw-fallback; publish-job unresolved (YAML fallback) [auth0__node-jwks-rsa__npm-release.yml,auth0__node-jwks-rsa__release.yml]",rater_A
+brace-expansion,5.0.3,E,GHA has no publish workflow; no other CI,rater_A
+globals,17.2.0,E,GHA has no publish workflow; no other CI,rater_A
+immer,11.1.3,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (filename-hint+token); id-token scope=workflow; publish-job unresolved (YAML fallback) [immerjs__immer__release.yml],rater_A
+configstore,8.0.0,E,GHA has no publish workflow; no other CI,rater_A
+@nestjs/cli,12.0.0-alpha.4,C,no GHA; circleci config present,rater_A
+axios,1.13.3,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=workflow [axios__axios__publish.yml],rater_A
+framer-motion,12.34.2,C,GHA has no publish; circleci config present,rater_A
+qs,6.4.2,E,GHA has no publish workflow; no other CI,rater_A
+ora,9.4.0,E,GHA has no publish workflow; no other CI,rater_A
+jest-util,30.4.1,E,GHA has no publish workflow; no other CI,rater_A
+eslint-config-xo-space,1.0.0,E,GHA has no publish workflow; no other CI,rater_A
+@angular-devkit/architect,0.1902.25,E,GHA has no publish workflow; no other CI,rater_A
+@babel/plugin-transform-modules-umd,8.0.0-rc.1,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+recharts,3.8.0,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [recharts__recharts__npm-publish.yml],rater_A
+lodash,4.18.1,E,GHA has no publish workflow; no other CI,rater_A
+firebase,12.12.0,A,multiple publish workflows with conflicting classes: firebase__firebase-js-sdk__release-pr.yml=UNCERTAIN; firebase__firebase-js-sdk__release-staging.yml=A; PI-adjudicated 2026-05-16 from UNCERTAIN to A,rater_A
+terser,5.47.1,E,GHA has no publish workflow; no other CI,rater_A
+jest-worker,30.4.1,E,GHA has no publish workflow; no other CI,rater_A
+redis,5.12.1,A,NPM_TOKEN env + no id-token:write (classic publish) (filename-hint+token); id-token scope=none; publish-job unresolved (YAML fallback) [redis__node-redis__release.yml],rater_A
+bn.js,4.12.3,E,GHA has no publish workflow; no other CI,rater_A
+@storybook/addon-essentials,7.6.23,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+@jest/types,30.4.1,E,GHA has no publish workflow; no other CI,rater_A
+file-entry-cache,11.1.2,E,GHA has no publish workflow; no other CI,rater_A
+eslint-plugin-cypress,6.1.0,E,GHA has no publish workflow; no other CI,rater_A
+@angular/platform-browser,21.2.10,E,GHA has no publish workflow; no other CI,rater_A
+@babel/plugin-proposal-export-default-from,8.0.0-rc.1,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+ajv,6.15.0,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [ajv-validator__ajv__publish.yml],rater_A
+typescript,6.0.0-dev.20251216,A,"NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [microsoft__TypeScript__nightly.yaml,microsoft__TypeScript__insiders.yaml]",rater_A
+serve-static,1.16.3,E,GHA has no publish workflow; no other CI,rater_A
+jest-haste-map,30.3.0,E,GHA has no publish workflow; no other CI,rater_A
+slice-ansi,9.0.0,E,GHA has no publish workflow; no other CI,rater_A
+@babel/core,8.0.0-rc.3,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+pretty-format,30.3.0,E,GHA has no publish workflow; no other CI,rater_A
+jest-snapshot,30.3.0,E,GHA has no publish workflow; no other CI,rater_A
+postcss,8.5.12,E,GHA has no publish workflow; no other CI,rater_A
+fast-xml-parser,5.4.0,E,GHA has no publish workflow; no other CI,rater_A
+fs-extra,11.3.5,E,GHA has no publish workflow; no other CI,rater_A
+@azure/storage-blob,12.30.0-alpha.20251224.1,E,GHA has no publish workflow; no other CI,rater_A
+anser,2.3.5,E,no GHA workflows; no .circleci/.gitlab-ci,rater_A
+is-descriptor,1.0.4,E,GHA has no publish workflow; no other CI,rater_A
+module-alias,2.3.1,E,GHA has no publish workflow; no other CI,rater_A
+yauzl,3.3.0,E,GHA has no publish workflow; no other CI,rater_A
+@ant-design/icons,6.2.0,E,GHA has no publish workflow; no other CI,rater_A
+electron-to-chromium,1.5.277,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=workflow [Kilian__electron-to-chromium__publish.yml],rater_A
+react-virtualized-auto-sizer,2.0.2,E,GHA has no publish workflow; no other CI,rater_A
+jest-runner,30.4.2,E,GHA has no publish workflow; no other CI,rater_A
+@nestjs/platform-express,11.1.18,C,GHA has no publish; circleci config present,rater_A
+@types/pg,8.20.0,E,GHA has no publish workflow; no other CI,rater_A
+@babel/plugin-proposal-function-sent,8.0.0-rc.1,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+terser-webpack-plugin,5.3.16,B,id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=workflow [webpack__minimizer-webpack-plugin__release.yml],rater_A
+libphonenumber-js,1.12.33,F,no/non-github repo url,rater_A
+jest-runtime,30.4.0,E,GHA has no publish workflow; no other CI,rater_A
+mocha,12.0.0-beta-9.3,B,id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=workflow [mochajs__mocha__release-please.yml],rater_A
+npm,11.9.0,E,GHA has no publish workflow; no other CI,rater_A
+@storybook/addon-controls,0.0.0-pr-33859-sha-95913f7f,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+jest,30.4.0,E,GHA has no publish workflow; no other CI,rater_A
+eslint-webpack-plugin,5.0.3,E,GHA has no publish workflow; no other CI,rater_A
+minimatch,5.1.8,E,GHA has no publish workflow; no other CI,rater_A
+babel-plugin-polyfill-regenerator,1.0.0-rc.1,E,GHA has no publish workflow; no other CI,rater_A
+webpack,5.104.1,B,id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=workflow [webpack__webpack__release.yml],rater_A
+@storybook/react-vite,10.3.0,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+@babel/helper-plugin-utils,8.0.0-rc.2,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+@aws-sdk/credential-provider-node,3.972.13,E,GHA has no publish workflow; no other CI,rater_A
+react-window,2.2.5,E,GHA has no publish workflow; no other CI,rater_A
+rollup,3.30.0,B,id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=job [rollup__rollup__build-and-tests.yml],rater_A
+test-exclude,7.0.2,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [istanbuljs__test-exclude__release-please.yml],rater_A
+@types/jquery,3.5.34,E,GHA has no publish workflow; no other CI,rater_A
+testem,3.19.0,E,GHA has no publish workflow; no other CI,rater_A
+protobufjs,6.11.5,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=workflow [protobufjs__protobuf.js__release.yaml],rater_A
+@storybook/builder-webpack5,0.0.0-pr-34743-sha-23a2c455,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+socks,2.8.9,E,GHA has no publish workflow; no other CI,rater_A
+lodash-es,4.18.1,E,GHA has no publish workflow; no other CI,rater_A
+glob,13.0.2,E,GHA has no publish workflow; no other CI,rater_A
+eslint,10.3.0,E,GHA has no publish workflow; no other CI,rater_A
+@storybook/addon-actions,8.6.15,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+sanitize-html,2.17.3,E,GHA has no publish workflow; no other CI,rater_A
+class-validator,0.14.4,E,GHA has no publish workflow; no other CI,rater_A
+ejs,5.0.2,E,GHA has no publish workflow; no other CI,rater_A
+conventional-changelog-conventionalcommits,9.3.1,A,NPM_TOKEN env + no id-token:write (classic publish) (filename-hint+token); id-token scope=none; publish-job unresolved (YAML fallback) [conventional-changelog__conventional-changelog__release.yml],rater_A
+node-releases,2.0.37,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=workflow [chicoxyzzy__node-releases__nightly-sync.yml],rater_A
+@ckeditor/ckeditor5-easy-image,0.0.0-nightly-20251210.0,C,no GHA; circleci config present,rater_A
+@babel/preset-typescript,8.0.0-rc.1,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+@storybook/builder-vite,0.0.0-pr-34625-sha-11c5970b,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+pixelmatch,7.2.0,E,GHA has no publish workflow; no other CI,rater_A
+firebase-admin,13.8.0,E,GHA has no publish workflow; no other CI,rater_A
+@xmldom/xmldom,0.9.10,E,GHA has no publish workflow; no other CI,rater_A
+sinon,21.1.2,E,GHA has no publish workflow; no other CI,rater_A
+filesize,11.0.16,E,GHA has no publish workflow; no other CI,rater_A
+flat-cache,6.1.22,E,GHA has no publish workflow; no other CI,rater_A
+file-type,21.3.2,E,GHA has no publish workflow; no other CI,rater_A
+core-js,3.49.0,E,GHA has no publish workflow; no other CI,rater_A
+@ckeditor/ckeditor5-cloud-services,0.0.0-nightly-20251220.0,C,no GHA; circleci config present,rater_A
+jest-environment-jsdom,30.3.0,E,GHA has no publish workflow; no other CI,rater_A
+@types/qs,6.15.0,E,GHA has no publish workflow; no other CI,rater_A
+@angular-devkit/schematics,21.0.5,E,GHA has no publish workflow; no other CI,rater_A
+send,0.19.2,E,GHA has no publish workflow; no other CI,rater_A
+body-parser,2.2.2,E,GHA has no publish workflow; no other CI,rater_A
+jwks-rsa,1.12.4,B,"id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (filename-hint+token); id-token scope=raw-fallback; publish-job unresolved (YAML fallback) [auth0__node-jwks-rsa__npm-release.yml,auth0__node-jwks-rsa__release.yml]",rater_A
+brace-expansion,5.0.4,E,GHA has no publish workflow; no other CI,rater_A
+globals,17.1.0,E,GHA has no publish workflow; no other CI,rater_A
+immer,11.1.2,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (filename-hint+token); id-token scope=workflow; publish-job unresolved (YAML fallback) [immerjs__immer__release.yml],rater_A
+@nestjs/cli,11.0.16,C,no GHA; circleci config present,rater_A
+framer-motion,12.25.0,C,GHA has no publish; circleci config present,rater_A
+qs,6.5.4,E,GHA has no publish workflow; no other CI,rater_A
+ora,9.3.0,E,GHA has no publish workflow; no other CI,rater_A
+jest-util,30.3.0,E,GHA has no publish workflow; no other CI,rater_A
+@angular-devkit/architect,0.2101.1,E,GHA has no publish workflow; no other CI,rater_A
+@babel/plugin-transform-modules-umd,8.0.0-rc.2,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+recharts,3.8.1,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [recharts__recharts__npm-publish.yml],rater_A
+lodash,4.17.23,E,GHA has no publish workflow; no other CI,rater_A
+firebase,12.8.0,A,multiple publish workflows with conflicting classes: firebase__firebase-js-sdk__release-pr.yml=UNCERTAIN; firebase__firebase-js-sdk__release-staging.yml=A; PI-adjudicated 2026-05-16 from UNCERTAIN to A,rater_A
+terser,5.45.0,E,GHA has no publish workflow; no other CI,rater_A
+jest-worker,30.4.0,E,GHA has no publish workflow; no other CI,rater_A
+redis,5.12.0,A,NPM_TOKEN env + no id-token:write (classic publish) (filename-hint+token); id-token scope=none; publish-job unresolved (YAML fallback) [redis__node-redis__release.yml],rater_A
+@storybook/addon-essentials,0.0.0-pr-33857-sha-9cf9d89d,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+@jest/types,30.3.0,E,GHA has no publish workflow; no other CI,rater_A
+eslint-plugin-cypress,5.4.0,E,GHA has no publish workflow; no other CI,rater_A
+@angular/platform-browser,21.0.5,E,GHA has no publish workflow; no other CI,rater_A
+@babel/plugin-proposal-export-default-from,8.0.0-rc.2,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+ajv,6.14.0,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [ajv-validator__ajv__publish.yml],rater_A
+typescript,6.0.0-dev.20260120,A,"NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [microsoft__TypeScript__nightly.yaml,microsoft__TypeScript__insiders.yaml]",rater_A
+jest-haste-map,30.4.0,E,GHA has no publish workflow; no other CI,rater_A
+@babel/core,8.0.0-beta.4,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+pretty-format,30.4.1,E,GHA has no publish workflow; no other CI,rater_A
+@radix-ui/react-collection,1.1.9-rc.1766004502650,A,"NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [radix-ui__primitives__publish-stable.yml,radix-ui__primitives__publish-snapshot.yml]",rater_A
+workbox-cacheable-response,7.4.1,E,GHA has no publish workflow; no other CI,rater_A
+@babel/plugin-transform-export-namespace-from,8.0.0-rc.1,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+@smithy/url-parser,4.2.6,B,"id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=job [smithy-lang__smithy-typescript__release-npm-ssdk-libs.yml,smithy-lang__smithy-typescript__release-npm-packages.yml]",rater_A
+@jest/expect,30.3.0,E,GHA has no publish workflow; no other CI,rater_A
+@react-aria/live-announcer,3.0.0-nightly-5670b2acc-251226,C,GHA has no publish; circleci config present,rater_A
+@react-aria/listbox,3.0.0-nightly-6ad41a5f5-260123,C,GHA has no publish; circleci config present,rater_A
+@aws-sdk/client-ssm,3.1040.0,E,GHA has no publish workflow; no other CI,rater_A
+@babel/plugin-transform-unicode-regex,8.0.0-beta.4,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+@radix-ui/react-scroll-area,1.2.11-rc.1766004502650,A,"NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [radix-ui__primitives__publish-stable.yml,radix-ui__primitives__publish-snapshot.yml]",rater_A
+@commitlint/lint,20.5.3,E,GHA has no publish workflow; no other CI,rater_A
+@protobufjs/codegen,2.0.5,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=workflow [dcodeIO__protobuf.js__release.yaml],rater_A
+@lezer/common,1.5.1,E,no GHA workflows; no .circleci/.gitlab-ci,rater_A
+@aws-sdk/xml-builder,3.972.2,E,GHA has no publish workflow; no other CI,rater_A
+@vue/language-core,3.2.2,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [vuejs__language-tools__release.yml],rater_A
+@tiptap/extension-underline,2.27.2,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [ueberdosis__tiptap__publish.yml],rater_A
+@rushstack/node-core-library,5.21.0,E,GHA has no publish workflow; no other CI,rater_A
+@tiptap/extension-strike,2.27.2,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [ueberdosis__tiptap__publish.yml],rater_A
+@babel/helper-validator-identifier,8.0.0-rc.4,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+@smui/dialog,9.0.0-beta.9,E,no GHA workflows; no .circleci/.gitlab-ci,rater_A
+@fast-csv/format,5.0.7,E,GHA has no publish workflow; no other CI,rater_A
+istanbul-lib-processinfo,3.0.0,E,GHA has no publish workflow; no other CI,rater_A
+@jimp/core,1.6.1,E,GHA has no publish workflow; no other CI,rater_A
+@types/mapbox__point-geometry,1.0.59,F,no/non-github repo url,rater_A
+conventional-changelog-writer,8.4.0,A,NPM_TOKEN env + no id-token:write (classic publish) (filename-hint+token); id-token scope=none; publish-job unresolved (YAML fallback) [conventional-changelog__conventional-changelog__release.yml],rater_A
+@azure/core-lro,3.3.2-alpha.20251229.1,E,GHA has no publish workflow; no other CI,rater_A
+json-schema-to-zod,2.8.0,E,no GHA workflows; no .circleci/.gitlab-ci,rater_A
+streamx,2.25.0,E,GHA has no publish workflow; no other CI,rater_A
+@types/oracledb,6.10.2,E,GHA has no publish workflow; no other CI,rater_A
+@lexical/history,0.41.1-nightly.20260319.0,A,"NPM_TOKEN env + no id-token:write (classic publish) (filename-hint+token); id-token scope=none; publish-job unresolved (YAML fallback) [facebook__lexical__call-npm-publish.yml,facebook__lexical__pre-release.yml,facebook__lexical__nightly-release.yml]",rater_A
+@tiptap/react,2.27.2,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [ueberdosis__tiptap__publish.yml],rater_A
+object.getownpropertydescriptors,2.1.9,E,GHA has no publish workflow; no other CI,rater_A
+lib0,1.0.0-rc.4,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [dmonad__lib0__publish.yml],rater_A
+@react-types/datepicker,3.0.0-nightly-daafdd59d-260222,C,GHA has no publish; circleci config present,rater_A
+@aws-sdk/core,3.973.2,E,GHA has no publish workflow; no other CI,rater_A
+@react-stately/list,3.0.0-nightly-6c29f7a30-251213,C,GHA has no publish; circleci config present,rater_A
+parse5-html-rewriting-stream,8.0.1,E,GHA has no publish workflow; no other CI,rater_A
+@nestjs/schedule,6.1.2,C,no GHA; circleci config present,rater_A
+pkijs,3.4.0,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [PeculiarVentures__PKI.js__library.yml],rater_A
+@jimp/types,1.6.1,E,GHA has no publish workflow; no other CI,rater_A
+ol-mapbox-style,13.4.1,E,GHA has no publish workflow; no other CI,rater_A
+@babel/plugin-transform-class-properties,8.0.0-rc.4,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+@aws-sdk/middleware-logger,3.972.4,E,GHA has no publish workflow; no other CI,rater_A
+@firebase/database,1.1.3-20260505131936,A,multiple publish workflows with conflicting classes: firebase__firebase-js-sdk__release-pr.yml=UNCERTAIN; firebase__firebase-js-sdk__release-staging.yml=A; PI-adjudicated 2026-05-16 from UNCERTAIN to A,rater_A
+react-resizable-panels,4.7.5,E,GHA has no publish workflow; no other CI,rater_A
+@azure/core-http-compat,2.3.2-alpha.20251215.2,E,GHA has no publish workflow; no other CI,rater_A
+@storybook/addon-measure,0.0.0-pr-34011-sha-c45b0f3f,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+@fluentui/react-avatar,0.0.0-nightly-20260122-0406.1,E,GHA has no publish workflow; no other CI,rater_A
+@types/d3-shape,3.1.8,E,GHA has no publish workflow; no other CI,rater_A
+@babel/helper-replace-supers,8.0.0-beta.4,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+@graphql-codegen/core,5.0.2-alpha-20260410121041-c0cf4996b120a939961143bf4222458eba0062dc,A,"NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [dotansimha__graphql-code-generator__rust.yml,dotansimha__graphql-code-generator__release.yml]",rater_A
+metro-transform-plugins,0.83.4,E,GHA has no publish workflow; no other CI,rater_A
+@azure/core-auth,1.10.2-alpha.20260129.2,E,GHA has no publish workflow; no other CI,rater_A
+@aws-sdk/middleware-host-header,3.972.1,E,GHA has no publish workflow; no other CI,rater_A
+@csstools/css-parser-algorithms,4.0.0,E,GHA has no publish workflow; no other CI,rater_A
+postcss-color-functional-notation,8.0.0,E,GHA has no publish workflow; no other CI,rater_A
+@types/whatwg-mimetype,5.0.0,E,GHA has no publish workflow; no other CI,rater_A
+@react-types/shared,3.0.0-nightly-5670b2acc-260103,C,GHA has no publish; circleci config present,rater_A
+@azure/core-paging,1.6.3-alpha.20260212.2,E,GHA has no publish workflow; no other CI,rater_A
+plyr,3.8.4,E,no GHA workflows; no .circleci/.gitlab-ci,rater_A
+embla-carousel-react,9.0.0-rc01,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [davidjerleke__embla-carousel__cd.yml],rater_A
+@ungap/structured-clone,1.3.1,E,GHA has no publish workflow; no other CI,rater_A
+@firebase/database-types,1.0.20,A,multiple publish workflows with conflicting classes: firebase__firebase-js-sdk__release-pr.yml=UNCERTAIN; firebase__firebase-js-sdk__release-staging.yml=A; PI-adjudicated 2026-05-16 from UNCERTAIN to A,rater_A
+@smithy/util-defaults-mode-node,4.2.41,B,"id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=job [smithy-lang__smithy-typescript__release-npm-ssdk-libs.yml,smithy-lang__smithy-typescript__release-npm-packages.yml]",rater_A
+@algolia/client-search,4.26.0,B,id-token:write + NPM_TOKEN co-present (OIDC mis-config) (filename-hint+token); id-token scope=workflow; publish-job unresolved (YAML fallback) [algolia__algoliasearch-client-javascript__release.yml],rater_A
+@oozcitak/dom,3.0.0,E,GHA has no publish workflow; no other CI,rater_A
+@babel/plugin-transform-modules-amd,8.0.0-beta.4,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+@csstools/postcss-progressive-custom-properties,5.0.0,E,GHA has no publish workflow; no other CI,rater_A
+smob,1.6.1,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (release-please+token); id-token scope=workflow; publish-job unresolved (YAML fallback) [Tada5hi__smob__release.yml],rater_A
+@babel/helper-validator-option,8.0.0-rc.4,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+@storybook/client-logger,0.0.0-pr-34011-sha-1f3f0b01,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+metro-symbolicate,0.83.4,E,GHA has no publish workflow; no other CI,rater_A
+@aws-sdk/util-dynamodb,3.983.0,E,GHA has no publish workflow; no other CI,rater_A
+@react-stately/utils,3.0.0-nightly-8ab651b09-260416,C,GHA has no publish; circleci config present,rater_A
+@smithy/node-config-provider,4.3.13,B,"id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=job [smithy-lang__smithy-typescript__release-npm-ssdk-libs.yml,smithy-lang__smithy-typescript__release-npm-packages.yml]",rater_A
+which-typed-array,1.1.20,E,GHA has no publish workflow; no other CI,rater_A
+which-pm-runs,2.0.0,E,GHA has no publish workflow; no other CI,rater_A
+pg-pool,3.13.0,E,GHA has no publish workflow; no other CI,rater_A
+@types/http-cache-semantics,4.2.0,E,GHA has no publish workflow; no other CI,rater_A
+@inquirer/select,5.1.4,E,GHA has no publish workflow; no other CI,rater_A
+@discoveryjs/json-ext,1.0.0,E,GHA has no publish workflow; no other CI,rater_A
+@csstools/css-tokenizer,4.0.0,E,GHA has no publish workflow; no other CI,rater_A
+@sentry/utils,8.55.2,E,GHA has no publish workflow; no other CI,rater_A
+@smithy/util-body-length-browser,4.3.0,B,"id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=job [smithy-lang__smithy-typescript__release-npm-ssdk-libs.yml,smithy-lang__smithy-typescript__release-npm-packages.yml]",rater_A
+@paralleldrive/cuid2,3.3.0,E,GHA has no publish workflow; no other CI,rater_A
+real-require,1.0.0,E,GHA has no publish workflow; no other CI,rater_A
+@storybook/core,8.6.16,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+@storybook/addon-toolbars,7.6.24,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+@firebase/functions,0.13.3-20260317152345,A,multiple publish workflows with conflicting classes: firebase__firebase-js-sdk__release-pr.yml=UNCERTAIN; firebase__firebase-js-sdk__release-staging.yml=A; PI-adjudicated 2026-05-16 from UNCERTAIN to A,rater_A
+@tiptap/extension-bullet-list,2.27.2,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [ueberdosis__tiptap__publish.yml],rater_A
+@azure/core-rest-pipeline,1.22.3-alpha.20260107.1,E,GHA has no publish workflow; no other CI,rater_A
+vscode-languageserver-protocol,3.17.6-next.16,E,no GHA workflows; no .circleci/.gitlab-ci,rater_A
+@aws-sdk/util-format-url,3.972.6,E,GHA has no publish workflow; no other CI,rater_A
+@aws-sdk/credential-provider-cognito-identity,3.967.0,E,GHA has no publish workflow; no other CI,rater_A
+is-subdir,2.0.0,E,GHA has no publish workflow; no other CI,rater_A
+@azure/logger,1.3.1-alpha.20260129.2,E,GHA has no publish workflow; no other CI,rater_A
+@graphql-codegen/schema-ast,5.0.2-alpha-20260409175142-915647b671c5e5d6eb762e25b2bd6c3f4b6a27f1,A,"NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [dotansimha__graphql-code-generator__rust.yml,dotansimha__graphql-code-generator__release.yml]",rater_A
+ordered-binary,1.6.1,E,no GHA workflows; no .circleci/.gitlab-ci,rater_A
+@inquirer/type,4.0.3,E,GHA has no publish workflow; no other CI,rater_A
+ai,6.0.8,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=workflow [vercel__ai__release.yml],rater_A
+@jest/test-sequencer,30.4.0,E,GHA has no publish workflow; no other CI,rater_A
+@smithy/eventstream-codec,4.2.7,B,"id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=job [smithy-lang__smithy-typescript__release-npm-ssdk-libs.yml,smithy-lang__smithy-typescript__release-npm-packages.yml]",rater_A
+@formatjs/intl,4.0.2,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (filename-hint+token); id-token scope=raw-fallback; publish-job unresolved (YAML fallback) [formatjs__formatjs__release.yml],rater_A
+@aws-sdk/util-locate-window,3.957.0,E,GHA has no publish workflow; no other CI,rater_A
+@phenomnomnominal/tsquery,6.2.0,E,no GHA workflows; no .circleci/.gitlab-ci,rater_A
+@storybook/core-common,0.0.0-pr-34011-sha-c45b0f3f,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+@smithy/smithy-client,4.12.2,B,"id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=job [smithy-lang__smithy-typescript__release-npm-ssdk-libs.yml,smithy-lang__smithy-typescript__release-npm-packages.yml]",rater_A
+@firebase/messaging,0.12.23-canary.bc2b2cdea,A,multiple publish workflows with conflicting classes: firebase__firebase-js-sdk__release-pr.yml=UNCERTAIN; firebase__firebase-js-sdk__release-staging.yml=A; PI-adjudicated 2026-05-16 from UNCERTAIN to A,rater_A
+prosemirror-menu,1.3.0,F,no/non-github repo url,rater_A
+citty,0.2.0,E,GHA has no publish workflow; no other CI,rater_A
+@aws-sdk/util-endpoints,3.982.0,E,GHA has no publish workflow; no other CI,rater_A
+@radix-ui/react-slider,1.3.7-rc.1766004502650,A,"NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [radix-ui__primitives__publish-stable.yml,radix-ui__primitives__publish-snapshot.yml]",rater_A
+foreground-child,4.0.0,E,GHA has no publish workflow; no other CI,rater_A
+@azure/abort-controller,2.1.3-alpha.20260109.1,E,GHA has no publish workflow; no other CI,rater_A
+@babel/helper-remap-async-to-generator,8.0.0-rc.3,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+@babel/plugin-transform-exponentiation-operator,8.0.0-rc.2,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+@commitlint/load,20.3.1,E,GHA has no publish workflow; no other CI,rater_A
+@storybook/core-server,0.0.0-pr-33859-sha-2907ae70,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+@babel/plugin-transform-new-target,8.0.0-rc.4,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+@azure-rest/core-client,2.5.2-alpha.20251231.1,E,GHA has no publish workflow; no other CI,rater_A
+@graphql-tools/wrap,11.1.10-alpha-9b6aab968b2c340f6b0107305e1ee089c74566e2,B,id-token:write + NPM_TOKEN co-present (OIDC mis-config) (filename-hint+token); id-token scope=raw-fallback; publish-job unresolved (YAML fallback) [graphql-hive__gateway__release.yml],rater_A
+@microsoft/api-extractor-model,7.33.0,E,GHA has no publish workflow; no other CI,rater_A
+@smithy/middleware-stack,4.2.7,B,"id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=job [smithy-lang__smithy-typescript__release-npm-ssdk-libs.yml,smithy-lang__smithy-typescript__release-npm-packages.yml]",rater_A
+node-pty,1.2.0-beta.9,E,GHA has no publish workflow; no other CI,rater_A
+array-back,6.2.3,E,GHA has no publish workflow; no other CI,rater_A
+@storybook/channels,8.6.18,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+postcss-logical,9.0.0,E,GHA has no publish workflow; no other CI,rater_A
+@react-stately/tree,3.0.0-nightly-6073f1c76-260220,C,GHA has no publish; circleci config present,rater_A
+@tiptap/extension-bubble-menu,2.27.2,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [ueberdosis__tiptap__publish.yml],rater_A
+@storybook/test,0.0.0-pr-34009-sha-c90626e7,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+@sentry/types,10.47.0,E,GHA has no publish workflow; no other CI,rater_A
+comment-parser,1.4.3,E,GHA has no publish workflow; no other CI,rater_A
+@angular-devkit/schematics-cli,20.3.21,E,GHA has no publish workflow; no other CI,rater_A
+@types/eslint-scope,9.1.0,F,no/non-github repo url,rater_A
+@azure/msal-common,16.0.3,E,GHA has no publish workflow; no other CI,rater_A
+detective-scss,5.0.2,E,GHA has no publish workflow; no other CI,rater_A
+@aws-sdk/client-bedrock-runtime,3.1018.0,E,GHA has no publish workflow; no other CI,rater_A
+prosemirror-changeset,2.4.0,F,no/non-github repo url,rater_A
+@wordpress/block-editor,15.13.1,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=job-no-id-token [WordPress__gutenberg__publish-npm-packages.yml],rater_A
+@parcel/transformer-js,2.16.4,E,GHA has no publish workflow; no other CI,rater_A
+path-scurry,2.0.2,E,GHA has no publish workflow; no other CI,rater_A
+@storybook/addon-outline,7.6.21,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+@lexical/utils,0.42.1-nightly.20260325.0,A,"NPM_TOKEN env + no id-token:write (classic publish) (filename-hint+token); id-token scope=none; publish-job unresolved (YAML fallback) [facebook__lexical__call-npm-publish.yml,facebook__lexical__pre-release.yml,facebook__lexical__nightly-release.yml]",rater_A
+@react-native/js-polyfills,0.85.0-nightly-20260301-d6042d216,A,"NPM_TOKEN env + no id-token:write (classic publish) (filename-hint+token); id-token scope=none; publish-job unresolved (YAML fallback) [facebook__react-native__publish-bumped-packages.yml,facebook__react-native__publish-release.yml,facebook__react-native__create-release.yml]",rater_A
+embla-carousel,9.0.0-rc02,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [davidjerleke__embla-carousel__cd.yml],rater_A
+css-prefers-color-scheme,11.0.0,E,GHA has no publish workflow; no other CI,rater_A
+create-jest,30.4.2,E,GHA has no publish workflow; no other CI,rater_A
+@smithy/hash-node,4.3.0,B,"id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=job [smithy-lang__smithy-typescript__release-npm-ssdk-libs.yml,smithy-lang__smithy-typescript__release-npm-packages.yml]",rater_A
+spawn-wrap,3.0.0,E,GHA has no publish workflow; no other CI,rater_A
+exit-hook,5.1.0,E,GHA has no publish workflow; no other CI,rater_A
+@exodus/bytes,1.0.0-rc.10,E,GHA has no publish workflow; no other CI,rater_A
+@sentry-internal/feedback,10.47.0,E,GHA has no publish workflow; no other CI,rater_A
+@commitlint/config-validator,20.4.0,E,GHA has no publish workflow; no other CI,rater_A
+@nocobase/plugin-workflow-dynamic-calculation,2.0.0-beta.11,F,no/non-github repo url,rater_A
+@codingame/monaco-vscode-api,24.1.1,E,GHA has no publish workflow; no other CI,rater_A
+@csstools/postcss-relative-color-syntax,4.0.2,E,GHA has no publish workflow; no other CI,rater_A
+@pandacss/preset-panda,1.11.0,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [chakra-ui__panda__release.yml],rater_A
+@datadog/browser-rum-core,6.25.1,C,GHA has no publish; gitlab config present,rater_A
+alien-signals,3.1.2,E,GHA has no publish workflow; no other CI,rater_A
+fast-xml-builder,1.1.5,E,no GHA workflows; no .circleci/.gitlab-ci,rater_A
+@csstools/postcss-unset-value,5.0.0,E,GHA has no publish workflow; no other CI,rater_A
+@hyperjump/json-pointer,1.1.2,E,GHA has no publish workflow; no other CI,rater_A
+bare-url,2.4.0,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (filename-hint+token); id-token scope=workflow; publish-job unresolved (YAML fallback) [holepunchto__bare-url__publish.yml],rater_A
+thingies,2.6.0,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [streamich__thingies__release.yml],rater_A
+qified,0.8.0,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [jaredwray__qified__release.yaml],rater_A
+@jimp/plugin-fisheye,1.6.1,E,GHA has no publish workflow; no other CI,rater_A
+@babel/plugin-bugfix-safari-id-destructuring-collision-in-function-expression,8.0.0-rc.1,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+@csstools/postcss-color-function,5.0.2,E,GHA has no publish workflow; no other CI,rater_A
+@graphql-tools/executor-graphql-ws,3.1.4-alpha-1d2d1089c944617a01e28c874a6d363b571d28f6,B,id-token:write + NPM_TOKEN co-present (OIDC mis-config) (filename-hint+token); id-token scope=raw-fallback; publish-job unresolved (YAML fallback) [graphql-hive__gateway__release.yml],rater_A
+@opencode-ai/plugin,0.0.0-beta-202604230134,F,no/non-github repo url,rater_A
+@csstools/postcss-color-mix-function,4.0.0,E,GHA has no publish workflow; no other CI,rater_A
+@aws-sdk/eventstream-handler-node,3.972.13,E,GHA has no publish workflow; no other CI,rater_A
+@isaacs/cliui,9.0.0,E,GHA has no publish workflow; no other CI,rater_A
+lightningcss-linux-arm64-gnu,1.31.0,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [parcel-bundler__lightningcss__release.yml],rater_A
+@csstools/postcss-oklab-function,5.0.1,E,GHA has no publish workflow; no other CI,rater_A
+@metamask/polling-controller,16.0.1,A,NPM_TOKEN env + no id-token:write (classic publish) (filename-hint+token); id-token scope=none; publish-job unresolved (YAML fallback) [MetaMask__core__publish-release.yml],rater_A
+lightningcss-darwin-x64,1.31.0,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [parcel-bundler__lightningcss__release.yml],rater_A
+@internationalized/string,3.0.0-nightly-ac718c6cd-260402,C,GHA has no publish; circleci config present,rater_A
+@zenstackhq/server,3.5.0-beta.5,E,GHA has no publish workflow; no other CI,rater_A
+@jimp/plugin-blur,1.6.1,E,GHA has no publish workflow; no other CI,rater_A
+@injectivelabs/wallet-base,1.17.2-alpha.4,B,id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=workflow [InjectiveLabs__injective-ts__publish.yaml],rater_A
+@oxfmt/binding-linux-x64-gnu,0.0.0,B,"id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=raw-fallback; publish-job unresolved (YAML fallback) [oxc-project__oxc__release_napi_transform.yml,oxc-project__oxc__release_types.yml,oxc-project__oxc__release_napi_parser.yml,oxc-project__oxc__release_apps.yml,oxc-project__oxc__reusable_release_napi.yml,oxc-project__oxc__release_runtime.yml,oxc-project__oxc__release_napi_minify.yml]",rater_A
+@babel/plugin-transform-unicode-property-regex,8.0.0-rc.3,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+@rc-component/collapse,1.2.0,E,GHA has no publish workflow; no other CI,rater_A
+@smithy/util-buffer-from,4.3.0,B,"id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=job [smithy-lang__smithy-typescript__release-npm-ssdk-libs.yml,smithy-lang__smithy-typescript__release-npm-packages.yml]",rater_A
+@pnpm/npm-conf,3.0.2,E,no GHA workflows; no .circleci/.gitlab-ci,rater_A
+@expo/devtools,56.0.0-canary-20260506-1b0052a,A,NPM_TOKEN env + no id-token:write (classic publish) (filename-hint+token); id-token scope=none; publish-job unresolved (YAML fallback) [expo__expo__publish-canaries.yml],rater_A
+@expo/apple-utils,2.1.18,F,no/non-github repo url,rater_A
+@stdlib/math-base-special-kernel-cos,0.2.4,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [stdlib-js__math-base-special-kernel-cos__publish.yml],rater_A
+ts-api-utils,2.1.1,B,publish detected but neither id-token nor NPM_TOKEN visible (composite/external action) (strong-keyword); id-token scope=none [JoshuaKGoldberg__ts-api-utils__release-pr.yml]; PI-adjudicated 2026-05-16 from UNCERTAIN to B,rater_A
+@keyv/serialize,6.0.0-alpha.1,B,id-token:write + NPM_TOKEN co-present (OIDC mis-config) (filename-hint+token); id-token scope=workflow; publish-job unresolved (YAML fallback) [jaredwray__keyv__release.yaml],rater_A
+@redis/time-series,5.12.0,A,NPM_TOKEN env + no id-token:write (classic publish) (filename-hint+token); id-token scope=none; publish-job unresolved (YAML fallback) [redis__node-redis__release.yml],rater_A
+lightningcss-win32-arm64-msvc,1.32.0,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [parcel-bundler__lightningcss__release.yml],rater_A
+@swc/types,0.1.26,B,"id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (filename-hint+token); id-token scope=workflow; publish-job unresolved (YAML fallback) [swc-project__swc__publish.yml,swc-project__swc__publish-misc-packages.yml,swc-project__swc__publish-npm-package.yml]",rater_A
+@tanstack/start-server-core,1.167.11,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=workflow [TanStack__router__release.yml],rater_A
+@powerhousedao/registry,6.0.0-dev.73,B,"id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=workflow; publish-job unresolved (YAML fallback) [powerhouse-inc__powerhouse__release-branch.yml,powerhouse-inc__powerhouse__manual-release.yml]",rater_A
+@jimp/plugin-displace,1.6.1,E,GHA has no publish workflow; no other CI,rater_A
+@volr/sdk-core,0.2.2,F,no/non-github repo url,rater_A
+@graphql-hive/signal,2.1.0-alpha-6f928bf99482eaf38ad5bb93e59c160a6da93772,B,id-token:write + NPM_TOKEN co-present (OIDC mis-config) (filename-hint+token); id-token scope=raw-fallback; publish-job unresolved (YAML fallback) [graphql-hive__gateway__release.yml],rater_A
+shadcn,4.0.7-beta.1,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [shadcn-ui__ui__release.yml],rater_A
+@pandacss/preset-base,1.9.1,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [chakra-ui__panda__release.yml],rater_A
+@parcel/packager-js,2.0.0-canary.1875,E,GHA has no publish workflow; no other CI,rater_A
+@csstools/postcss-trigonometric-functions,5.0.0,E,GHA has no publish workflow; no other CI,rater_A
+@workflow/rollup,4.0.0-beta.15,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [vercel__workflow__release.yml],rater_A
+@capacitor-community/screen-brightness,8.0.0,E,GHA has no publish workflow; no other CI,rater_A
+@babel/plugin-transform-dynamic-import,8.0.0-rc.1,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [babel__babel__release.yml],rater_A
+@prisma/studio-core,0.0.0-dev.202512311439,F,no/non-github repo url,rater_A
+@backstage/frontend-defaults,0.0.0-nightly-20260424031925,E,GHA has no publish workflow; no other CI,rater_A
+@digital-ai/devops-page-object-release,0.0.0-snapshot-20260421064856,D,repo 404 (deleted),rater_A
+@statsig/js-user-persisted-storage,3.31.1,E,GHA has no publish workflow; no other CI,rater_A
+@dicebear/open-peeps,6.1.4,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (filename-hint+token); id-token scope=workflow; publish-job unresolved (YAML fallback) [dicebear__dicebear__publish.yml],rater_A
+@azure/storage-common,12.2.0-alpha.20260101.1,E,GHA has no publish workflow; no other CI,rater_A
+@smithy/uuid,1.1.1,B,"id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=job [smithy-lang__smithy-typescript__release-npm-ssdk-libs.yml,smithy-lang__smithy-typescript__release-npm-packages.yml]",rater_A
+@smithy/eventstream-serde-universal,4.2.7,B,"id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=job [smithy-lang__smithy-typescript__release-npm-ssdk-libs.yml,smithy-lang__smithy-typescript__release-npm-packages.yml]",rater_A
+@base44/sdk,0.8.8,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=workflow [base44__javascript-sdk__manual-publish.yml],rater_A
+lightningcss-wasm,1.32.0,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [parcel-bundler__lightningcss__release.yml],rater_A
+@anthropic-ai/claude-agent-sdk,0.2.61,E,GHA has no publish workflow; no other CI,rater_A
+@smithy/core,3.20.7,B,"id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=job [smithy-lang__smithy-typescript__release-npm-ssdk-libs.yml,smithy-lang__smithy-typescript__release-npm-packages.yml]",rater_A
+react-native-wallet-manager,2.1.0,C,no GHA; circleci config present,rater_A
+@typescript/native-preview,7.0.0-dev.20260307.1,E,GHA has no publish workflow; no other CI,rater_A
+bare-stream,2.11.0,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (filename-hint+token); id-token scope=workflow; publish-job unresolved (YAML fallback) [holepunchto__bare-stream__publish.yml],rater_A
+@aws-sdk/middleware-expect-continue,3.972.8,E,GHA has no publish workflow; no other CI,rater_A
+@tanstack/start-plugin-core,1.167.20,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=workflow [TanStack__router__release.yml],rater_A
+safe-regex2,5.1.0,E,GHA has no publish workflow; no other CI,rater_A
+@vendure/telemetry-plugin,3.5.7,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [vendurehq__vendure__publish_to_npm.yml],rater_A
+motion-utils,12.27.2,C,GHA has no publish; circleci config present,rater_A
+@expo/code-signing-certificates,0.0.6,E,GHA has no publish workflow; no other CI,rater_A
+node-exports-info,1.6.0,E,GHA has no publish workflow; no other CI,rater_A
+@storybook/react-dom-shim,0.0.0-pr-34333-sha-8972daa1,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+@aws-sdk/middleware-sdk-sqs,3.972.6,E,GHA has no publish workflow; no other CI,rater_A
+types-registry,0.1.766,A,"NPM_TOKEN env + no id-token:write (classic publish) (filename-hint+token); id-token scope=none; publish-job unresolved (YAML fallback) [microsoft__DefinitelyTyped-tools__publish-registry.yml,microsoft__DefinitelyTyped-tools__version-or-publish.yml]",rater_A
+node-opcua-server,2.160.0,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=workflow [node-opcua__node-opcua__publish.yml],rater_A
+@zendeskgarden/react-tables,9.15.4,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [zendeskgarden__react-components__ci.yaml],rater_A
+baseline-browser-mapping,2.10.0-beta,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=workflow [web-platform-dx__baseline-browser-mapping__publish.yml],rater_A
+@smithy/chunked-blob-reader,5.2.1,B,"id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=job [smithy-lang__smithy-typescript__release-npm-ssdk-libs.yml,smithy-lang__smithy-typescript__release-npm-packages.yml]",rater_A
+@abp/font-awesome,10.4.0-rc.2,E,GHA has no publish workflow; no other CI,rater_A
+@parcel/watcher-linux-x64-glibc,2.5.4,A,NPM_TOKEN env + no id-token:write (classic publish) (strong-keyword); id-token scope=none [parcel-bundler__watcher__release.yml],rater_A
+@parcel/reporter-dev-server,2.0.0-canary.1875,E,GHA has no publish workflow; no other CI,rater_A
+crossws,0.4.2,E,GHA has no publish workflow; no other CI,rater_A
+@storybook/csf-plugin,0.0.0-pr-34003-sha-5f27e882,B,GHA has no publish; circleci config present; PI-adjudicated 2026-05-16 from C to B,rater_A
+@parcel/packager-raw,2.16.4,E,GHA has no publish workflow; no other CI,rater_A
+cacheable,2.3.3,E,GHA has no publish workflow; no other CI,rater_A
+@redocly/config,0.43.0-custom.1,F,no/non-github repo url,rater_A
+@inquirer/external-editor,2.0.4,E,GHA has no publish workflow; no other CI,rater_A
+@workflow/nuxt,4.0.1-beta.40,B,id-token:write w/o NPM_TOKEN; sampled version lacks attestation → OIDC failed (strong-keyword); id-token scope=job [vercel__workflow__release.yml],rater_A
+@firebase/app-check,0.11.0-canary.58ddd6e54,A,multiple publish workflows with conflicting classes: firebase__firebase-js-sdk__release-pr.yml=UNCERTAIN; firebase__firebase-js-sdk__release-staging.yml=A; PI-adjudicated 2026-05-16 from UNCERTAIN to A,rater_A
+@aws-sdk/middleware-flexible-checksums,3.974.12,E,GHA has no publish workflow; no other CI,rater_A
+rou3,0.7.11,E,GHA has no publish workflow; no other CI,rater_A
+oniguruma-to-es,4.3.6,E,GHA has no publish workflow; no other CI,rater_A
+@tsparticles/shape-star,4.0.0-alpha.0,B,id-token:write + NPM_TOKEN co-present (OIDC mis-config) (strong-keyword); id-token scope=workflow [tsparticles__tsparticles__npm-publish.yml],rater_A

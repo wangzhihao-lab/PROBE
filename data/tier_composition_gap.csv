@@ -1,0 +1,4 @@
+tier,version_rows,attestation_rate,median_age_years,scoped_share,dependabot_share
+top,31400,0.2346,2.46,0.8338,0.1337
+mid,48696,0.5138,3.93,0.9116,0.4504
+tail,17576,0.3669,2.46,0.9657,0.3866

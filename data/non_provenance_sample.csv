@@ -1,0 +1,501 @@
+package,version,published_at,has_attestation,attestation_url,npm_user,npm_cli_version,tier,dependent_packages_count
+@types/sinon,21.0.1,2026-04-03T03:00:54.033Z,False,,types,,top,12537
+axios,0.30.3,2026-02-18T17:19:20.081Z,False,,jasonsaayman,11.6.2,top,97210
+framer-motion,12.27.5,2026-01-20T14:58:26.725Z,False,,popmotion,lerna/4.0.0/node@v22.14.0+arm64 (darwin),top,3126
+qs,6.7.4,2026-02-12T08:11:24.601Z,False,,ljharb,11.8.0,top,15944
+@grpc/grpc-js,1.14.3,2025-12-11T15:16:01.552Z,False,,murgatroid99,10.9.4,top,1412
+ora,9.2.0,2026-02-04T05:37:59.429Z,False,,sindresorhus,11.7.0,top,34717
+jest-util,30.4.0,2026-05-07T18:41:49.042Z,False,,simenb,lerna/4.3.0/node@v26.0.0+arm64 (darwin),top,1213
+eslint-config-xo-space,0.36.0,2026-02-07T07:58:48.857Z,False,,sindresorhus,11.7.0,top,2311
+minipass,7.1.3,2026-02-19T00:34:33.886Z,False,,isaacs,11.10.0,top,559
+camelcase-keys,10.0.2,2026-01-25T07:35:35.120Z,False,,sindresorhus,11.7.0,top,1168
+@angular-devkit/architect,0.2102.2,2026-03-11T13:04:20.070Z,False,,google-wombot,11.9.0,top,582
+@babel/plugin-transform-modules-umd,8.0.0-rc.4,2026-04-29T21:41:54.213Z,False,,GitHub Actions,,top,870
+recharts,3.7.0,2026-01-21T21:11:48.437Z,False,,ckifer,11.7.0,top,1206
+lodash,4.18.0,2026-03-31T18:18:42.717Z,False,,jdalton,11.11.1,top,159122
+git-semver-tags,8.0.1,2026-03-01T19:45:22.482Z,False,,dangreen,10.8.2,top,526
+firebase,12.9.0-canary.e4b2890fd,2026-02-05T14:55:59.887Z,False,,google-wombot,10.9.0,top,4800
+terser,5.46.2,2026-04-23T10:58:46.887Z,False,,fabiosantoscode,10.8.1,top,9173
+react-datepicker,9.1.0,2025-12-19T08:41:59.004Z,False,,mrusschen,10.9.0,top,2278
+jest-worker,30.3.0,2026-03-10T01:59:45.181Z,False,,cpojer,lerna/4.3.0/node@v24.14.0+arm64 (darwin),top,1610
+redis,5.11.0,2026-02-16T14:35:44.603Z,False,,dmaier-redislabs,10.9.4,top,8794
+bn.js,5.2.3,2026-02-19T01:43:19.815Z,False,,fanatid,11.6.2,top,5369
+jiti,2.7.0,2026-05-05T21:02:47.918Z,False,,pi0,11.6.1,top,755
+@storybook/addon-essentials,8.6.17,2026-02-18T09:21:43.743Z,False,,GitHub Actions,,top,31634
+@jest/types,30.4.0,2026-05-07T18:41:47.150Z,False,,simenb,lerna/4.3.0/node@v26.0.0+arm64 (darwin),top,1811
+file-entry-cache,11.1.3,2026-05-07T19:43:58.305Z,False,,jaredwray,11.6.2,top,1201
+eslint-plugin-cypress,6.2.0,2026-03-10T17:07:50.186Z,False,,cypress-npm-publisher,11.11.0,top,2867
+@angular/platform-browser,21.2.4,2026-03-12T18:58:49.579Z,False,,google-wombot,10.9.4,top,23006
+esquery,1.7.0,2025-12-31T15:44:57.664Z,False,,michaelficarra,11.6.2,top,1334
+@babel/plugin-proposal-export-default-from,8.0.0-rc.3,2026-03-16T20:25:10.113Z,False,,GitHub Actions,,top,8335
+es-module-lexer,2.1.0,2026-04-25T22:50:31.041Z,False,,guybedford,11.9.0,top,895
+ajv,8.18.0,2026-02-14T15:41:17.656Z,False,,esp,10.8.2,top,14548
+typescript,6.0.0-dev.20260321,2026-03-21T07:21:10.481Z,False,,typescript-bot,8.19.4,top,488056
+serve-static,2.2.1,2025-12-15T19:17:31.514Z,False,,ulisesgascon,10.9.0,top,5768
+jest-haste-map,30.4.1,2026-05-08T08:34:55.714Z,False,,simenb,lerna/4.3.0/node@v26.1.0+arm64 (darwin),top,1280
+slice-ansi,8.0.0,2026-02-10T16:25:49.022Z,False,,sindresorhus,11.8.0,top,1013
+bfj,9.1.3,2026-02-09T07:08:21.936Z,False,,philbooth,11.6.2,top,2391
+react-toastify,11.1.0,2026-04-19T21:08:26.690Z,False,,sniphpet,11.11.0,top,2074
+bufferutil,4.1.0,2025-12-18T16:24:21.551Z,False,,lpinca,11.6.2,top,1832
+@babel/core,8.0.0-rc.4,2026-04-29T21:41:42.994Z,False,,GitHub Actions,,top,197540
+pretty-format,30.4.0,2026-05-07T18:41:50.791Z,False,,simenb,lerna/4.3.0/node@v26.0.0+arm64 (darwin),top,1834
+sortablejs,1.15.7,2026-02-11T22:42:31.720Z,False,,owenm,9.6.6,top,2798
+jest-snapshot,30.4.0,2026-05-07T18:41:59.995Z,False,,simenb,lerna/4.3.0/node@v26.0.0+arm64 (darwin),top,1106
+postcss,8.5.8,2026-03-02T22:19:42.040Z,False,,ai,10.9.4,top,38375
+react-syntax-highlighter,16.1.1,2026-02-26T22:37:53.840Z,False,,simmerer,10.9.4,top,2172
+fast-xml-parser,5.5.4,2026-03-13T05:32:52.137Z,False,,amitgupta,11.11.0,top,1935
+@ant-design/colors,8.0.1,2026-01-05T11:46:11.548Z,False,,afc163,11.6.0,top,869
+fs-extra,11.3.4,2026-03-03T16:46:08.750Z,False,,ryanzim,11.6.2,top,73834
+@azure/storage-blob,12.32.0-alpha.20260310.1,2026-03-11T00:21:05.504Z,False,,microsoft1es,,top,508
+cjs-module-lexer,2.2.0,2026-01-02T19:40:27.050Z,False,,guybedford,11.5.1,top,670
+utf-8-validate,6.0.6,2025-12-18T16:38:00.865Z,False,,lpinca,11.6.2,top,1754
+c8,11.0.0,2026-02-22T21:58:30.755Z,False,,bcoe,10.8.2,top,9964
+anser,2.3.4,2025-12-15T21:09:54.370Z,False,,ionicabizau,11.3.0,top,659
+is-descriptor,0.1.8,2026-05-10T23:49:48.666Z,False,,ljharb,11.6.2,top,929
+module-alias,2.3.4,2026-02-05T06:07:13.970Z,False,,ilearnio,11.5.1,top,1690
+yauzl,3.2.1,2026-03-10T20:36:59.688Z,False,,thejoshwolfe,10.9.4,top,1035
+@ant-design/icons,6.2.1,2026-04-27T08:34:16.002Z,False,,zombiej,11.7.0,top,5594
+electron-to-chromium,1.5.323,2026-03-25T07:44:17.435Z,False,,kilianvalkhof,10.8.2,top,1696
+react-virtualized-auto-sizer,2.0.1,2025-12-30T15:35:32.266Z,False,,brianvaughn,11.4.2,top,658
+jest-runner,30.3.0,2026-03-10T01:59:59.768Z,False,,cpojer,lerna/4.3.0/node@v24.14.0+arm64 (darwin),top,970
+@nestjs/platform-express,12.0.0-alpha.1,2026-03-05T14:00:11.495Z,False,,nestjscore,lerna/9.0.4/node@v20.18.0+x64 (darwin),top,3400
+@types/pg,8.18.0,2026-02-28T14:38:39.927Z,False,,types,,top,2096
+@babel/plugin-proposal-function-sent,8.0.0-rc.4,2026-04-29T21:41:46.963Z,False,,GitHub Actions,,top,3375
+terser-webpack-plugin,5.3.17,2026-03-03T15:02:56.060Z,False,,evilebottnawi,8.19.4,top,21370
+libphonenumber-js,1.13.0,2026-05-08T20:26:01.859Z,False,,catamphetamine,11.5.2,top,1025
+jest-runtime,30.4.1,2026-05-08T08:35:04.230Z,False,,simenb,lerna/4.3.0/node@v26.1.0+arm64 (darwin),top,1011
+content-disposition,1.1.0,2026-04-07T21:07:53.748Z,False,,blakeembrey,11.12.1,top,1185
+mocha,12.0.0-beta-7,2026-02-06T14:38:25.596Z,False,,mark-wiemer,10.9.4,top,261831
+npm,10.9.7,2026-03-18T21:50:04.361Z,False,,owlstronaut,10.9.7,top,9618
+@storybook/addon-controls,8.6.15,2025-12-17T13:27:56.419Z,False,,storybook-bot,,top,1451
+jest,30.4.2,2026-05-09T00:31:21.036Z,False,,simenb,lerna/4.3.0/node@v26.1.0+arm64 (darwin),top,241476
+eslint-webpack-plugin,6.0.0,2026-04-03T11:55:42.640Z,False,,ricardogobbosouza,11.12.1,top,3441
+minimatch,10.2.3,2026-02-25T00:19:15.056Z,False,,isaacs,11.10.0,top,9743
+babel-plugin-polyfill-regenerator,0.6.8,2026-03-16T22:05:00.811Z,False,,nicolo-ribaudo,lerna/3.22.1/node@v25.6.1+x64 (linux),top,893
+jest-junit,17.0.0,2026-04-24T13:40:36.740Z,False,,jsonp,10.9.0,top,7083
+copy-webpack-plugin,14.0.0,2026-03-02T16:45:25.776Z,False,,evilebottnawi,11.6.2,top,25162
+webpack,5.104.0,2025-12-16T13:25:43.199Z,False,,evilebottnawi,11.6.2,top,216244
+@storybook/react-vite,0.0.0-pr-34080-sha-088d952e,2026-03-20T12:58:14.991Z,False,,GitHub Actions,,top,3261
+@babel/helper-plugin-utils,8.0.0-rc.1,2026-01-31T17:48:14.845Z,False,,GitHub Actions,,top,1068
+workerpool,10.0.2,2026-04-16T13:36:29.496Z,False,,josdejong,11.4.2,top,507
+@aws-sdk/credential-provider-node,3.972.34,2026-04-21T20:49:16.377Z,False,,aws-sdk-bot,11.7.0,top,735
+react-window,2.2.5-alpha.1,2026-01-11T17:42:54.584Z,False,,brianvaughn,11.4.2,top,1853
+rollup,2.80.0,2026-02-22T06:17:08.097Z,False,,lukastaegert,11.6.2,top,130345
+test-exclude,8.0.0,2026-02-22T17:10:34.067Z,False,,bcoe,10.9.2,top,999
+@types/jquery,4.0.0,2026-02-23T17:23:56.408Z,False,,types,,top,4791
+testem,3.18.0,2026-03-10T07:47:55.507Z,False,,johanneswuerbach,10.9.3,top,958
+update-browserslist-db,1.2.3,2025-12-16T15:17:57.962Z,False,,ai,10.9.3,top,999
+protobufjs,8.0.3,2026-04-27T23:40:38.158Z,False,,dcode,11.6.2,top,3418
+@storybook/builder-webpack5,0.0.0-pr-34707-sha-66dc6ff5,2026-05-05T05:31:21.380Z,False,,GitHub Actions,,top,7128
+@radix-ui/react-dropdown-menu,2.1.17-rc.1766004502650,2025-12-17T20:48:59.670Z,False,,chancestrickland,10.9.4,top,854
+follow-redirects,1.16.0,2026-04-13T11:03:45.228Z,False,,rubenverborgh,10.9.3,top,1670
+conf,15.1.0,2026-02-04T04:43:43.361Z,False,,sindresorhus,11.7.0,top,1594
+socks,2.8.8,2026-04-28T06:19:04.302Z,False,,joshglazebrook,10.9.2,top,613
+lodash-es,4.17.22,2025-12-16T16:55:47.833Z,False,,jdalton,11.6.2,top,10953
+glob,13.0.6,2026-02-19T17:26:33.269Z,False,,isaacs,11.10.0,top,48165
+eslint,10.0.0-beta.0,2025-12-12T21:22:56.033Z,False,,eslintbot,10.9.4,top,424118
+@storybook/addon-actions,0.0.0-pr-33843-sha-df25ab64,2026-02-16T09:23:25.459Z,False,,GitHub Actions,,top,31683
+sanitize-html,2.17.1,2026-02-18T20:36:19.675Z,False,,bodonkey,11.5.1,top,1495
+@radix-ui/react-accordion,1.2.13-rc.1766004502650,2025-12-17T20:48:36.846Z,False,,chancestrickland,10.9.4,top,599
+class-validator,0.15.1,2026-02-26T10:46:55.062Z,False,,nonameprovided,11.8.0,top,3854
+ejs,4.0.1,2026-01-14T22:02:43.979Z,False,,mde,11.6.2,top,15041
+metro,0.83.4,2026-02-20T12:16:22.568Z,False,,metro-bot,11.6.2,top,604
+conventional-changelog-conventionalcommits,9.2.0,2026-03-01T19:44:55.026Z,False,,dangreen,10.8.2,top,2297
+node-releases,2.0.36,2026-03-04T03:59:16.821Z,False,,chicoxyzzy,11.5.1,top,1539
+@ckeditor/ckeditor5-easy-image,0.0.0-nightly-next-20260130.0,2026-01-30T02:19:49.674Z,False,,ckeditor,11.6.1,top,1358
+@babel/preset-typescript,8.0.0-rc.4,2026-04-29T21:41:59.116Z,False,,GitHub Actions,,top,40818
+@storybook/builder-vite,0.0.0-pr-34730-sha-035fd1c7,2026-05-07T09:14:27.988Z,False,,GitHub Actions,,top,2418
+node-forge,1.4.0,2026-03-24T21:44:34.668Z,False,,davidlehn,11.7.0,top,2329
+pixelmatch,7.1.1,2026-04-28T15:53:27.407Z,False,,mbx-npm-02-production,11.3.0,top,1159
+firebase-admin,13.6.1,2026-02-04T20:05:36.533Z,False,,google-wombot,10.8.2,top,2267
+wrap-ansi,10.0.0,2026-02-20T10:03:54.703Z,False,,sindresorhus,11.8.0,top,2301
+@xmldom/xmldom,0.9.9,2026-03-29T19:46:43.323Z,False,,karfau,10.8.2,top,605
+@types/estree,1.0.9,2026-05-06T21:01:00.975Z,False,,types,,top,1590
+sinon,22.0.0,2026-05-05T22:11:55.055Z,False,,fatso83,11.9.0,top,70717
+react-icons,5.6.0,2026-03-03T09:36:04.926Z,False,,kamijin_fanta,10.9.2,top,6872
+filesize,11.0.17,2026-04-27T11:34:22.101Z,False,,avoidwork,11.11.0,top,2508
+flat-cache,6.1.21,2026-03-17T23:45:07.084Z,False,,jaredwray,11.11.0,top,1275
+file-type,21.3.4,2026-03-22T14:29:40.810Z,False,,sindresorhus,11.11.0,top,1983
+core-js,3.48.0,2026-01-21T18:03:56.410Z,False,,zloirock,11.7.0,top,68956
+@ckeditor/ckeditor5-cloud-services,0.0.0-nightly-20260131.0,2026-01-31T02:02:38.052Z,False,,ckeditor,11.6.1,top,1078
+jest-environment-jsdom,30.4.0,2026-05-07T18:41:59.708Z,False,,simenb,lerna/4.3.0/node@v26.0.0+arm64 (darwin),top,8956
+@types/qs,6.15.1,2026-05-06T23:46:01.024Z,False,,types,,top,4796
+@angular-devkit/schematics,20.3.21,2026-03-19T13:36:39.844Z,False,,google-wombot,11.6.2,top,2773
+@mapbox/node-pre-gyp,2.0.4-pre.0,2025-12-19T08:16:59.566Z,False,,mbx-npm-01-production,10.9.4,top,560
+send,1.2.1,2025-12-15T19:36:11.862Z,False,,ulisesgascon,10.9.0,top,2106
+body-parser,1.20.5,2026-04-24T17:55:23.868Z,False,,jonchurch,11.12.1,top,26598
+jwks-rsa,1.12.5,2026-04-30T07:09:41.239Z,False,,auth0-oss,8.19.4,top,654
+brace-expansion,5.0.3,2026-02-22T11:37:25.657Z,False,,juliangruber,10.9.2,top,2652
+globals,17.2.0,2026-01-27T14:41:12.441Z,False,,sindresorhus,11.7.0,top,2314
+immer,11.1.3,2025-12-29T09:21:37.186Z,False,,mweststrate,7.24.2,top,5437
+configstore,8.0.0,2026-01-24T13:12:52.443Z,False,,sindresorhus,11.7.0,top,2460
+@nestjs/cli,12.0.0-alpha.4,2026-03-07T17:29:47.662Z,False,,nestjscore,11.4.2,top,2189
+axios,1.13.3,2026-01-25T14:21:38.842Z,False,,jasonsaayman,10.9.4,top,97210
+framer-motion,12.34.2,2026-02-18T12:09:55.886Z,False,,popmotion,lerna/4.0.0/node@v22.14.0+arm64 (darwin),top,3126
+qs,6.4.2,2026-02-12T08:12:00.853Z,False,,ljharb,11.8.0,top,15944
+ora,9.4.0,2026-04-22T06:11:17.972Z,False,,sindresorhus,11.12.0,top,34717
+jest-util,30.4.1,2026-05-08T08:34:48.663Z,False,,simenb,lerna/4.3.0/node@v26.1.0+arm64 (darwin),top,1213
+eslint-config-xo-space,1.0.0,2026-03-25T16:12:04.594Z,False,,sindresorhus,11.12.0,top,2311
+@angular-devkit/architect,0.1902.25,2026-04-30T06:20:54.935Z,False,,google-wombot,10.9.2,top,582
+@babel/plugin-transform-modules-umd,8.0.0-rc.1,2026-01-31T17:49:07.596Z,False,,GitHub Actions,,top,870
+recharts,3.8.0,2026-03-06T21:58:48.207Z,False,,ckifer,11.7.0,top,1206
+lodash,4.18.1,2026-04-01T21:01:20.458Z,False,,jdalton,10.9.4,top,159122
+firebase,12.12.0,2026-04-09T19:37:19.701Z,False,,google-wombot,10.9.0,top,4800
+terser,5.47.1,2026-05-07T10:16:39.195Z,False,,fabiosantoscode,11.6.0,top,9173
+jest-worker,30.4.1,2026-05-08T08:34:53.898Z,False,,simenb,lerna/4.3.0/node@v26.1.0+arm64 (darwin),top,1610
+redis,5.12.1,2026-04-14T13:26:57.611Z,False,,dmaier-redislabs,10.9.7,top,8794
+bn.js,4.12.3,2026-02-19T01:49:54.499Z,False,,fanatid,11.6.2,top,5369
+@storybook/addon-essentials,7.6.23,2026-02-18T08:57:27.971Z,False,,GitHub Actions,,top,31634
+@jest/types,30.4.1,2026-05-08T08:34:46.736Z,False,,simenb,lerna/4.3.0/node@v26.1.0+arm64 (darwin),top,1811
+file-entry-cache,11.1.2,2026-01-17T17:27:45.872Z,False,,jaredwray,11.4.1,top,1201
+eslint-plugin-cypress,6.1.0,2026-02-20T14:21:08.679Z,False,,cypress-npm-publisher,11.9.0,top,2867
+@angular/platform-browser,21.2.10,2026-04-22T23:29:30.687Z,False,,google-wombot,10.9.7,top,23006
+@babel/plugin-proposal-export-default-from,8.0.0-rc.1,2026-01-31T17:48:23.173Z,False,,GitHub Actions,,top,8335
+ajv,6.15.0,2026-04-23T14:59:24.089Z,False,,esp,11.5.2,top,14548
+typescript,6.0.0-dev.20251216,2025-12-16T07:13:30.663Z,False,,typescript-bot,8.19.4,top,488056
+serve-static,1.16.3,2025-12-15T19:12:56.654Z,False,,ulisesgascon,10.9.0,top,5768
+jest-haste-map,30.3.0,2026-03-10T01:59:46.999Z,False,,cpojer,lerna/4.3.0/node@v24.14.0+arm64 (darwin),top,1280
+slice-ansi,9.0.0,2026-04-04T13:19:33.198Z,False,,sindresorhus,11.12.0,top,1013
+@babel/core,8.0.0-rc.3,2026-03-16T20:25:46.960Z,False,,GitHub Actions,,top,197540
+pretty-format,30.3.0,2026-03-10T01:59:40.771Z,False,,cpojer,lerna/4.3.0/node@v24.14.0+arm64 (darwin),top,1834
+jest-snapshot,30.3.0,2026-03-10T01:59:50.493Z,False,,cpojer,lerna/4.3.0/node@v24.14.0+arm64 (darwin),top,1106
+postcss,8.5.12,2026-04-26T14:23:03.643Z,False,,ai,10.9.4,top,38375
+fast-xml-parser,5.4.0,2026-02-25T10:50:12.776Z,False,,amitgupta,10.9.2,top,1935
+fs-extra,11.3.5,2026-05-06T19:35:56.296Z,False,,ryanzim,11.6.2,top,73834
+@azure/storage-blob,12.30.0-alpha.20251224.1,2025-12-25T01:19:36.755Z,False,,microsoft1es,,top,508
+anser,2.3.5,2025-12-15T21:10:49.252Z,False,,ionicabizau,11.3.0,top,659
+is-descriptor,1.0.4,2026-05-10T23:42:10.375Z,False,,ljharb,11.6.2,top,929
+module-alias,2.3.1,2026-02-02T18:10:42.632Z,False,,ilearnio,11.5.1,top,1690
+yauzl,3.3.0,2026-03-31T21:05:34.337Z,False,,thejoshwolfe,10.9.4,top,1035
+@ant-design/icons,6.2.0,2026-04-27T07:08:58.531Z,False,,zombiej,11.7.0,top,5594
+electron-to-chromium,1.5.277,2026-01-22T09:15:02.188Z,False,,kilianvalkhof,11.8.0,top,1696
+react-virtualized-auto-sizer,2.0.2,2026-01-05T03:42:05.046Z,False,,brianvaughn,11.4.2,top,658
+jest-runner,30.4.2,2026-05-09T00:31:13.253Z,False,,simenb,lerna/4.3.0/node@v26.1.0+arm64 (darwin),top,970
+@nestjs/platform-express,11.1.18,2026-04-03T09:33:09.715Z,False,,nestjscore,lerna/9.0.7/node@v20.18.0+x64 (darwin),top,3400
+@types/pg,8.20.0,2026-03-20T23:06:39.416Z,False,,types,,top,2096
+@babel/plugin-proposal-function-sent,8.0.0-rc.1,2026-01-31T17:49:00.837Z,False,,GitHub Actions,,top,3375
+terser-webpack-plugin,5.3.16,2025-12-11T20:39:03.539Z,False,,evilebottnawi,10.9.2,top,21370
+libphonenumber-js,1.12.33,2025-12-19T10:40:54.796Z,False,,catamphetamine,11.5.2,top,1025
+jest-runtime,30.4.0,2026-05-07T18:42:06.135Z,False,,simenb,lerna/4.3.0/node@v26.0.0+arm64 (darwin),top,1011
+mocha,12.0.0-beta-9.3,2026-05-02T17:28:06.502Z,False,,mark-wiemer,11.13.0,top,261831
+npm,11.9.0,2026-02-04T18:24:56.782Z,False,,gar,11.9.0,top,9618
+@storybook/addon-controls,0.0.0-pr-33859-sha-95913f7f,2026-02-17T15:33:47.351Z,False,,GitHub Actions,,top,1451
+jest,30.4.0,2026-05-07T18:42:18.122Z,False,,simenb,lerna/4.3.0/node@v26.0.0+arm64 (darwin),top,241476
+eslint-webpack-plugin,5.0.3,2026-02-27T18:52:03.465Z,False,,ricardogobbosouza,11.11.0,top,3441
+minimatch,5.1.8,2026-02-25T00:24:36.227Z,False,,isaacs,6.14.18,top,9743
+babel-plugin-polyfill-regenerator,1.0.0-rc.1,2026-04-10T18:00:54.771Z,False,,nicolo-ribaudo,lerna/3.22.1/node@v25.6.1+x64 (linux),top,893
+webpack,5.104.1,2025-12-18T12:46:44.860Z,False,,evilebottnawi,10.9.2,top,216244
+@storybook/react-vite,10.3.0,2026-03-18T12:52:14.107Z,False,,GitHub Actions,,top,3261
+@babel/helper-plugin-utils,8.0.0-rc.2,2026-02-15T20:23:07.099Z,False,,GitHub Actions,,top,1068
+@aws-sdk/credential-provider-node,3.972.13,2026-02-25T20:06:58.809Z,False,,aws-sdk-bot,10.8.2,top,735
+react-window,2.2.5,2026-01-11T17:48:37.337Z,False,,brianvaughn,11.4.2,top,1853
+rollup,3.30.0,2026-02-22T06:51:09.563Z,False,,lukastaegert,11.6.2,top,130345
+test-exclude,7.0.2,2026-02-22T15:52:07.197Z,False,,bcoe,11.6.2,top,999
+@types/jquery,3.5.34,2026-02-23T17:24:06.597Z,False,,types,,top,4791
+testem,3.19.0,2026-03-23T21:25:36.377Z,False,,johanneswuerbach,10.9.3,top,958
+protobufjs,6.11.5,2026-04-14T07:19:08.054Z,False,,fenster,11.9.0,top,3418
+@storybook/builder-webpack5,0.0.0-pr-34743-sha-23a2c455,2026-05-07T16:12:56.504Z,False,,GitHub Actions,,top,7128
+socks,2.8.9,2026-05-08T19:49:47.594Z,False,,joshglazebrook,10.9.2,top,613
+lodash-es,4.18.1,2026-04-01T21:04:15.518Z,False,,jdalton,10.9.4,top,10953
+glob,13.0.2,2026-02-10T16:28:00.598Z,False,,isaacs,11.9.0,top,48165
+eslint,10.3.0,2026-05-01T15:39:41.045Z,False,,eslintbot,10.9.4,top,424118
+@storybook/addon-actions,8.6.15,2025-12-17T13:27:56.333Z,False,,storybook-bot,,top,31683
+sanitize-html,2.17.3,2026-04-15T17:48:03.845Z,False,,bodonkey,11.5.1,top,1495
+class-validator,0.14.4,2026-02-25T19:21:39.502Z,False,,nonameprovided,11.8.0,top,3854
+ejs,5.0.2,2026-04-11T22:27:23.850Z,False,,mde,11.6.2,top,15041
+conventional-changelog-conventionalcommits,9.3.1,2026-03-29T15:46:34.075Z,False,,dangreen,10.8.2,top,2297
+node-releases,2.0.37,2026-04-02T04:30:42.706Z,False,,chicoxyzzy,11.5.1,top,1539
+@ckeditor/ckeditor5-easy-image,0.0.0-nightly-20251210.0,2025-12-10T02:01:26.449Z,False,,ckeditor,11.6.1,top,1358
+@babel/preset-typescript,8.0.0-rc.1,2026-01-31T17:49:12.347Z,False,,GitHub Actions,,top,40818
+@storybook/builder-vite,0.0.0-pr-34625-sha-11c5970b,2026-04-29T11:26:13.968Z,False,,GitHub Actions,,top,2418
+pixelmatch,7.2.0,2026-04-29T05:53:29.615Z,False,,mbx-npm-08-production,11.3.0,top,1159
+firebase-admin,13.8.0,2026-04-09T20:46:10.865Z,False,,google-wombot,10.8.2,top,2267
+@xmldom/xmldom,0.9.10,2026-04-18T11:34:10.031Z,False,,karfau,10.8.2,top,605
+sinon,21.1.2,2026-04-11T17:31:25.534Z,False,,fatso83,11.9.0,top,70717
+filesize,11.0.16,2026-04-20T01:07:20.963Z,False,,avoidwork,11.11.0,top,2508
+flat-cache,6.1.22,2026-03-27T02:29:02.513Z,False,,jaredwray,11.11.0,top,1275
+file-type,21.3.2,2026-03-13T07:42:33.853Z,False,,sindresorhus,11.11.0,top,1983
+core-js,3.49.0,2026-03-16T21:13:03.395Z,False,,zloirock,11.11.0,top,68956
+@ckeditor/ckeditor5-cloud-services,0.0.0-nightly-20251220.0,2025-12-20T02:01:33.765Z,False,,ckeditor,11.6.1,top,1078
+jest-environment-jsdom,30.3.0,2026-03-10T01:59:48.776Z,False,,cpojer,lerna/4.3.0/node@v24.14.0+arm64 (darwin),top,8956
+@types/qs,6.15.0,2026-03-06T02:55:59.542Z,False,,types,,top,4796
+@angular-devkit/schematics,21.0.5,2026-01-07T21:38:01.375Z,False,,google-wombot,11.6.2,top,2773
+send,0.19.2,2025-12-15T19:29:04.515Z,False,,ulisesgascon,10.9.0,top,2106
+body-parser,2.2.2,2026-01-07T09:38:34.589Z,False,,ulisesgascon,10.9.0,top,26598
+jwks-rsa,1.12.4,2026-04-17T09:57:32.098Z,False,,auth0-oss,8.19.4,top,654
+brace-expansion,5.0.4,2026-02-27T09:37:56.676Z,False,,juliangruber,10.9.2,top,2652
+globals,17.1.0,2026-01-23T02:22:25.905Z,False,,sindresorhus,11.7.0,top,2314
+immer,11.1.2,2025-12-29T09:14:32.125Z,False,,mweststrate,7.24.2,top,5437
+@nestjs/cli,11.0.16,2026-01-15T18:45:00.502Z,False,,nestjscore,10.8.2,top,2189
+framer-motion,12.25.0,2026-01-09T09:59:20.607Z,False,,popmotion,lerna/4.0.0/node@v22.14.0+arm64 (darwin),top,3126
+qs,6.5.4,2026-02-12T08:11:49.692Z,False,,ljharb,11.8.0,top,15944
+ora,9.3.0,2026-02-05T04:33:37.616Z,False,,sindresorhus,11.7.0,top,34717
+jest-util,30.3.0,2026-03-10T01:59:39.269Z,False,,cpojer,lerna/4.3.0/node@v24.14.0+arm64 (darwin),top,1213
+@angular-devkit/architect,0.2101.1,2026-01-21T19:11:52.813Z,False,,google-wombot,11.6.2,top,582
+@babel/plugin-transform-modules-umd,8.0.0-rc.2,2026-02-15T20:24:01.031Z,False,,GitHub Actions,,top,870
+recharts,3.8.1,2026-03-25T12:12:20.764Z,False,,corkscreewe,11.3.0,top,1206
+lodash,4.17.23,2026-01-21T17:29:52.831Z,False,,jdalton,11.6.2,top,159122
+firebase,12.8.0,2026-01-14T23:31:49.512Z,False,,google-wombot,10.9.0,top,4800
+terser,5.45.0,2026-01-15T15:08:37.712Z,False,,fabiosantoscode,11.6.0,top,9173
+jest-worker,30.4.0,2026-05-07T18:41:54.366Z,False,,simenb,lerna/4.3.0/node@v26.0.0+arm64 (darwin),top,1610
+redis,5.12.0,2026-04-14T10:33:51.569Z,False,,dmaier-redislabs,10.9.7,top,8794
+@storybook/addon-essentials,0.0.0-pr-33857-sha-9cf9d89d,2026-02-17T13:46:17.122Z,False,,GitHub Actions,,top,31634
+@jest/types,30.3.0,2026-03-10T01:59:37.419Z,False,,cpojer,lerna/4.3.0/node@v24.14.0+arm64 (darwin),top,1811
+eslint-plugin-cypress,5.4.0,2026-02-17T14:28:29.905Z,False,,cypress-npm-publisher,11.9.0,top,2867
+@angular/platform-browser,21.0.5,2025-12-11T23:42:47.480Z,False,,google-wombot,10.9.4,top,23006
+@babel/plugin-proposal-export-default-from,8.0.0-rc.2,2026-02-15T20:23:15.409Z,False,,GitHub Actions,,top,8335
+ajv,6.14.0,2026-02-20T18:09:33.622Z,False,,esp,11.5.2,top,14548
+typescript,6.0.0-dev.20260120,2026-01-20T07:16:23.002Z,False,,typescript-bot,8.19.4,top,488056
+jest-haste-map,30.4.0,2026-05-07T18:41:56.114Z,False,,simenb,lerna/4.3.0/node@v26.0.0+arm64 (darwin),top,1280
+@babel/core,8.0.0-beta.4,2026-01-12T17:32:23.643Z,False,,GitHub Actions,,top,197540
+pretty-format,30.4.1,2026-05-08T08:34:50.481Z,False,,simenb,lerna/4.3.0/node@v26.1.0+arm64 (darwin),top,1834
+@radix-ui/react-collection,1.1.9-rc.1766004502650,2025-12-17T20:48:33.496Z,False,,chancestrickland,10.9.4,mid,26
+workbox-cacheable-response,7.4.1,2026-05-04T20:21:36.993Z,False,,swissspidy,lerna/5.6.2/node@v24.14.1+arm64 (darwin),mid,145
+@babel/plugin-transform-export-namespace-from,8.0.0-rc.1,2026-01-31T17:48:34.507Z,False,,GitHub Actions,,mid,31
+@smithy/url-parser,4.2.6,2025-12-15T20:42:01.727Z,False,,smithy-team,10.8.2,mid,405
+@jest/expect,30.3.0,2026-03-10T01:59:52.169Z,False,,cpojer,lerna/4.3.0/node@v24.14.0+arm64 (darwin),mid,41
+@react-aria/live-announcer,3.0.0-nightly-5670b2acc-251226,2025-12-26T09:08:30.402Z,False,,devongovett,,mid,26
+@react-aria/listbox,3.0.0-nightly-6ad41a5f5-260123,2026-01-23T09:11:51.190Z,False,,devongovett,,mid,97
+@aws-sdk/client-ssm,3.1040.0,2026-04-30T20:05:39.312Z,False,,aws-sdk-bot,11.7.0,mid,381
+@babel/plugin-transform-unicode-regex,8.0.0-beta.4,2026-01-12T17:32:21.329Z,False,,GitHub Actions,,mid,90
+@radix-ui/react-scroll-area,1.2.11-rc.1766004502650,2025-12-17T20:48:35.195Z,False,,chancestrickland,10.9.4,mid,427
+@commitlint/lint,20.5.3,2026-04-30T08:16:13.486Z,False,,escapedcat,lerna/8.2.4/node@v18.20.8+arm64 (darwin),mid,179
+@protobufjs/codegen,2.0.5,2026-04-27T20:30:11.789Z,False,,dcode,11.6.2,mid,64
+@lezer/common,1.5.1,2026-02-03T18:49:03.657Z,False,,marijn,11.7.0,mid,166
+@aws-sdk/xml-builder,3.972.2,2026-01-26T20:02:36.929Z,False,,aws-sdk-bot,10.8.2,mid,11
+@vue/language-core,3.2.2,2026-01-05T19:54:40.158Z,False,,johnsoncodehk,lerna/4.10.3/node@v24.12.0+x64 (linux),mid,16
+@tiptap/extension-underline,2.27.2,2026-01-07T15:21:24.867Z,False,,_bdbch,10.8.2,mid,371
+@rushstack/node-core-library,5.21.0,2026-03-31T15:17:23.821Z,False,,odspnpm,10.9.4,mid,157
+@tiptap/extension-strike,2.27.2,2026-01-07T15:21:22.751Z,False,,_bdbch,10.8.2,mid,148
+@babel/helper-validator-identifier,8.0.0-rc.4,2026-04-29T21:41:00.165Z,False,,GitHub Actions,,mid,94
+@smui/dialog,9.0.0-beta.9,2026-04-21T18:36:32.302Z,False,,hperrin,lerna/9.0.5/node@v24.14.1+arm64 (darwin),mid,15
+@fast-csv/format,5.0.7,2026-05-06T18:40:56.808Z,False,,juan-c2fo,lerna/9.0.7/node@v20.20.0+arm64 (darwin),mid,53
+istanbul-lib-processinfo,3.0.0,2026-02-22T18:14:08.408Z,False,,bcoe,11.6.2,mid,46
+@jimp/core,1.6.1,2026-04-07T17:54:45.968Z,False,,alisowski,lerna/9.0.7/node@v24.12.0+arm64 (darwin),mid,15
+@types/mapbox__point-geometry,1.0.59,2026-02-17T00:07:00.893Z,False,,types,,mid,31
+conventional-changelog-writer,8.4.0,2026-03-04T22:08:16.722Z,False,,dangreen,10.8.2,mid,495
+@azure/core-lro,3.3.2-alpha.20251229.1,2025-12-29T19:06:41.081Z,False,,microsoft1es,,mid,237
+json-schema-to-zod,2.8.0,2026-03-27T18:21:34.229Z,False,,stefan-terdell,11.6.1,mid,36
+streamx,2.25.0,2026-03-19T10:48:17.367Z,False,,mafintosh,11.6.2,mid,205
+@types/oracledb,6.10.2,2026-03-17T06:20:13.235Z,False,,types,,mid,122
+@lexical/history,0.41.1-nightly.20260319.0,2026-03-19T03:31:38.815Z,False,,zurfyx,10.9.4,mid,26
+@tiptap/react,2.27.2,2026-01-07T15:21:27.122Z,False,,_bdbch,10.8.2,mid,405
+object.getownpropertydescriptors,2.1.9,2025-12-10T21:03:22.734Z,False,,ljharb,11.6.2,mid,405
+lib0,1.0.0-rc.4,2026-03-16T00:17:57.519Z,False,,dmonad,11.8.0,mid,199
+@react-types/datepicker,3.0.0-nightly-daafdd59d-260222,2026-02-22T09:11:24.630Z,False,,devongovett,,mid,23
+@aws-sdk/core,3.973.2,2026-01-26T19:59:47.477Z,False,,aws-sdk-bot,10.8.2,mid,388
+@react-stately/list,3.0.0-nightly-6c29f7a30-251213,2025-12-13T09:09:17.957Z,False,,devongovett,,mid,95
+parse5-html-rewriting-stream,8.0.1,2026-04-19T20:17:11.533Z,False,,43081j,11.7.0,mid,46
+@nestjs/schedule,6.1.2,2026-04-15T09:53:12.368Z,False,,nestjscore,10.8.2,mid,209
+pkijs,3.4.0,2026-03-18T09:13:24.018Z,False,,microshine,10.9.4,mid,101
+@jimp/types,1.6.1,2026-04-07T17:54:40.803Z,False,,alisowski,lerna/9.0.7/node@v24.12.0+arm64 (darwin),mid,17
+ol-mapbox-style,13.4.1,2026-04-15T11:56:46.743Z,False,,ahocevar,11.9.0,mid,79
+@babel/plugin-transform-class-properties,8.0.0-rc.4,2026-04-29T21:41:56.153Z,False,,GitHub Actions,,mid,217
+@aws-sdk/middleware-logger,3.972.4,2026-02-24T20:07:02.008Z,False,,aws-sdk-bot,10.8.2,mid,431
+@firebase/database,1.1.3-20260505131936,2026-05-05T13:31:59.443Z,False,,google-wombot,10.9.0,mid,52
+react-resizable-panels,4.7.5,2026-03-22T14:25:59.726Z,False,,brianvaughn,11.4.2,mid,23
+@azure/core-http-compat,2.3.2-alpha.20251215.2,2025-12-15T19:09:52.965Z,False,,microsoft1es,,mid,17
+@storybook/addon-measure,0.0.0-pr-34011-sha-c45b0f3f,2026-03-06T09:57:19.695Z,False,,GitHub Actions,,mid,167
+@fluentui/react-avatar,0.0.0-nightly-20260122-0406.1,2026-01-22T04:23:29.364Z,False,,uifabricteam,10.9.2,mid,13
+@types/d3-shape,3.1.8,2026-01-12T09:42:38.759Z,False,,types,,mid,475
+@babel/helper-replace-supers,8.0.0-beta.4,2026-01-12T17:32:27.003Z,False,,GitHub Actions,,mid,24
+@graphql-codegen/core,5.0.2-alpha-20260410121041-c0cf4996b120a939961143bf4222458eba0062dc,2026-04-10T12:11:04.383Z,False,,theguild-bot,10.9.7,mid,204
+metro-transform-plugins,0.83.4,2026-02-20T12:16:48.176Z,False,,metro-bot,11.6.2,mid,294
+@azure/core-auth,1.10.2-alpha.20260129.2,2026-01-29T19:15:06.842Z,False,,microsoft1es,,mid,391
+@aws-sdk/middleware-host-header,3.972.1,2026-01-22T20:00:24.827Z,False,,aws-sdk-bot,10.8.2,mid,430
+@csstools/css-parser-algorithms,4.0.0,2026-01-14T07:20:09.455Z,False,,romainmenke,11.6.2,mid,27
+postcss-color-functional-notation,8.0.0,2026-01-14T07:36:10.659Z,False,,romainmenke,11.6.2,mid,75
+@types/whatwg-mimetype,5.0.0,2026-02-26T17:50:01.869Z,False,,types,,mid,56
+@react-types/shared,3.0.0-nightly-5670b2acc-260103,2026-01-03T09:07:52.735Z,False,,devongovett,,mid,483
+@azure/core-paging,1.6.3-alpha.20260212.2,2026-02-12T19:09:10.560Z,False,,microsoft1es,,mid,310
+plyr,3.8.4,2026-01-03T16:13:07.771Z,False,,sam_potts,10.9.3,mid,211
+embla-carousel-react,9.0.0-rc01,2026-01-20T14:57:44.110Z,False,,davidjerleke,,mid,64
+@ungap/structured-clone,1.3.1,2026-05-06T05:15:15.978Z,False,,webreflection,11.13.0,mid,123
+@firebase/database-types,1.0.20,2026-05-07T13:09:00.654Z,False,,google-wombot,10.9.0,mid,49
+@smithy/util-defaults-mode-node,4.2.41,2026-03-04T23:13:42.356Z,False,,smithy-team,10.8.2,mid,402
+@algolia/client-search,4.26.0,2026-02-17T14:42:00.281Z,False,,fluf,,mid,197
+@oozcitak/dom,3.0.0,2026-02-03T15:49:48.500Z,False,,oozcitak,11.6.0,mid,15
+@babel/plugin-transform-modules-amd,8.0.0-beta.4,2026-01-12T17:32:35.696Z,False,,GitHub Actions,,mid,203
+@csstools/postcss-progressive-custom-properties,5.0.0,2026-01-14T07:20:18.208Z,False,,romainmenke,11.6.2,mid,13
+smob,1.6.1,2026-02-11T14:21:13.133Z,False,,tada5hi,,mid,38
+@babel/helper-validator-option,8.0.0-rc.4,2026-04-29T21:41:00.334Z,False,,GitHub Actions,,mid,20
+@storybook/client-logger,0.0.0-pr-34011-sha-1f3f0b01,2026-03-04T13:22:03.027Z,False,,GitHub Actions,,mid,223
+metro-symbolicate,0.83.4,2026-02-20T12:16:46.285Z,False,,metro-bot,11.6.2,mid,393
+@aws-sdk/util-dynamodb,3.983.0,2026-02-04T20:03:52.939Z,False,,aws-sdk-bot,10.8.2,mid,298
+@react-stately/utils,3.0.0-nightly-8ab651b09-260416,2026-04-16T09:12:54.297Z,False,,devongovett,,mid,98
+@smithy/node-config-provider,4.3.13,2026-04-06T17:01:19.020Z,False,,smithy-team,10.8.2,mid,417
+which-typed-array,1.1.20,2026-01-14T21:25:14.306Z,False,,ljharb,11.6.2,mid,480
+which-pm-runs,2.0.0,2026-03-11T07:52:22.037Z,False,,zkochan,,mid,211
+pg-pool,3.13.0,2026-03-04T23:48:46.754Z,False,,brianc,lerna/3.22.1/node@v22.16.0+arm64 (darwin),mid,97
+@types/http-cache-semantics,4.2.0,2026-01-27T09:06:17.247Z,False,,types,,mid,33
+@inquirer/select,5.1.4,2026-04-19T16:52:11.134Z,False,,sboudrias,lerna/5.0.0/node@v24.14.0+arm64 (darwin),mid,128
+@discoveryjs/json-ext,1.0.0,2026-03-09T21:26:31.407Z,False,,lahmatiy,11.9.0,mid,35
+@csstools/css-tokenizer,4.0.0,2026-01-14T07:14:15.368Z,False,,romainmenke,11.6.2,mid,30
+@sentry/utils,8.55.2,2026-04-28T07:35:28.174Z,False,,sentry-bot,10.9.7,mid,117
+@smithy/util-body-length-browser,4.3.0,2026-05-08T14:46:28.231Z,False,,smithy-team,10.8.2,mid,402
+@paralleldrive/cuid2,3.3.0,2026-01-25T21:11:49.489Z,False,,ericelliott,11.6.2,mid,94
+real-require,1.0.0,2026-03-14T17:28:29.902Z,False,,jsumners,11.9.0,mid,12
+@storybook/core,8.6.16,2026-02-17T13:03:28.444Z,False,,GitHub Actions,,mid,280
+@storybook/addon-toolbars,7.6.24,2026-03-06T11:09:28.412Z,False,,GitHub Actions,,mid,213
+@firebase/functions,0.13.3-20260317152345,2026-03-17T15:33:50.053Z,False,,google-wombot,10.9.0,mid,31
+@tiptap/extension-bullet-list,2.27.2,2026-01-07T15:21:13.736Z,False,,_bdbch,10.8.2,mid,160
+@azure/core-rest-pipeline,1.22.3-alpha.20260107.1,2026-01-07T19:19:45.890Z,False,,microsoft1es,,mid,363
+vscode-languageserver-protocol,3.17.6-next.16,2025-12-18T14:30:27.932Z,False,,microsoft1es,,mid,365
+@aws-sdk/util-format-url,3.972.6,2026-02-26T20:06:00.491Z,False,,aws-sdk-bot,10.8.2,mid,41
+@aws-sdk/credential-provider-cognito-identity,3.967.0,2026-01-13T00:14:18.195Z,False,,aws-sdk-bot,10.8.2,mid,62
+is-subdir,2.0.0,2026-03-11T07:52:34.927Z,False,,zkochan,,mid,32
+@azure/logger,1.3.1-alpha.20260129.2,2026-01-29T19:15:22.958Z,False,,microsoft1es,,mid,140
+@graphql-codegen/schema-ast,5.0.2-alpha-20260409175142-915647b671c5e5d6eb762e25b2bd6c3f4b6a27f1,2026-04-09T17:52:06.822Z,False,,theguild-bot,10.9.7,mid,171
+ordered-binary,1.6.1,2026-01-02T23:57:56.415Z,False,,kriszyp,10.9.2,mid,25
+@inquirer/type,4.0.3,2026-01-11T18:34:09.777Z,False,,sboudrias,lerna/4.10.3/node@v25.2.1+arm64 (darwin),mid,32
+ai,6.0.8,2026-01-05T19:21:55.364Z,False,,vercel-release-bot,10.9.4,mid,185
+@jest/test-sequencer,30.4.0,2026-05-07T18:42:02.007Z,False,,simenb,lerna/4.3.0/node@v26.0.0+arm64 (darwin),mid,110
+@smithy/eventstream-codec,4.2.7,2025-12-18T18:41:09.012Z,False,,smithy-team,10.8.2,mid,11
+@formatjs/intl,4.0.2,2025-12-17T04:27:30.439Z,False,,longlho,11.6.2,mid,104
+@aws-sdk/util-locate-window,3.957.0,2025-12-22T20:07:00.295Z,False,,aws-sdk-bot,11.6.2,mid,11
+@phenomnomnominal/tsquery,6.2.0,2026-04-06T22:59:03.429Z,False,,phenomnomnominal,10.8.2,mid,227
+@storybook/core-common,0.0.0-pr-34011-sha-c45b0f3f,2026-03-06T09:58:30.794Z,False,,GitHub Actions,,mid,236
+@smithy/smithy-client,4.12.2,2026-03-04T23:13:40.686Z,False,,smithy-team,10.8.2,mid,430
+@firebase/messaging,0.12.23-canary.bc2b2cdea,2025-12-12T19:27:24.021Z,False,,google-wombot,10.9.0,mid,37
+prosemirror-menu,1.3.0,2026-02-17T07:22:58.139Z,False,,marijn,11.9.0,mid,96
+citty,0.2.0,2026-01-20T11:49:43.592Z,False,,pi0,11.6.2,mid,84
+@aws-sdk/util-endpoints,3.982.0,2026-02-03T20:02:59.833Z,False,,aws-sdk-bot,10.8.2,mid,424
+@radix-ui/react-slider,1.3.7-rc.1766004502650,2025-12-17T20:48:43.077Z,False,,chancestrickland,10.9.4,mid,413
+foreground-child,4.0.0,2026-02-05T20:16:41.267Z,False,,isaacs,11.9.0,mid,202
+@azure/abort-controller,2.1.3-alpha.20260109.1,2026-01-09T19:16:15.494Z,False,,microsoft1es,,mid,269
+@babel/helper-remap-async-to-generator,8.0.0-rc.3,2026-03-16T20:25:49.866Z,False,,GitHub Actions,,mid,23
+@babel/plugin-transform-exponentiation-operator,8.0.0-rc.2,2026-02-15T20:23:26.008Z,False,,GitHub Actions,,mid,163
+@commitlint/load,20.3.1,2026-01-08T15:16:22.178Z,False,,escapedcat,lerna/8.2.4/node@v20.19.5+arm64 (darwin),mid,185
+@storybook/core-server,0.0.0-pr-33859-sha-2907ae70,2026-02-17T15:17:42.375Z,False,,GitHub Actions,,mid,117
+@babel/plugin-transform-new-target,8.0.0-rc.4,2026-04-29T21:41:21.915Z,False,,GitHub Actions,,mid,51
+@azure-rest/core-client,2.5.2-alpha.20251231.1,2025-12-31T19:06:48.605Z,False,,microsoft1es,,mid,48
+@graphql-tools/wrap,11.1.10-alpha-9b6aab968b2c340f6b0107305e1ee089c74566e2,2026-03-13T01:14:45.825Z,False,,theguild-bot,,mid,129
+@microsoft/api-extractor-model,7.33.0,2026-02-19T00:06:08.417Z,False,,odspnpm,10.9.4,mid,80
+@smithy/middleware-stack,4.2.7,2025-12-18T18:41:14.830Z,False,,smithy-team,10.8.2,mid,405
+node-pty,1.2.0-beta.9,2026-01-28T19:35:04.124Z,False,,microsoft1es,,mid,454
+array-back,6.2.3,2026-03-19T16:07:58.911Z,False,,75lb,11.6.2,mid,141
+@storybook/channels,8.6.18,2026-03-06T11:06:37.616Z,False,,GitHub Actions,,mid,190
+postcss-logical,9.0.0,2026-01-14T07:23:13.588Z,False,,romainmenke,11.6.2,mid,109
+@react-stately/tree,3.0.0-nightly-6073f1c76-260220,2026-02-20T09:10:08.254Z,False,,devongovett,,mid,89
+@tiptap/extension-bubble-menu,2.27.2,2026-01-07T15:21:13.425Z,False,,_bdbch,10.8.2,mid,119
+@storybook/test,0.0.0-pr-34009-sha-c90626e7,2026-03-04T15:14:05.613Z,False,,GitHub Actions,,mid,187
+@sentry/types,10.47.0,2026-03-31T11:48:20.100Z,False,,sentry-bot,10.9.7,mid,290
+comment-parser,1.4.3,2026-01-16T23:15:25.929Z,False,,yavorskiys,10.2.4,mid,298
+@angular-devkit/schematics-cli,20.3.21,2026-03-19T13:36:44.057Z,False,,google-wombot,11.6.2,mid,267
+@types/eslint-scope,9.1.0,2026-02-21T05:22:47.769Z,False,,types,,mid,94
+@azure/msal-common,16.0.3,2026-01-28T19:11:42.895Z,False,,azuread,10.8.2,mid,37
+detective-scss,5.0.2,2026-04-25T16:48:38.809Z,False,,xhmikosr,11.12.1,mid,19
+@aws-sdk/client-bedrock-runtime,3.1018.0,2026-03-26T19:04:04.029Z,False,,aws-sdk-bot,10.8.2,mid,59
+prosemirror-changeset,2.4.0,2026-02-14T10:55:48.173Z,False,,marijn,11.9.0,mid,13
+@wordpress/block-editor,15.13.1,2026-02-23T10:57:47.679Z,False,,gutenbergplugin,lerna/8.1.9/node@v20.20.0+x64 (linux),mid,85
+@parcel/transformer-js,2.16.4,2026-02-02T03:53:12.121Z,False,,devongovett,lerna/6.6.2/node@v20.20.0+x64 (linux),mid,45
+path-scurry,2.0.2,2026-02-19T17:20:00.211Z,False,,isaacs,11.10.0,mid,83
+@storybook/addon-outline,7.6.21,2025-12-17T13:41:34.261Z,False,,storybook-bot,,mid,124
+@lexical/utils,0.42.1-nightly.20260325.0,2026-03-25T03:31:42.183Z,False,,zurfyx,11.9.0,mid,147
+@react-native/js-polyfills,0.85.0-nightly-20260301-d6042d216,2026-03-01T03:51:59.016Z,False,,react-native-bot,10.9.2,mid,11
+embla-carousel,9.0.0-rc02,2026-04-10T12:47:25.184Z,False,,davidjerleke,,mid,30
+css-prefers-color-scheme,11.0.0,2026-01-14T07:21:21.672Z,False,,romainmenke,11.6.2,mid,76
+create-jest,30.4.2,2026-05-09T00:31:16.760Z,False,,simenb,lerna/4.3.0/node@v26.1.0+arm64 (darwin),mid,17
+@smithy/hash-node,4.3.0,2026-05-08T14:46:21.686Z,False,,smithy-team,10.8.2,mid,404
+spawn-wrap,3.0.0,2026-02-22T21:03:26.969Z,False,,bcoe,10.8.2,mid,87
+exit-hook,5.1.0,2026-02-04T04:45:55.456Z,False,,sindresorhus,11.7.0,mid,358
+@exodus/bytes,1.0.0-rc.10,2025-12-15T13:07:47.298Z,False,,chalker,10.9.2,tail,0
+@sentry-internal/feedback,10.47.0,2026-03-31T11:48:30.850Z,False,,sentry-bot,10.9.7,tail,1
+@commitlint/config-validator,20.4.0,2026-01-30T10:15:43.661Z,False,,escapedcat,lerna/8.2.4/node@v20.19.5+arm64 (darwin),tail,4
+@nocobase/plugin-workflow-dynamic-calculation,2.0.0-beta.11,2026-01-15T06:50:57.701Z,False,,chenos,lerna/4.0.0/node@v20.19.6+x64 (linux),tail,0
+@codingame/monaco-vscode-api,24.1.1,2025-12-18T18:28:19.212Z,False,,samuel.olivier,10.9.3,tail,3
+@csstools/postcss-relative-color-syntax,4.0.2,2026-02-21T15:08:57.042Z,False,,romainmenke,11.6.2,tail,2
+@pandacss/preset-panda,1.11.0,2026-05-03T07:32:01.951Z,False,,segunadebayo,10.9.7,tail,8
+@datadog/browser-rum-core,6.25.1,2025-12-19T07:14:47.532Z,False,,datadog,lerna/9.0.3/node@v24.11.1+arm64 (darwin),tail,10
+alien-signals,3.1.2,2025-12-24T11:37:32.348Z,False,,johnsoncodehk,11.6.2,tail,0
+fast-xml-builder,1.1.5,2026-04-17T07:44:20.876Z,False,,amitgupta,11.11.0,tail,0
+@csstools/postcss-unset-value,5.0.0,2026-01-14T07:25:51.384Z,False,,romainmenke,11.6.2,tail,4
+@hyperjump/json-pointer,1.1.2,2026-03-05T18:20:44.557Z,False,,jason.desrosiers,11.8.0,tail,6
+bare-url,2.4.0,2026-03-19T10:04:17.801Z,False,,kasperisager,11.10.1,tail,1
+thingies,2.6.0,2026-03-20T11:02:52.905Z,False,,streamich,10.8.2,tail,8
+qified,0.8.0,2026-02-12T20:19:47.730Z,False,,jaredwray,11.6.2,tail,0
+@jimp/plugin-fisheye,1.6.1,2026-04-07T17:54:48.456Z,False,,alisowski,lerna/9.0.7/node@v24.12.0+arm64 (darwin),tail,3
+@babel/plugin-bugfix-safari-id-destructuring-collision-in-function-expression,8.0.0-rc.1,2026-01-31T17:48:21.195Z,False,,GitHub Actions,,tail,7
+@csstools/postcss-color-function,5.0.2,2026-02-21T15:07:49.291Z,False,,romainmenke,11.6.2,tail,6
+@graphql-tools/executor-graphql-ws,3.1.4-alpha-1d2d1089c944617a01e28c874a6d363b571d28f6,2026-01-07T22:32:51.107Z,False,,theguild-bot,,tail,4
+@opencode-ai/plugin,0.0.0-beta-202604230134,2026-04-23T01:58:02.904Z,False,,GitHub Actions,11.6.2,tail,0
+@csstools/postcss-color-mix-function,4.0.0,2026-01-14T07:36:16.741Z,False,,romainmenke,11.6.2,tail,2
+@aws-sdk/eventstream-handler-node,3.972.13,2026-04-07T19:04:45.303Z,False,,aws-sdk-bot,10.8.2,tail,6
+@isaacs/cliui,9.0.0,2026-02-05T18:40:56.258Z,False,,isaacs,11.8.0,tail,0
+lightningcss-linux-arm64-gnu,1.31.0,2026-01-20T05:27:26.075Z,False,,devongovett,10.8.2,tail,2
+@csstools/postcss-oklab-function,5.0.1,2026-01-25T13:05:42.539Z,False,,romainmenke,11.6.2,tail,9
+@metamask/polling-controller,16.0.1,2026-01-13T15:49:01.279Z,False,,metamaskbot,,tail,5
+lightningcss-darwin-x64,1.31.0,2026-01-20T05:27:18.829Z,False,,devongovett,10.8.2,tail,2
+@internationalized/string,3.0.0-nightly-ac718c6cd-260402,2026-04-02T09:07:40.303Z,False,,devongovett,,tail,10
+@zenstackhq/server,3.5.0-beta.5,2026-03-24T16:47:17.221Z,False,,ymc9,10.9.4,tail,1
+@jimp/plugin-blur,1.6.1,2026-04-07T17:54:49.922Z,False,,alisowski,lerna/9.0.7/node@v24.12.0+arm64 (darwin),tail,5
+@injectivelabs/wallet-base,1.17.2-alpha.4,2025-12-10T08:26:30.551Z,False,,thomasralee,11.4.2,tail,0
+@oxfmt/binding-linux-x64-gnu,0.0.0,2026-02-02T09:46:29.953Z,False,,boshen,11.6.2,tail,0
+@babel/plugin-transform-unicode-property-regex,8.0.0-rc.3,2026-03-16T20:25:43.313Z,False,,GitHub Actions,,tail,3
+@rc-component/collapse,1.2.0,2026-01-06T15:57:07.676Z,False,,zombiej,11.7.0,tail,0
+@smithy/util-buffer-from,4.3.0,2026-05-08T14:46:28.447Z,False,,smithy-team,10.8.2,tail,6
+@pnpm/npm-conf,3.0.2,2025-12-30T15:57:33.442Z,False,,zkochan,11.6.2,tail,9
+@expo/devtools,56.0.0-canary-20260506-1b0052a,2026-05-06T16:15:46.189Z,False,,alanhughes,10.9.7,tail,0
+@expo/apple-utils,2.1.18,2026-04-09T15:19:55.868Z,False,,evanbacon,11.6.2,tail,8
+@stdlib/math-base-special-kernel-cos,0.2.4,2026-02-04T15:43:48.798Z,False,,stdlib-bot,10.8.2,tail,6
+ts-api-utils,2.1.1,2025-12-27T04:55:48.663Z,False,,joshuakgoldberg,11.4.2,tail,3
+@keyv/serialize,6.0.0-alpha.1,2026-02-26T01:42:43.821Z,False,,jaredwray,11.8.0,tail,0
+@redis/time-series,5.12.0,2026-04-14T10:33:40.434Z,False,,dmaier-redislabs,10.9.7,tail,5
+lightningcss-win32-arm64-msvc,1.32.0,2026-03-09T04:23:30.176Z,False,,devongovett,10.8.2,tail,0
+@swc/types,0.1.26,2026-03-24T03:20:13.592Z,False,,kdy1,11.8.0,tail,9
+@tanstack/start-server-core,1.167.11,2026-04-11T01:15:09.776Z,False,,tannerlinsley,10.8.3,tail,0
+@powerhousedao/registry,6.0.0-dev.73,2026-03-10T08:03:11.222Z,False,,froid,11.9.0,tail,0
+@jimp/plugin-displace,1.6.1,2026-04-07T17:54:44.710Z,False,,alisowski,lerna/9.0.7/node@v24.12.0+arm64 (darwin),tail,3
+@volr/sdk-core,0.2.2,2025-12-29T08:23:32.218Z,False,,dannyatvolr,10.8.2,tail,0
+@graphql-hive/signal,2.1.0-alpha-6f928bf99482eaf38ad5bb93e59c160a6da93772,2026-02-23T13:42:28.133Z,False,,theguild-bot,,tail,0
+shadcn,4.0.7-beta.1,2026-03-14T12:16:31.539Z,False,,shadcn,10.9.2,tail,0
+@pandacss/preset-base,1.9.1,2026-03-22T19:11:49.960Z,False,,segunadebayo,10.9.4,tail,5
+@parcel/packager-js,2.0.0-canary.1875,2026-02-03T00:54:40.805Z,False,,devongovett,lerna/6.6.2/node@v20.20.0+x64 (linux),tail,6
+@csstools/postcss-trigonometric-functions,5.0.0,2026-01-14T07:34:54.548Z,False,,romainmenke,11.6.2,tail,5
+@workflow/rollup,4.0.0-beta.15,2026-02-19T23:20:08.713Z,False,,vercel-release-bot,10.9.4,tail,0
+@capacitor-community/screen-brightness,8.0.0,2025-12-26T11:44:11.971Z,False,,jcesarmobile,10.9.3,tail,1
+@babel/plugin-transform-dynamic-import,8.0.0-rc.1,2026-01-31T17:48:33.483Z,False,,GitHub Actions,,tail,5
+@prisma/studio-core,0.0.0-dev.202512311439,2025-12-31T14:40:40.166Z,False,,GitHub Actions,11.7.0,tail,0
+@backstage/frontend-defaults,0.0.0-nightly-20260424031925,2026-04-24T03:37:46.874Z,False,,patriko,,tail,0
+@digital-ai/devops-page-object-release,0.0.0-snapshot-20260421064856,2026-04-21T06:49:02.785Z,False,,GitHub Actions,11.12.1,tail,0
+@statsig/js-user-persisted-storage,3.31.1,2026-01-08T23:39:02.089Z,False,,kat_gao_030,10.8.2,tail,0
+@dicebear/open-peeps,6.1.4,2026-03-18T21:01:03.211Z,False,,floriankoerner,lerna/8.1.3/node@v24.13.0+arm64 (darwin),tail,6
+@azure/storage-common,12.2.0-alpha.20260101.1,2026-01-02T01:22:09.167Z,False,,microsoft1es,,tail,0
+@smithy/uuid,1.1.1,2026-02-23T17:41:00.633Z,False,,smithy-team,10.8.2,tail,0
+@smithy/eventstream-serde-universal,4.2.7,2025-12-18T18:41:09.102Z,False,,smithy-team,10.8.2,tail,3
+@base44/sdk,0.8.8,2025-12-31T12:44:23.696Z,False,,GitHub Actions,11.7.0,tail,0
+lightningcss-wasm,1.32.0,2026-03-09T04:23:36.219Z,False,,devongovett,10.8.2,tail,2
+@anthropic-ai/claude-agent-sdk,0.2.61,2026-02-26T22:08:11.781Z,False,,wolffiex,10.8.2,tail,0
+@smithy/core,3.20.7,2026-01-17T02:42:29.075Z,False,,smithy-team,10.8.2,tail,1
+react-native-wallet-manager,2.1.0,2026-03-03T11:53:35.523Z,False,,euset,11.3.0,tail,2
+@typescript/native-preview,7.0.0-dev.20260307.1,2026-03-07T07:55:13.920Z,False,,typescript-deploys,10.8.2,tail,0
+bare-stream,2.11.0,2026-03-25T12:57:36.248Z,False,,kasperisager,11.10.1,tail,0
+@aws-sdk/middleware-expect-continue,3.972.8,2026-03-13T19:01:56.581Z,False,,aws-sdk-bot,10.8.2,tail,7
+@tanstack/start-plugin-core,1.167.20,2026-04-11T01:15:15.962Z,False,,tannerlinsley,10.8.3,tail,0
+safe-regex2,5.1.0,2026-03-12T16:55:56.170Z,False,,fdawgs,11.8.0,tail,6
+@vendure/telemetry-plugin,3.5.7,2026-04-13T09:23:07.656Z,False,,michaelbromley,10.9.3,tail,0
+motion-utils,12.27.2,2026-01-20T09:50:45.969Z,False,,popmotion,lerna/4.0.0/node@v22.14.0+arm64 (darwin),tail,0
+@expo/code-signing-certificates,0.0.6,2026-01-06T17:04:54.340Z,False,,wschurman,10.9.0,tail,7
+node-exports-info,1.6.0,2026-01-28T23:03:12.539Z,False,,ljharb,11.7.0,tail,1
+@storybook/react-dom-shim,0.0.0-pr-34333-sha-8972daa1,2026-03-30T09:33:49.306Z,False,,GitHub Actions,,tail,2
+@aws-sdk/middleware-sdk-sqs,3.972.6,2026-02-06T20:04:10.002Z,False,,aws-sdk-bot,10.8.2,tail,3
+types-registry,0.1.766,2026-04-19T00:48:52.127Z,False,,types,,tail,3
+node-opcua-server,2.160.0,2026-01-10T20:26:16.741Z,False,,erossignon,lerna/9.0.3/node@v20.19.6+x64 (linux),tail,8
+@zendeskgarden/react-tables,9.15.4,2026-04-28T05:07:52.220Z,False,,zendesk-garden,lerna/8.2.4/node@v24.14.1+x64 (linux),tail,6
+baseline-browser-mapping,2.10.0-beta,2026-02-19T11:51:08.712Z,False,,tonypconway,11.6.2,tail,0
+@smithy/chunked-blob-reader,5.2.1,2026-02-23T17:40:46.815Z,False,,smithy-team,10.8.2,tail,3
+@abp/font-awesome,10.4.0-rc.2,2026-05-07T08:00:59.680Z,False,,volo,10.8.2,tail,6
+@parcel/watcher-linux-x64-glibc,2.5.4,2026-01-11T19:15:05.792Z,False,,devongovett,10.8.2,tail,0
+@parcel/reporter-dev-server,2.0.0-canary.1875,2026-02-03T00:54:45.626Z,False,,devongovett,lerna/6.6.2/node@v20.20.0+x64 (linux),tail,10
+crossws,0.4.2,2026-01-19T23:19:21.470Z,False,,pi0,11.6.2,tail,0
+@storybook/csf-plugin,0.0.0-pr-34003-sha-5f27e882,2026-03-04T10:31:38.202Z,False,,GitHub Actions,,tail,5
+@parcel/packager-raw,2.16.4,2026-02-02T03:53:01.228Z,False,,devongovett,lerna/6.6.2/node@v20.20.0+x64 (linux),tail,6
+cacheable,2.3.3,2026-02-27T16:39:28.552Z,False,,jaredwray,11.6.2,tail,4
+@redocly/config,0.43.0-custom.1,2026-02-25T07:22:34.083Z,False,,romanhotsiy,11.8.0,tail,0
+@inquirer/external-editor,2.0.4,2026-03-15T20:48:40.282Z,False,,sboudrias,lerna/4.11.4/node@v24.14.0+arm64 (darwin),tail,0
+@workflow/nuxt,4.0.1-beta.40,2026-02-13T04:11:43.594Z,False,,vercel-release-bot,10.9.4,tail,0
+@firebase/app-check,0.11.0-canary.58ddd6e54,2026-01-16T15:49:15.262Z,False,,google-wombot,10.9.0,tail,5
+@aws-sdk/middleware-flexible-checksums,3.974.12,2026-04-22T19:04:51.055Z,False,,aws-sdk-bot,11.7.0,tail,4
+rou3,0.7.11,2025-12-10T10:29:54.984Z,False,,pi0,11.6.2,tail,0
+oniguruma-to-es,4.3.6,2026-04-19T13:08:33.973Z,False,,slevithan,11.11.0,tail,0
+@tsparticles/shape-star,4.0.0-alpha.0,2026-01-07T17:20:57.966Z,False,,matteobruni,lerna/9.0.3/node@v24.12.0+arm64 (darwin),tail,3

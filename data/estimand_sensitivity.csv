@@ -1,0 +1,49 @@
+block,window,tier,estimand,label,value_pct,n_versions,n_packages,ci_low_pp,ci_high_pp,boot_B,boot_valid,note
+level,full,top,1_version_weighted,version-weighted rate (paper estimand),23.4618,31400,550,,,,,
+level,full,top,2_equal_package,equal-package mean of per-package rates,30.6507,31400,550,,,,,
+level,full,top,3_any_attested_share,any-attested package share,35.0909,31400,550,,,,,
+level,full,top,4_stable_only,stable-only version-weighted rate,23.3875,9907,550,,,,,
+level,full,top,5_top_excl_top5rows,top tier excl. 5 highest-volume packages,42.2228,15809,545,,,,,"excluded: @opencode-ai/sdk (6,888 rows); @opencode-ai/plugin (6,863 rows); ai (672 rows); prisma (658 rows); @ckeditor/ckeditor5-cloud-services (510 rows)"
+level,full,mid,1_version_weighted,version-weighted rate (paper estimand),51.3779,48696,809,,,,,
+level,full,mid,2_equal_package,equal-package mean of per-package rates,38.6886,48696,809,,,,,
+level,full,mid,3_any_attested_share,any-attested package share,45.4883,48696,809,,,,,
+level,full,mid,4_stable_only,stable-only version-weighted rate,56.3167,13314,809,,,,,
+level,full,tail,1_version_weighted,version-weighted rate (paper estimand),36.6864,17576,226,,,,,
+level,full,tail,2_equal_package,equal-package mean of per-package rates,34.5823,17576,226,,,,,
+level,full,tail,3_any_attested_share,any-attested package share,44.6903,17576,226,,,,,
+level,full,tail,4_stable_only,stable-only version-weighted rate,49.2431,5351,226,,,,,
+level,pre_8wk,top,1_version_weighted,version-weighted rate (paper estimand),23.1088,6755,341,,,,,
+level,pre_8wk,top,2_equal_package,equal-package mean of per-package rates,30.678,6755,341,,,,,
+level,pre_8wk,top,3_any_attested_share,any-attested package share,32.2581,6755,341,,,,,
+level,pre_8wk,top,4_stable_only,stable-only version-weighted rate,25.4221,2132,341,,,,,
+level,pre_8wk,top,5_top_excl_top5rows,top tier excl. 5 highest-volume packages,39.4165,3496,336,,,,,"excluded: @opencode-ai/sdk (6,888 rows); @opencode-ai/plugin (6,863 rows); ai (672 rows); prisma (658 rows); @ckeditor/ckeditor5-cloud-services (510 rows)"
+level,pre_8wk,mid,1_version_weighted,version-weighted rate (paper estimand),52.097,9895,546,,,,,
+level,pre_8wk,mid,2_equal_package,equal-package mean of per-package rates,44.5979,9895,546,,,,,
+level,pre_8wk,mid,3_any_attested_share,any-attested package share,47.9853,9895,546,,,,,
+level,pre_8wk,mid,4_stable_only,stable-only version-weighted rate,60.3506,2681,546,,,,,
+level,pre_8wk,tail,1_version_weighted,version-weighted rate (paper estimand),34.0206,3977,158,,,,,
+level,pre_8wk,tail,2_equal_package,equal-package mean of per-package rates,31.87,3977,158,,,,,
+level,pre_8wk,tail,3_any_attested_share,any-attested package share,32.9114,3977,158,,,,,
+level,pre_8wk,tail,4_stable_only,stable-only version-weighted rate,43.8628,1108,158,,,,,
+level,post_8wk,top,1_version_weighted,version-weighted rate (paper estimand),19.0564,6486,298,,,,,
+level,post_8wk,top,2_equal_package,equal-package mean of per-package rates,32.1648,6486,298,,,,,
+level,post_8wk,top,3_any_attested_share,any-attested package share,33.2215,6486,298,,,,,
+level,post_8wk,top,4_stable_only,stable-only version-weighted rate,19.3617,1880,298,,,,,
+level,post_8wk,top,5_top_excl_top5rows,top tier excl. 5 highest-volume packages,39.6957,2892,293,,,,,"excluded: @opencode-ai/sdk (6,888 rows); @opencode-ai/plugin (6,863 rows); ai (672 rows); prisma (658 rows); @ckeditor/ckeditor5-cloud-services (510 rows)"
+level,post_8wk,mid,1_version_weighted,version-weighted rate (paper estimand),52.2791,8512,554,,,,,
+level,post_8wk,mid,2_equal_package,equal-package mean of per-package rates,49.3396,8512,554,,,,,
+level,post_8wk,mid,3_any_attested_share,any-attested package share,50.722,8512,554,,,,,
+level,post_8wk,mid,4_stable_only,stable-only version-weighted rate,65.1797,2421,554,,,,,
+level,post_8wk,tail,1_version_weighted,version-weighted rate (paper estimand),37.2261,3331,168,,,,,
+level,post_8wk,tail,2_equal_package,equal-package mean of per-package rates,38.7918,3331,168,,,,,
+level,post_8wk,tail,3_any_attested_share,any-attested package share,41.6667,3331,168,,,,,
+level,post_8wk,tail,4_stable_only,stable-only version-weighted rate,58.04,1051,168,,,,,
+contrast_8wk,post_minus_pre,top,1_version_weighted,version-weighted rate (paper estimand),-4.0524,13241,402,-8.4323,1.5833,2000,2000,"package-cluster bootstrap percentile CI, seed 42"
+contrast_8wk,post_minus_pre,top,2_equal_package,equal-package mean of per-package rates,1.4868,13241,402,-2.5201,5.5837,2000,2000,"package-cluster bootstrap percentile CI, seed 42"
+contrast_8wk,post_minus_pre,top,4_stable_only,stable-only version-weighted rate,-6.0604,13241,402,-10.7111,-1.7091,2000,2000,"package-cluster bootstrap percentile CI, seed 42"
+contrast_8wk,post_minus_pre,mid,1_version_weighted,version-weighted rate (paper estimand),0.1821,18407,656,-6.2825,6.9674,2000,2000,"package-cluster bootstrap percentile CI, seed 42"
+contrast_8wk,post_minus_pre,mid,2_equal_package,equal-package mean of per-package rates,4.7417,18407,656,1.5348,7.9422,2000,2000,"package-cluster bootstrap percentile CI, seed 42"
+contrast_8wk,post_minus_pre,mid,4_stable_only,stable-only version-weighted rate,4.8291,18407,656,0.5244,9.0169,2000,2000,"package-cluster bootstrap percentile CI, seed 42"
+contrast_8wk,post_minus_pre,tail,1_version_weighted,version-weighted rate (paper estimand),3.2054,7308,187,-5.2811,11.8213,2000,2000,"package-cluster bootstrap percentile CI, seed 42"
+contrast_8wk,post_minus_pre,tail,2_equal_package,equal-package mean of per-package rates,6.9218,7308,187,2.215,12.0196,2000,2000,"package-cluster bootstrap percentile CI, seed 42"
+contrast_8wk,post_minus_pre,tail,4_stable_only,stable-only version-weighted rate,14.1771,7308,187,8.3976,18.7303,2000,2000,"package-cluster bootstrap percentile CI, seed 42"
