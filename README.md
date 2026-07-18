@@ -4,7 +4,7 @@
 
 Replication package for *"Measuring npm Provenance Adoption
 Around the 2025 Classic-Token Revocation: Coincidence Is Not
-Identification"* (IEEE TSE submission).
+Identification"*.
 
 ## What this artifact reproduces
 
@@ -25,9 +25,8 @@ paper's numbers (this is a disclosed limitation, paper Section 12). The
 analysis therefore ships the **frozen derived data** in `data/`, which the
 analysis scripts consume directly. The raw API pulls (~2.6 GB of packument
 JSON and workflow YAML) are **not** included here; they are access-gated
-(they carry maintainer contact fields) and available to editors/reviewers
-through the submission system. `SHA256_MANIFEST.txt` identifies the exact
-snapshot analyzed.
+(they carry maintainer contact fields) and available to researchers on
+request. `SHA256_MANIFEST.txt` identifies the exact snapshot analyzed.
 
 ## Layout
 
