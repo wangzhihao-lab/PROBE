@@ -2,9 +2,9 @@
 
 **Provenance Revocation Observational Boundary Evaluation**
 
-Replication package for *"Coincidence Is Not Identification: Measuring npm
-Provenance Adoption Around the 2025 Classic-Token Revocation Deadline"* (IEEE
-TSE submission).
+Replication package for *"Measuring npm Provenance Adoption
+Around the 2025 Classic-Token Revocation: Coincidence Is Not
+Identification"* (IEEE TSE submission).
 
 ## What this artifact reproduces
 
