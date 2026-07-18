@@ -265,6 +265,14 @@ def s4_perclass() -> pd.DataFrame:
 
 
 def main() -> int:
+    # --s4-only: recompute the per-class rater-agreement block (S4) alone.
+    # S4 reads only the frozen classification tables shipped with the public
+    # package; the full run additionally needs the access-gated raw slice
+    # (data/packuments_raw/) for the Cox blocks.
+    if "--s4-only" in sys.argv[1:]:
+        perclass = s4_perclass()
+        print(perclass.to_markdown(index=False))
+        return 0
     drift = s1_cox_tiebreak()
     s2 = s2_its_cluster_bootstrap()
     s3, cases = s3_s5_logistic()

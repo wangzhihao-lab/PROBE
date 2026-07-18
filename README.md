@@ -60,7 +60,13 @@ python scripts/50_rq2_design_weights.py    # RQ2 design-weighted distribution
 python scripts/07_compute_kappa.py         # post-adjudication concordance (kappa = 0.82)
 ```
 
-Note on reliability: `scripts/07` compares the two raters on the final, post-adjudication labels and prints the post-adjudication concordance (kappa = 0.8192, rounded to 0.82 in the paper). The paper's *primary* independent inter-rater estimate --- kappa = 0.8099 (rounded to 0.81), the two raters applying the shared *initial* rule --- is the `classification_v1_raw.csv` pairing, shipped here and also tabulated in `review9_rater_perclass.csv`; `scripts/53_review9_sensitivities.py` (block S4) recomputes it from those frozen tables.
+Note on reliability: `scripts/07` compares the two raters on the final, post-adjudication labels and prints the post-adjudication concordance (kappa = 0.8192, rounded to 0.82 in the paper). The paper's *primary* independent inter-rater estimate --- kappa = 0.8099 (rounded to 0.81), the two raters applying the shared *initial* rule --- is the
+`classification_v1_raw.csv` pairing, shipped here and also tabulated in
+`review9_rater_perclass.csv`; recompute it directly with
+`python scripts/53_review9_sensitivities.py --s4-only`, which reads only the
+frozen tables (the script's full run additionally needs the access-gated
+`data/packuments_raw/` slice for its Cox blocks and will not complete
+without it).
 
 **Access-gated path (needs the raw slice).** The RQ3 primary driver
 `scripts/52_rq3_sensitivity.py` rebuilds the incident Cox cohort and the
