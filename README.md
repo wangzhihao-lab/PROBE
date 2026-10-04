@@ -54,7 +54,7 @@ conda activate stage2c
 
 **Public path (frozen `data/` only — no raw pulls needed).** These scripts
 read the frozen derived tables shipped here and regenerate their outputs into
-`data/` (and a human-readable summary into `reports/`, created on demand):
+`data/` (and a human-readable summary into `reports/`, which ships empty):
 
 ```bash
 python scripts/46_placebo_cutoff_rank.py   # RQ1 ITS placebo rank (17/28)
@@ -111,18 +111,22 @@ python scripts/73_workflow_history_prewindow.py    # the same labels replayed at
 python scripts/74_workflow_history_pagination_check.py  # completeness check of the 72/73 commit listings (cached; offline re-run)
 ```
 
-Two offline follow-ups after an independent audit (no network; frozen tables only):
+Two offline follow-ups after an independent audit (no network). Script 75 runs
+from the frozen tables shipped here; script 76 re-reads the cached workflow
+YAML in `data/workflows_raw/`, which is part of the access-gated raw slice, so
+its frozen output (`tse_r1_provenance_flag_read.csv`) is shipped for checking the
+reported counts:
 
 ```bash
 python scripts/75_protocol_window_estimand_its.py   # equal-package / drop-top-5 ITS companions on the protocol window
-python scripts/76_provenance_flag_read.py          # explicit --provenance request in the cached publish workflows (Class A/B rows)
+python scripts/76_provenance_flag_read.py          # explicit --provenance request in the cached publish workflows (needs the raw slice)
 ```
 
 Scripts that need the access-gated raw slice (`data/packuments_raw/`,
 `data/workflows_raw/`) and therefore will not complete from this public
 package alone: `55` (construct audit over packuments), `62` and `66` (they
-rebuild the RQ3 frame through `scripts/52`), `64` (re-runs the publish
-detector over cached workflows), and the extended-window runs of `47`/`52`
+rebuild the RQ3 frame through `scripts/52`), `64` and `76` (they re-read the
+cached workflows), and the extended-window runs of `47`/`52`
 (`--origin 2024-01-01 --versions-csv versions_extended.csv`). Their outputs
 are shipped frozen (`*_tse_r1_long.csv`, `tse_r1_class_c_audit.csv`,
 `tse_r1_sampling_flow.csv`, `tse_r1_or_mechanism.csv`). `68` and `69`
