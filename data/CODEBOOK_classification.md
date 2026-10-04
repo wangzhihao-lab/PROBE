@@ -39,7 +39,8 @@ The authoritative construct definitions are the paper's Table 2 and
 Section 4.3; where a `reason` string and the paper disagree, the paper's
 final language governs and this codebook is the bridge.
 
-Created 2026-07-16 during internal review. The alternative —
+Created 2026-07-16 during pre-submission review (external round 10, item:
+released `reason` strings vs final construct language). The alternative —
 regenerating the trace strings under the final wording — would be a
 records change to a frozen adjudicated dataset and was deliberately not
 taken without an explicit records decision.

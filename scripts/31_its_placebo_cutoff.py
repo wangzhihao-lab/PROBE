@@ -1,3 +1,21 @@
+"""
+Task 5 Step 5.7 (Round 1 revision) — ITS placebo cutoff for top-tier.
+
+PI Round 1 #6 mandate: add one robustness check for the top-tier ITS drop.
+This script repeats the ITS segmented regression on the top-tier weekly rate
+using PLACEBO cutoffs (no real policy event):
+  - 2025-10-06 (9 weeks before Dec-9)
+  - 2026-02-23 (10 weeks after Dec-9)
+If the placebo β2 is statistically distinguishable from zero at similar
+magnitude as the Dec-9 estimate, the original top-tier drop is NOT specific
+to the deadline.
+
+Output:
+  data/its_placebo_results.csv
+  reports/task_5_its_placebo.md
+
+Run: conda run --no-capture-output -n stage2c python scripts/31_its_placebo_cutoff.py
+"""
 from __future__ import annotations
 
 import csv
@@ -17,9 +35,9 @@ OUT_CSV = DATA_DIR / "its_placebo_results.csv"
 OUT_MD = REPORTS_DIR / "task_5_its_placebo.md"
 
 CUTOFFS = {
-    "actual_2025-12-08": date(2025, 12, 8),
-    "placebo_2025-10-06": date(2025, 10, 6),
-    "placebo_2026-02-23": date(2026, 2, 23),
+    "actual_2025-12-08": date(2025, 12, 8),       # real deadline week
+    "placebo_2025-10-06": date(2025, 10, 6),      # 9 weeks BEFORE deadline
+    "placebo_2026-02-23": date(2026, 2, 23),      # 10 weeks AFTER deadline
 }
 
 
@@ -73,13 +91,13 @@ def main() -> int:
         w.writeheader()
         for r in out_rows:
             w.writerow({k: r[k] for k in fields})
-    print(f"\n Saved {OUT_CSV}", flush=True)
+    print(f"\n✓ Saved {OUT_CSV}", flush=True)
 
-
+    # Markdown
     lines = [
-        "# — ITS placebo cutoff test (top-tier robustness)",
+        "# Task 5 Step 5.7 — ITS placebo cutoff test (top-tier robustness)",
         "",
-        "review : test whether the top-tier ITS level drop is specific",
+        "PI Round 1 #6 mandate: test whether the top-tier ITS level drop is specific",
         "to the Dec-9 deadline by re-running the segmented regression with placebo",
         "cutoffs (no real policy event at those weeks).",
         "",
@@ -101,7 +119,7 @@ def main() -> int:
             f"{r['DW']:.2f} | {r['LB_min_p']:.3f} |"
         )
 
-
+    # Interpretation
     actual_b2 = out_rows[0]["β2_level_change"]
     placebo_b2s = [out_rows[1]["β2_level_change"], out_rows[2]["β2_level_change"]]
     lines += ["",
@@ -112,9 +130,9 @@ def main() -> int:
               "",
               "Verdict (qualitative):",
               ("- Placebo β2s are NOT statistically distinguishable from zero (CIs cross 0) "
-               " actual Dec-9 drop appears SPECIFIC to the deadline window."
+               "→ actual Dec-9 drop appears SPECIFIC to the deadline window."
                if all(out_rows[i]["β2_p"] > 0.05 for i in (1, 2))
-               else "- At least one placebo β2 is statistically significant  top-tier level drop is "
+               else "- At least one placebo β2 is statistically significant → top-tier level drop is "
                     "NOT uniquely specific to Dec-9; alternative deadline-shock explanations remain."),
               "",
               "Caveats:",
@@ -125,7 +143,7 @@ def main() -> int:
               "  magnitude) remains untested.",
               ]
     OUT_MD.write_text("\n".join(lines) + "\n")
-    print(f" Saved {OUT_MD}", flush=True)
+    print(f"✓ Saved {OUT_MD}", flush=True)
     return 0
 
 

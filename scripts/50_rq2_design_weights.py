@@ -1,3 +1,59 @@
+"""
+Pre-submission RQ2 check — design-weighted class shares under deps.dev tier,
+computed at the PACKAGE level with the ACTUAL package-first sampling design.
+
+Batch-8 repair (ANOMALY_REPORT.md, Anomaly 11): the earlier weight
+w = version_pool / sample_rows assumed version-level simple random sampling
+within each eco stratum. The real scripts/03 design is PACKAGE-FIRST: shuffle
+packages, round-robin one version at a time up to 3 per package, until the
+row target is met. The primary sampling unit is therefore the PACKAGE, not
+the version. Two facts make a clean package-level design possible:
+  * the A–F evidence state is a repository-level (collection-time) attribute,
+    CONSTANT across all sampled versions of a package (verified: 0 of 97
+    multi-version packages have a non-constant class);
+  * within each eco stratum the package selection is a census (top) or a
+    simple random sample of packages (mid, tail).
+
+So we collapse to one row per package (its constant class), and weight by the
+PACKAGE inclusion probability of its eco stratum,
+    w_h = P_h / n_selected_packages_h,
+where P_h = number of packages in the eco-stratum pool (packages with >=1
+post-deadline non-attested version) and n_selected = distinct sampled
+packages in that stratum. This is Horvitz-Thompson for the pool of
+NON-ATTESTED PACKAGES within the 3,000-package cohort — NOT a population
+prevalence for the npm ecosystem.
+
+Pool package counts (recomputed): top 131 (131 sampled -> census, w=1.00),
+mid 387 (150 -> w=2.58), tail 377 (100 -> w=3.77). The old version-based
+weights (11.13 / 66.75 / 212.46) over-weighted the tail ~19x relative to top;
+the correct package weights are 1 : 2.58 : 3.77.
+
+Steps:
+  1. Recompute eco-stratum PACKAGE pool sizes from data/versions.csv with the
+     exact scripts/03 filter (has_attestation=False AND published_at > Dec-9 EOD).
+  2. Collapse the sample to one row per package; assert class constancy.
+  3. Package design weight w_h = P_h / n_selected_packages_h.
+  4. Per deps.dev tier: unweighted and design-weighted % of the A–E package
+     pool (F excluded), with a stratified package bootstrap 95% CI.
+
+Inputs:
+  data/versions.csv                       (pool recomputation)
+  data/non_provenance_sample.csv          (500 rows, eco tier)
+  data/classification.csv                 (final labels A–F)
+  data/depsdev_dependents_2026_05_05.csv  (name -> dependents_count)
+
+Outputs:
+  data/rq2_design_weighted.csv            (long-form: dd_tier × class, counts + shares + CIs)
+  reports/presub_rq2_weights.md           (summary + limitations)
+
+Carried-forward caveats:
+  - Design-consistent for the NON-ATTESTED PACKAGE POOL within the cohort, not
+    an ecosystem prevalence. deps.dev tier is an outcome-side regrouping; eco
+    tier is the sampling stratum.
+  - deps.dev-missing packages are a separate "missing" tier (no bootstrap CI).
+
+Run: conda run --no-capture-output -n stage2c python scripts/50_rq2_design_weights.py
+"""
 from __future__ import annotations
 
 import csv
@@ -18,18 +74,19 @@ DEPSDEV_CSV = DATA_DIR / "depsdev_dependents_2026_05_05.csv"
 OUT_CSV = DATA_DIR / "rq2_design_weighted.csv"
 OUT_MD = REPORTS_DIR / "presub_rq2_weights.md"
 
-
+# Same deadline semantics as scripts/03 (post-deadline = strictly 2025-12-10+ UTC)
 DEADLINE = datetime(2025, 12, 9, 23, 59, 59, 999999, tzinfo=timezone.utc)
 ECO_TIERS = ("top", "mid", "tail")
 DD_TIERS = ("top", "mid", "tail", "missing")
 CLASSES_AE = ("A", "B", "C", "D", "E")
-EXPECTED_SAMPLE_N = {"top": 250, "mid": 150, "tail": 100}
+EXPECTED_SAMPLE_N = {"top": 250, "mid": 150, "tail": 100}  # scripts/03 design
 B_BOOT = 2000
 SEED = 42
 
 
 @dataclass(frozen=True)
 class Row:
+    """One sampled PACKAGE with its design weight and both tier assignments."""
     package: str
     eco_tier: str
     dd_tier: str
@@ -45,6 +102,7 @@ def parse_dt(s: str) -> Optional[datetime]:
 
 
 def dd_tier_of(dpc: int) -> str:
+    """deps.dev tier thresholds — identical to scripts/25."""
     if dpc > 500:
         return "top"
     if dpc > 10:
@@ -53,6 +111,8 @@ def dd_tier_of(dpc: int) -> str:
 
 
 def recompute_pool_sizes() -> tuple[dict[str, int], dict[str, int]]:
+    """Recompute eco-stratum PACKAGE and version pool sizes with the scripts/03
+    filter (has_attestation=False AND published_at > Dec-9 EOD UTC)."""
     pkg_pool: dict[str, set] = {t: set() for t in ECO_TIERS}
     ver_pool: Counter = Counter()
     with VERSIONS_CSV.open() as f:
@@ -68,6 +128,8 @@ def recompute_pool_sizes() -> tuple[dict[str, int], dict[str, int]]:
 
 
 def load_rows(weights: dict[str, float], dd_map: dict[str, int]) -> list[Row]:
+    """Collapse the sample to one row per PACKAGE (class is constant within a
+    package — asserted), joining classification labels and deps.dev tiers."""
     cls_map: dict[tuple[str, str], str] = {}
     with CLASS_CSV.open() as f:
         for r in csv.DictReader(f):
@@ -100,6 +162,8 @@ def load_rows(weights: dict[str, float], dd_map: dict[str, int]) -> list[Row]:
 
 
 def weighted_ae_shares(rows: list[Row]) -> dict[str, dict[str, float]]:
+    """Per dd tier: weighted class shares of the A–E pool (F excluded). NaN-free:
+    tiers with zero A–E weighted mass are omitted from the result."""
     mass: dict[str, Counter] = {t: Counter() for t in DD_TIERS}
     for r in rows:
         mass[r.dd_tier][r.cls] += r.weight
@@ -112,6 +176,7 @@ def weighted_ae_shares(rows: list[Row]) -> dict[str, dict[str, float]]:
 
 
 def percentile(sorted_vals: list[float], p: float) -> float:
+    """Linear-interpolation percentile (numpy default) on a pre-sorted list."""
     n = len(sorted_vals)
     if n == 1:
         return sorted_vals[0]
@@ -123,6 +188,9 @@ def percentile(sorted_vals: list[float], p: float) -> float:
 
 def bootstrap_cis(rows: list[Row]) -> tuple[dict[tuple[str, str], tuple[float, float]],
                                             dict[str, int]]:
+    """Stratified package-cluster bootstrap. Returns ((dd_tier, class) → (lo, hi) of
+    the weighted A–E share, for dd top/mid/tail) and per-tier count of replicates
+    with an empty A–E denominator (excluded from that tier's percentiles)."""
     by_stratum_pkg: dict[str, dict[str, list[Row]]] = {t: {} for t in ECO_TIERS}
     for r in rows:
         by_stratum_pkg[r.eco_tier].setdefault(r.package, []).append(r)
@@ -154,10 +222,10 @@ def bootstrap_cis(rows: list[Row]) -> tuple[dict[tuple[str, str], tuple[float, f
 
 
 def main() -> int:
-
+    # --- Step 1: PACKAGE pool sizes + package-first design weights ------------
     pkg_pool, ver_pool = recompute_pool_sizes()
     print("=== Eco-stratum PACKAGE pools (scripts/03 filter) ===", flush=True)
-
+    # Distinct sampled packages and version rows per eco stratum.
     sample_rows: Counter = Counter()
     sample_pkgs: dict[str, set] = {t: set() for t in ECO_TIERS}
     with SAMPLE_CSV.open() as f:
@@ -165,7 +233,7 @@ def main() -> int:
             sample_rows[r["tier"]] += 1
             sample_pkgs[r["tier"]].add(r["package"])
     if dict(sample_rows) != EXPECTED_SAMPLE_N:
-        print(f" sample rows {dict(sample_rows)} != design {EXPECTED_SAMPLE_N}", flush=True)
+        print(f"⚠ sample rows {dict(sample_rows)} != design {EXPECTED_SAMPLE_N}", flush=True)
         return 1
     selected = {t: len(sample_pkgs[t]) for t in ECO_TIERS}
     weights = {t: pkg_pool[t] / selected[t] for t in ECO_TIERS}
@@ -173,14 +241,14 @@ def main() -> int:
         census = " (census)" if selected[t] >= pkg_pool[t] else ""
         print(f"  {t:<5s} pkg_pool={pkg_pool[t]:>4}  selected_pkgs={selected[t]:>3}  "
               f"rows={sample_rows[t]:>3}  w={weights[t]:.3f}{census}", flush=True)
-
+    # Weight sanity: Σ (w_h × selected_pkgs_h) should reconstruct the package pool.
     wsum = sum(weights[t] * selected[t] for t in ECO_TIERS)
     if round(wsum) != sum(pkg_pool.values()):
-        print(f" weight sanity failed: Σw={wsum} != pkg pool total "
+        print(f"⚠ weight sanity failed: Σw={wsum} != pkg pool total "
               f"{sum(pkg_pool.values())}", flush=True)
         return 1
 
-
+    # --- Step 2+3: join, tabulate --------------------------------------------
     dd_map: dict[str, int] = {}
     with DEPSDEV_CSV.open() as f:
         for r in csv.DictReader(f):
@@ -204,14 +272,14 @@ def main() -> int:
           f"({len(miss_ae)} in A–E pool, {len(miss_rows) - len(miss_ae)} class F)",
           flush=True)
 
-
+    # --- Step 4: bootstrap CIs ------------------------------------------------
     print(f"\nBootstrap: stratified package-cluster, B={B_BOOT}, seed={SEED} ...",
           flush=True)
     cis, empty = bootstrap_cis(rows)
     if any(empty.values()):
         print(f"  replicates with empty A–E denominator (excluded): {empty}", flush=True)
 
-
+    # --- Outputs ---------------------------------------------------------------
     def upct(t: str, c: str) -> Optional[float]:
         denom = sum(v for k, v in counts[t].items() if k != "F")
         return counts[t].get(c, 0) / denom * 100 if denom else None
@@ -240,9 +308,9 @@ def main() -> int:
         w = csv.DictWriter(f, fieldnames=list(out_rows[0].keys()))
         w.writeheader()
         w.writerows(out_rows)
-    print(f"\n Saved {OUT_CSV} ({len(out_rows)} rows)", flush=True)
+    print(f"\n✓ Saved {OUT_CSV} ({len(out_rows)} rows)", flush=True)
 
-
+    # Markdown report
     lines = [
         "# Pre-submission RQ2 check — design-weighted class shares under deps.dev tier",
         "",
@@ -332,10 +400,10 @@ def main() -> int:
         "  imputed.",
     ]
     OUT_MD.write_text("\n".join(lines) + "\n")
-    print(f" Saved {OUT_MD}", flush=True)
+    print(f"✓ Saved {OUT_MD}", flush=True)
 
-
-    print("\n=== Headline: unweighted%  weighted% [95% CI] (A–E pool, F excluded) ===",
+    # Compact stdout table (headline: dd-top and dd-mid)
+    print("\n=== Headline: unweighted% → weighted% [95% CI] (A–E pool, F excluded) ===",
           flush=True)
     for t in ("top", "mid"):
         print(f"  dd-{t} (A–E n={sum(v for k, v in counts[t].items() if k != 'F')}):",
@@ -343,9 +411,9 @@ def main() -> int:
         for c in CLASSES_AE:
             u, wv, ci = upct(t, c), wpct(t, c), cis.get((t, c))
             ci_s = f"[{ci[0]:.1f}, {ci[1]:.1f}]" if ci else "[—]"
-            print(f"    {c}: {u:5.1f}%  {wv:5.1f}%  {ci_s}", flush=True)
+            print(f"    {c}: {u:5.1f}% → {wv:5.1f}%  {ci_s}", flush=True)
 
-    print("\n Pre-submission RQ2 design-weight check PASS", flush=True)
+    print("\n✅ Pre-submission RQ2 design-weight check PASS", flush=True)
     return 0
 
 

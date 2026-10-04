@@ -1,3 +1,20 @@
+"""
+Task 3 Step 3.7 — deps.dev BQ dependents enrichment (run 2026-05-18).
+
+Single 464 GB scan against deps.dev `Dependents` table (one partition,
+SnapshotAt = 2026-05-05 — the closest deps.dev snapshot before 2026-05-10
+cutoff). 500 GB max_bytes_billed safety cap.
+
+Output: data/depsdev_dependents_2026_05_05.csv (name, dependents_count, snapshot_at)
+
+Guardrails (per reports/bq_usage_ledger.md):
+  - Dry-run done before this run (estimated 464 GB)
+  - max_bytes_billed = 500 GiB hard cap
+  - Single-partition filter via SnapshotAt BETWEEN one day
+  - Explicit column projection (no SELECT *)
+
+Run: source ~/.zshenv && conda run --no-capture-output -n stage2c python scripts/22_depsdev_dependents.py
+"""
 from __future__ import annotations
 
 import csv
@@ -11,7 +28,7 @@ PACKAGES_FILE = DATA_DIR / "packages_full.txt"
 OUT_CSV = DATA_DIR / "depsdev_dependents_2026_05_05.csv"
 
 SNAPSHOT_AT = "2026-05-05"
-MAX_BYTES_BILLED = 500 * (1024 ** 3)
+MAX_BYTES_BILLED = 500 * (1024 ** 3)  # 500 GiB
 
 
 def main() -> int:
@@ -26,7 +43,7 @@ def main() -> int:
         print("ERROR: GOOGLE_CLOUD_PROJECT not set; source ~/.zshenv first", file=sys.stderr)
         return 2
 
-
+    # Load 3000 packages
     packages: list[str] = []
     with PACKAGES_FILE.open() as f:
         header = next(f).rstrip("\n").split("\t")
@@ -37,10 +54,13 @@ def main() -> int:
                 packages.append(parts[idx_name])
     print(f"Loaded {len(packages)} packages", flush=True)
 
-
+    # Build query — UNNEST array literal (BQ supports up to 1 MB query text)
+    # Escape any double-quotes in package names (none expected for npm, but safe)
     quoted = ",".join('"' + p.replace('"', '\\"') + '"' for p in packages)
-
-
+    # Counting DIRECT dependents only (MinimumDepth = 1) to match ecosyste.ms
+    # `dependent_packages_count` semantics. Without this filter, deps.dev counts transitive
+    # dependents (any package whose dependency graph eventually includes ours), which produces
+    # vastly inflated counts vs ecosyste.ms (e.g., utility packages like `kind-of` go to 1.5M).
     query = f"""
 SELECT
   Name AS name,
@@ -70,20 +90,20 @@ GROUP BY Name
 
     rows = list(query_job.result())
     elapsed = time.time() - t0
-    print(f"\n Completed in {elapsed:.1f}s", flush=True)
+    print(f"\n✓ Completed in {elapsed:.1f}s", flush=True)
     print(f"  Bytes processed: {query_job.total_bytes_processed:,}", flush=True)
     print(f"  Bytes billed:    {query_job.total_bytes_billed:,}", flush=True)
     print(f"  Rows returned:   {len(rows)}", flush=True)
 
-
+    # Save to CSV
     with OUT_CSV.open("w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=["name", "dependents_count", "snapshot_at"])
         w.writeheader()
         for r in rows:
             w.writerow({"name": r["name"], "dependents_count": r["dependents_count"], "snapshot_at": SNAPSHOT_AT})
-    print(f"\n Saved {OUT_CSV} ({len(rows)} rows)", flush=True)
+    print(f"\n✓ Saved {OUT_CSV} ({len(rows)} rows)", flush=True)
 
-
+    # Summary
     counts = sorted([int(r["dependents_count"]) for r in rows])
     if counts:
         n = len(counts)

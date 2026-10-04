@@ -1,3 +1,37 @@
+"""
+Task 5 Step 5.4 — Logistic regression on version-level has_attestation.
+
+Sample: 100,168 versions in 2025-08-01 .. 2026-05-10 window (versions.csv).
+Outcome: has_attestation ∈ {0, 1}.
+
+Predictors (deps.dev-tier PRIMARY):
+  log1p(deps.dev_dependents_count)
+  log1p(weekly_downloads_avg)
+  log1p(package_age_days)
+  log1p(maintainers_count)
+  owner_is_org           (1 if Organization)
+  has_dependabot, has_issue_template, is_scoped_package
+  tier_top, tier_mid     (vs tail reference)
+  post_deadline          (1 if published_at >= 2025-12-09)
+
+Cluster-robust SE at package level (versions within the same package share
+unobserved publishing-pipeline characteristics).
+
+MANDATORY diagnostics (methodologist AGENTS.md):
+  - Hosmer-Lemeshow goodness-of-fit (10-decile)
+  - ROC AUC (with bootstrap 95% CI, B=200)
+  - Brier score
+
+Effect sizes: odds ratios with 95% CI.
+
+Output:
+  data/logistic_results.csv
+  reports/task_5_logistic.md
+  paper/figures/logistic_roc.png
+  paper/figures/logistic_hl_calibration.png
+
+Run: conda run --no-capture-output -n stage2c python scripts/30_logistic_version_level.py
+"""
 from __future__ import annotations
 
 import csv
@@ -39,6 +73,7 @@ def dpc_tier(dpc: int) -> str:
 
 
 def hosmer_lemeshow(y_true: np.ndarray, p_hat: np.ndarray, n_bins: int = 10) -> tuple[float, float, pd.DataFrame]:
+    """Return (HL statistic, p-value, per-decile detail). Lower stat / higher p → better fit."""
     df = pd.DataFrame({"y": y_true, "p": p_hat})
     df["decile"] = pd.qcut(df["p"], q=n_bins, duplicates="drop", labels=False)
     grouped = df.groupby("decile").agg(
@@ -59,7 +94,7 @@ def main() -> int:
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     PAPER_DIR.mkdir(parents=True, exist_ok=True)
 
-
+    # ---- Build version-level analysis frame ----
     print("Loading versions.csv (100k rows)...", flush=True)
     versions = pd.read_csv(VERSIONS_CSV, parse_dates=["published_at"])
     versions["published_at"] = pd.to_datetime(versions["published_at"], utc=True)
@@ -76,7 +111,7 @@ def main() -> int:
     )
     inf = inf[inf["depsdev_tier"].isin(["top", "mid", "tail"])].copy()
 
-
+    # Build numeric covariates
     inf["log_weekly_downloads"] = np.log1p(pd.to_numeric(inf["weekly_downloads_avg"], errors="coerce"))
     inf["log_age_days"] = np.log1p(pd.to_numeric(inf["package_age_days"], errors="coerce"))
     inf["log_maintainers"] = np.log1p(pd.to_numeric(inf["maintainers_count"], errors="coerce"))
@@ -98,7 +133,7 @@ def main() -> int:
     print(f"Joined frame: {len(df):,} version rows × {len(df['package'].unique())} packages", flush=True)
     print(f"Outcome base rate: {df['y'].mean()*100:.2f}%", flush=True)
 
-
+    # ---- Fit logistic with cluster-robust SE at package level ----
     cov_cols = ["post_deadline",
                 "log_weekly_downloads", "log_age_days", "log_maintainers",
                 "owner_is_org", "has_dependabot_int", "has_issue_template_int",
@@ -116,13 +151,13 @@ def main() -> int:
     )
     print(f"Pseudo-R² (McFadden) = {fit.prsquared:.4f}", flush=True)
 
-
+    # ---- ROC / AUC / Brier ----
     p_hat = fit.predict(X)
     auc = roc_auc_score(y, p_hat)
     brier = brier_score_loss(y, p_hat)
     print(f"ROC AUC = {auc:.4f}  Brier = {brier:.4f}", flush=True)
 
-
+    # Bootstrap AUC CI
     rng = np.random.default_rng(42)
     boot_aucs = []
     n = len(y)
@@ -133,14 +168,14 @@ def main() -> int:
         except ValueError:
             continue
     boot_aucs = np.array(sorted(boot_aucs))
-    auc_lo, auc_hi = float(boot_aucs[5]), float(boot_aucs[-6])
+    auc_lo, auc_hi = float(boot_aucs[5]), float(boot_aucs[-6])  # 95% CI from 200 samples
     print(f"AUC 95% CI (boot n=200): [{auc_lo:.4f}, {auc_hi:.4f}]", flush=True)
 
-
+    # ---- Hosmer-Lemeshow ----
     hl_stat, hl_p, hl_table = hosmer_lemeshow(y, p_hat.values, n_bins=10)
     print(f"Hosmer-Lemeshow: χ² = {hl_stat:.3f}, p = {hl_p:.4f}", flush=True)
 
-
+    # ---- Write CSV ----
     summary_rows = []
     for cov in fit.params.index:
         oh = float(np.exp(fit.params[cov]))
@@ -162,11 +197,11 @@ def main() -> int:
         w.writeheader()
         for r in summary_rows:
             w.writerow(r)
-    print(f"\n Saved {OUT_CSV}", flush=True)
+    print(f"\n✓ Saved {OUT_CSV}", flush=True)
 
-
+    # ---- Markdown summary ----
     lines = [
-        "# — Logistic regression (version-level)",
+        "# Task 5 Step 5.4 — Logistic regression (version-level)",
         "",
         f"**Date**: 2026-05-18  ",
         f"**Sample**: {len(df):,} versions in 2025-08-01 .. 2026-05-10 window  ",
@@ -186,8 +221,8 @@ def main() -> int:
         lines.append(f"| `{r['covariate']}` | {r['OR']:.3f}{sig} | "
                      f"[{r['OR_ci_low']:.3f}, {r['OR_ci_high']:.3f}] | {r['p']:.4f} |")
 
-    auc_verdict = "PASS" if auc >= 0.70 else f" {'borderline' if auc >= 0.60 else 'POOR'}"
-    hl_verdict = "PASS (p > 0.05)" if hl_p > 0.05 else f" FAIL (p={hl_p:.3f}) — calibration questionable"
+    auc_verdict = "PASS" if auc >= 0.70 else f"⚠ {'borderline' if auc >= 0.60 else 'POOR'}"
+    hl_verdict = "PASS (p > 0.05)" if hl_p > 0.05 else f"⚠ FAIL (p={hl_p:.3f}) — calibration questionable"
     lines += [
         "",
         "## Discrimination + calibration diagnostics (MANDATORY)",
@@ -198,16 +233,16 @@ def main() -> int:
         "",
         "## Headline interpretation",
         "",
-        "OR > 1: covariate   HIGHER predicted probability of attestation.",
-        "OR < 1: covariate   LOWER predicted probability.",
+        "OR > 1: covariate ↑ ⇒ HIGHER predicted probability of attestation.",
+        "OR < 1: covariate ↑ ⇒ LOWER predicted probability.",
         "",
         "Statistically significant (p < 0.05) covariates:",
         "",
     ]
     for r in summary_rows:
         if r["p"] < 0.05 and r["covariate"] != "const":
-            direction = " attestation" if r["OR"] > 1 else " attestation"
-            lines.append(f"- `{r['covariate']}`: OR={r['OR']:.3f} [{r['OR_ci_low']:.3f}, {r['OR_ci_high']:.3f}]  {direction} (p={r['p']:.4f})")
+            direction = "↑ attestation" if r["OR"] > 1 else "↓ attestation"
+            lines.append(f"- `{r['covariate']}`: OR={r['OR']:.3f} [{r['OR_ci_low']:.3f}, {r['OR_ci_high']:.3f}] → {direction} (p={r['p']:.4f})")
 
     lines += [
         "",
@@ -221,9 +256,9 @@ def main() -> int:
         "- Causal interpretation is **NOT supported** by this model. AUC + OR are predictive/associational only. Unmeasured confounding (e.g., maintainer's technical risk-tolerance, pre-existing internal pipelines) remains plausible.",
     ]
     OUT_MD.write_text("\n".join(lines) + "\n")
-    print(f" Saved {OUT_MD}", flush=True)
+    print(f"✓ Saved {OUT_MD}", flush=True)
 
-
+    # ---- ROC figure ----
     fpr, tpr, _ = roc_curve(y, p_hat)
     fig, ax = plt.subplots(figsize=(6, 5.5))
     ax.plot(fpr, tpr, color=figstyle.ACCENT, linewidth=2,
@@ -235,9 +270,9 @@ def main() -> int:
     fig.tight_layout()
     fig.savefig(OUT_ROC)
     plt.close(fig)
-    print(f" Saved {OUT_ROC}", flush=True)
+    print(f"✓ Saved {OUT_ROC}", flush=True)
 
-
+    # ---- HL calibration figure ----
     fig, ax = plt.subplots(figsize=(6, 5.5))
     hl_table = hl_table.copy()
     hl_table["obs_rate"] = hl_table["obs"] / hl_table["n"]
@@ -251,7 +286,7 @@ def main() -> int:
     fig.tight_layout()
     fig.savefig(OUT_HL)
     plt.close(fig)
-    print(f" Saved {OUT_HL}", flush=True)
+    print(f"✓ Saved {OUT_HL}", flush=True)
     return 0
 
 

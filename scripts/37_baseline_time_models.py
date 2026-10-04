@@ -1,3 +1,26 @@
+"""Task 7 Baseline 4 (B4) — Time-series model variants (descriptive-only).
+
+Per Task 5 PI Round 2 mandate: NO model identifies a Dec-9 specific causal
+effect. B4 reshapes the time analysis to test whether that conclusion holds
+under alternative aggregations and contrast forms.
+
+Sub-baselines:
+  B4a: ITS weekly vs ITS monthly (does β2 level drop survive aggregation?)
+  B4b: placebo cutoff grid (every 4 weeks across 2025-09-01 to 2026-04-10)
+       to compare actual Dec-9 β2 against placebo distribution
+  B4c: pre-post descriptive contrast (rate 8wk pre vs 8wk post, Wilson 95% CIs)
+  B4d: DiD descriptive (re-fit parsimonious γ3 spec; mark as PT-FAIL-inherited
+       descriptive contrast, NOT identified)
+
+Outputs:
+  data/baselines/task_7_b4_its_weekly_vs_monthly.csv
+  data/baselines/task_7_b4_its_placebo_grid.csv
+  data/baselines/task_7_b4_pre_post_contrast.csv
+  data/baselines/task_7_b4_did_descriptive.csv
+  reports/task_7_baseline_4.md
+
+Run: conda run --no-capture-output -n stage2c python scripts/37_baseline_time_models.py
+"""
 from __future__ import annotations
 
 import logging
@@ -35,7 +58,7 @@ OUT_REPORT = REPORTS_DIR / "task_7_baseline_4.md"
 DEADLINE = pd.Timestamp("2025-12-09", tz="UTC")
 ORIGIN = pd.Timestamp("2025-08-01", tz="UTC")
 CENSOR = pd.Timestamp("2026-05-10 23:59:59", tz="UTC")
-PREPOST_WEEKS = 8
+PREPOST_WEEKS = 8  # 8 weeks pre / post for descriptive contrast
 
 
 def dd_tier(n) -> str:
@@ -57,6 +80,7 @@ def load_versions_with_tier() -> pd.DataFrame:
 
 
 def aggregate_period(df: pd.DataFrame, period: str = "W") -> pd.DataFrame:
+    """Aggregate to weekly or monthly rate by tier. period='W' or 'MS'."""
     if period == "W":
         df["period_start"] = (df["published_at"] -
                               pd.to_timedelta(df["published_at"].dt.weekday, unit="D")).dt.normalize()
@@ -74,6 +98,8 @@ def aggregate_period(df: pd.DataFrame, period: str = "W") -> pd.DataFrame:
 
 def run_its(weekly: pd.DataFrame, tier: str, cutoff: pd.Timestamp,
             granularity: str = "W") -> Optional[dict]:
+    """Canonical Batch-8 fit via scripts/its_spec.py: true calendar axis,
+    cutoff-DATE-centered, straddling period excluded (Anomaly 9 repair)."""
     sub = weekly[weekly["tier"] == tier].copy()
     if len(sub) < 8:
         return None
@@ -100,6 +126,7 @@ def run_its(weekly: pd.DataFrame, tier: str, cutoff: pd.Timestamp,
 
 
 def b4a_weekly_vs_monthly(versions: pd.DataFrame) -> pd.DataFrame:
+    """ITS at Dec-9 cutoff, weekly vs monthly aggregation, per tier."""
     rows = []
     for period, label in [("W", "weekly"), ("MS", "monthly")]:
         agg = aggregate_period(versions, period=period)
@@ -112,12 +139,13 @@ def b4a_weekly_vs_monthly(versions: pd.DataFrame) -> pd.DataFrame:
 
 
 def b4b_placebo_grid(versions: pd.DataFrame) -> pd.DataFrame:
+    """Placebo cutoffs every 4 weeks across the window for top tier ITS."""
     agg = aggregate_period(versions, period="W")
-
+    # Build placebo cutoffs: every 4 weeks from 2025-09-15 to 2026-04-13 (~ 7 months)
     start_placebo = pd.Timestamp("2025-09-15", tz="UTC")
     end_placebo = pd.Timestamp("2026-04-13", tz="UTC")
     cutoffs = pd.date_range(start_placebo, end_placebo, freq="4W")
-    cutoffs = list(cutoffs) + [DEADLINE]
+    cutoffs = list(cutoffs) + [DEADLINE]  # include actual
     cutoffs = sorted(set(cutoffs))
     rows = []
     for c in cutoffs:
@@ -131,6 +159,7 @@ def b4b_placebo_grid(versions: pd.DataFrame) -> pd.DataFrame:
 
 
 def b4c_pre_post_contrast(versions: pd.DataFrame) -> pd.DataFrame:
+    """Wilson 95% CI for attestation rate in 8wk pre vs 8wk post window, per tier."""
     pre_start = DEADLINE - pd.Timedelta(weeks=PREPOST_WEEKS)
     pre_end = DEADLINE - pd.Timedelta(seconds=1)
     post_start = DEADLINE
@@ -159,6 +188,10 @@ def b4c_pre_post_contrast(versions: pd.DataFrame) -> pd.DataFrame:
 
 
 def b4d_did_descriptive(versions: pd.DataFrame) -> pd.DataFrame:
+    """DiD descriptive: top vs tail, parsimonious γ3 spec.
+    rate = γ0 + γ1·t + γ2·top + γ3·(t × top)
+    Reports γ3 with HC1 SE; marked descriptive (parallel-trends FAILED in Task 5).
+    """
     agg = aggregate_period(versions, period="W")
     sub = agg[agg["tier"].isin(["top", "tail"])].copy()
     sub["t"] = (pd.to_datetime(sub["period_start"]) -
@@ -188,13 +221,13 @@ def b4d_did_descriptive(versions: pd.DataFrame) -> pd.DataFrame:
 def write_report(weekly_monthly: pd.DataFrame, placebo_df: pd.DataFrame,
                  prepost_df: pd.DataFrame, did_df: pd.DataFrame) -> None:
     lines = [
-        "# Baseline 4 — Time-Series Model Variants",
+        "# Task 7 Baseline 4 — Time-Series Model Variants",
         "",
         "**Date**: auto-generated 2026-05-18 by `scripts/37_baseline_time_models.py`",
         "**Scope**: Test whether Task 5's conclusion (no Dec-9 specific causal effect) "
         "holds under alternative time aggregations and contrast forms. All outputs are "
         "**descriptive only**; no causal claims.",
-        "**Framing**: per , no baseline can be re-read as a "
+        "**Framing**: per Task 5 PI Round 2 mandate, no baseline can be re-read as a "
         "deadline-specific identification.",
         "",
         "## B4a — Weekly vs Monthly aggregation (Dec-9 cutoff)",
@@ -230,7 +263,7 @@ def write_report(weekly_monthly: pd.DataFrame, placebo_df: pd.DataFrame,
             marker = " **ACTUAL**" if r.get("is_actual_dec9") else ""
             lines.append(f"| {r['cutoff']} | {r['beta2_level_change_pp']:.2f} | "
                          f"[{r['ci95_beta2_low']:.2f}, {r['ci95_beta2_high']:.2f}] |{marker} |")
-
+        # Compare actual vs placebo distribution — report both strict and >=
         actual = sub[sub.get("is_actual_dec9") == True]
         placebos = sub[sub.get("is_actual_dec9") != True]
         if not actual.empty and not placebos.empty:
@@ -244,7 +277,7 @@ def write_report(weekly_monthly: pd.DataFrame, placebo_df: pd.DataFrame,
                       f">= count is higher because some placebo dates (e.g. 2025-12-14) "
                       f"fall in the same weekly split as Dec-9 and yield the same β2. "
                       "If strict count ≥ 1, the actual Dec-9 is NOT uniquely large — "
-                      "consistent with placebo robustness conclusion._",
+                      "consistent with Task 5 placebo robustness conclusion._",
                       ""]
     lines += [
         "",
@@ -263,7 +296,7 @@ def write_report(weekly_monthly: pd.DataFrame, placebo_df: pd.DataFrame,
     lines += [
         "",
         "**Reading**: descriptive only. Even if pre/post CIs are non-overlapping, this "
-        "does NOT identify a deadline-specific causal effect (see placebo failure).",
+        "does NOT identify a deadline-specific causal effect (see Task 5 placebo failure).",
         "",
         "## B4d — DiD descriptive (top vs tail; PT-FAIL inherited from Task 5)",
         "",
@@ -278,13 +311,13 @@ def write_report(weekly_monthly: pd.DataFrame, placebo_df: pd.DataFrame,
     lines += [
         "",
         "**Reading**: γ3 (`t_top` row) is the descriptive pre-trend slope of top vs tail. "
-        "found PT FAILED (γ3 ≠ 0 with p < 0.001), which is why the DiD was demoted "
+        "Task 5 found PT FAILED (γ3 ≠ 0 with p < 0.001), which is why the DiD was demoted "
         "from causal identification to **descriptive contrast**. B4d reproduces that "
         "finding here; no causal claim is added.",
         "",
-        "## Decision gates (descriptive-only framing, mandatory)",
+        "## Decision gates (anti-causal-language firewall, mandatory)",
         "",
-        "- **Weekly vs monthly**: if signs/magnitudes match  headline ITS β2 is aggregation-robust",
+        "- **Weekly vs monthly**: if signs/magnitudes match → headline ITS β2 is aggregation-robust",
         "- **Placebo grid**: if ≥ 1 placebo has |β2| ≥ |actual Dec-9 β2|, Task 5's "
         "no-deadline-causal conclusion is reinforced; do NOT upgrade language",
         "- **Pre/post descriptive**: non-overlapping CIs are still descriptive, not causal",
@@ -295,8 +328,8 @@ def write_report(weekly_monthly: pd.DataFrame, placebo_df: pd.DataFrame,
         "a Dec-9 specific causal effect.",
         "",
         "## Closure status",
-        " B4 contributed: "
-        "descriptive-only framing preserved across all 4 sub-baselines; placebo grid "
+        "Task 7 closed at PI review round 2 (approved 2026-05-19). B4 contributed: "
+        "anti-causal-language firewall preserved across all 4 sub-baselines; placebo grid "
         "shows actual Dec-9 is NOT uniquely large for top tier (4 strictly larger; 5 larger-"
         "or-equal due to Dec-14 same-week tie); DiD PT-FAIL reproduced.",
     ]

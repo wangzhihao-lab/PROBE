@@ -1,3 +1,62 @@
+"""Review-9 sensitivity batch: five checks answering the 2026-07-14 external
+mock-review round (GPT round 9).
+
+S1  Cox entry-tie convention: the primary delayed-entry model breaks
+    entry==event integer-day ties by entering tied packages 0.5 day early
+    (85 of 326 events are first-release adopters). Refit under 0.25-day and
+    1.0-day offsets and with the tied packages excluded outright; report
+    hazard-ratio drift, sign changes, and significance changes.
+S2  ITS package-cluster bootstrap: the canonical top-tier cutoff-centered
+    ITS uses HAC errors on ~40 weekly aggregates, which handles serial
+    correlation but not the package-level uncertainty created by a few
+    prolific packages dominating weekly composition. Resample packages with
+    replacement (B=1000), rebuild the weekly top-tier series, refit the
+    canonical spec (scripts/its_spec.py), and report the percentile interval
+    for beta2 (and beta3).
+S3  Calibration vs clustering: Hosmer-Lemeshow treats 97,672 version rows
+    as independent. Hold the fitted primary logistic fixed, resample
+    packages with replacement (B=1000), and recompute the in-sample decile
+    ECE per resample: a package-cluster interval for the calibration-gap
+    magnitude that does not lean on the row-independence chi-square.
+S4  Per-class rater agreement: kappa is an aggregate. Reproduce the primary
+    (kappa=0.8099) and post-adjudication (kappa=0.8192) pairings from the
+    released label files, and tabulate the confusion matrix and per-class
+    specific agreement (2*n_kk / (row_k + col_k)); flag classes too sparse
+    to assess (D, F).
+S5  Case-level predicted probabilities: mean/min/max predicted attestation
+    probability for typescript's 242 in-window version rows under the
+    primary logistic fit (observed attested = 0), formalizing the
+    calibration-counterexample illustration in Section 6.3.
+
+Inputs:
+  data/versions.csv, data/influence_metrics.csv,
+  data/depsdev_dependents_2026_05_05.csv, data/packuments_raw/*.json
+  data/classification.csv, data/classification_v1_raw.csv,
+  data/classification_v2_rules.csv, data/classification_v3_pi.csv,
+  data/classification_rater2.csv
+  (frame construction imported from scripts/52; weekly aggregation and the
+  canonical ITS from scripts/46 + scripts/its_spec.py)
+
+Outputs:
+  data/review9_cox_tiebreak.csv
+  data/review9_its_cluster_bootstrap.csv
+  data/review9_ece_cluster_ci.csv
+  data/review9_rater_perclass.csv
+  data/review9_case_predicted.csv
+  reports/presub_review9_sensitivities.md
+
+Carried-forward caveats: data cutoff 2026-05-10 untouched; anti-causal
+firewall applies — every quantity below is descriptive/diagnostic and none
+identifies a December-9 effect.
+
+Run: conda run --no-capture-output -n stage2c python scripts/53_review9_sensitivities.py
+
+TSE R1 (S1 entry-tie sensitivity refit on the extended incident cohort; only
+S1 runs under a non-default window, outputs are suffixed, and --out-suffix is
+mandatory so the as-submitted files are never overwritten):
+  conda run --no-capture-output -n stage2c python scripts/53_review9_sensitivities.py \
+      --origin 2024-01-01 --versions-csv versions_extended.csv --out-suffix _tse_r1_long
+"""
 from __future__ import annotations
 
 import importlib.util
@@ -30,25 +89,50 @@ def _load(name: str, path: Path):
 
 
 mod52 = _load("mod52", SCRIPTS / "52_rq3_sensitivity.py")
+
+# TSE R1: optional extended-window run (S1 only) through scripts/52's configure().
+import argparse as _argparse  # noqa: E402
+_ap = _argparse.ArgumentParser(add_help=False)
+_ap.add_argument("--origin", default="2025-08-01")
+_ap.add_argument("--versions-csv", default="versions.csv")
+_ap.add_argument("--out-suffix", default="")
+_ARGS, _ = _ap.parse_known_args()
+_NON_DEFAULT = (_ARGS.origin, _ARGS.versions_csv) != ("2025-08-01", "versions.csv")
+if _NON_DEFAULT and not _ARGS.out_suffix:
+    raise SystemExit("--out-suffix is required whenever --origin or --versions-csv is "
+                     "non-default (protects the as-submitted artefacts)")
+_SUFFIX = _ARGS.out_suffix
+if _NON_DEFAULT:
+    mod52.configure(_ARGS.origin, _ARGS.versions_csv, _ARGS.out_suffix)
 mod46 = _load("mod46", SCRIPTS / "46_placebo_cutoff_rank.py")
-import its_spec
+import its_spec  # noqa: E402  (shared canonical ITS spec)
 
-from lifelines import CoxPHFitter
+from lifelines import CoxPHFitter  # noqa: E402
 
 
+# ---------------------------------------------------------------- S1: Cox ties
 def s1_cox_tiebreak() -> pd.DataFrame:
     prevalent = mod52.prevalent_packages()
     prewin = mod52.prewindow_release_counts()
     sd = mod52.build_survival(prevalent, prewin)
     sd_inc = sd[sd["prevalent"] == 0].copy()
-
-
+    # build_survival returns entry_days already clipped to duration - 0.5 for
+    # entry==event ties; raw integer-day entries are exactly recoverable
+    # (ties are the only fractional entries, and their raw value == duration).
     dur = sd_inc["duration_days"].astype(float)
     clipped = sd_inc["entry_days"].astype(float)
     tie_mask = (clipped % 1.0) == 0.5
     entry_raw = pd.Series(np.where(tie_mask, dur, clipped), index=sd_inc.index)
     logger.info("S1: incident n=%d events=%d entry==event ties=%d",
                 len(sd_inc), int(sd_inc["event"].sum()), int(tie_mask.sum()))
+    # Tie composition is computed, never hard-coded, so the report text follows
+    # whichever window is being refit.
+    s1_cox_tiebreak.tie_info = {
+        "n_incident": int(len(sd_inc)), "events": int(sd_inc["event"].sum()),
+        "n_tied": int(tie_mask.sum()),
+        "tied_events": int(sd_inc.loc[tie_mask, "event"].sum()),
+        "tied_censored": int(tie_mask.sum() - sd_inc.loc[tie_mask, "event"].sum()),
+    }
 
     def fit_variant(label: str, entry: pd.Series, frame: pd.DataFrame) -> pd.DataFrame:
         f = frame[["duration_days", "event"] + mod52.COX_COLS_PRIMARY].copy()
@@ -85,10 +169,11 @@ def s1_cox_tiebreak() -> pd.DataFrame:
                       "n_sig_changes_at_.05": int(sig_flip)})
         logger.info("S1 %-10s max|dlogHR|=%.4f (%s) sign_changes=%d sig_changes=%d",
                     variant, dlog.max(), dlog.idxmax(), sign_flip, sig_flip)
-    tab.to_csv(DATA / "review9_cox_tiebreak.csv", index=False)
+    tab.to_csv(DATA / f"review9_cox_tiebreak{_SUFFIX}.csv", index=False)
     return pd.DataFrame(drift)
 
 
+# ------------------------------------------------- S2: ITS package bootstrap
 def s2_its_cluster_bootstrap() -> dict:
     versions = mod46.load_versions_with_tier()
     top = versions[versions["dd_tier"] == "top"].copy()
@@ -145,6 +230,7 @@ def s2_its_cluster_bootstrap() -> dict:
     return out
 
 
+# ------------------------------------------- S3 + S5: ECE cluster CI + cases
 def s3_s5_logistic() -> tuple[dict, pd.DataFrame]:
     prewin = mod52.prewindow_release_counts()
     df = mod52.build_version_frame(prewin)
@@ -187,13 +273,20 @@ def s3_s5_logistic() -> tuple[dict, pd.DataFrame]:
     return s3, case_tab
 
 
+# ------------------------------------- S6: parallel-trends test under HAC SEs
 def s6_pt_hac() -> dict:
+    """The DiD pre-trend test (scripts/28) uses HC1 errors, which handle
+    heteroskedasticity but not the weekly series' serial correlation. Refit
+    the same pre-period differential-trend coefficient under (a) the stacked
+    interaction spec with Newey-West HAC errors and (b) the cleanest
+    formulation: the top-minus-tail difference series regressed on time with
+    Newey-West HAC errors (for balanced weeks the slope equals gamma3)."""
     import statsmodels.api as sm
     df = pd.read_csv(DATA / "rq1_weekly_attestation_rate_depsdev.csv")
     df = df[df["tier"].isin(["top", "tail"])].copy()
     df["week_start_dt"] = pd.to_datetime(df["week_start"])
-
-
+    # scripts/28 convention: the deadline WEEK (Monday 2025-12-08, containing
+    # December 9) is post — matches the event-study x=0 = week of 2025-12-08.
     df["post"] = (df["week_start_dt"] >= pd.Timestamp("2025-12-08")).astype(int)
     df["top"] = (df["tier"] == "top").astype(int)
     df["rate_pp"] = df["rate"].astype(float) * 100
@@ -229,6 +322,7 @@ def s6_pt_hac() -> dict:
     return out
 
 
+# ---------------------------------------------------- S4: per-class agreement
 def s4_perclass() -> pd.DataFrame:
     r2 = pd.read_csv(DATA / "classification_rater2.csv")[["package", "version", "class"]]
     r2 = r2.rename(columns={"class": "class_r2"})
@@ -274,6 +368,24 @@ def main() -> int:
         print(perclass.to_markdown(index=False))
         return 0
     drift = s1_cox_tiebreak()
+    ti = s1_cox_tiebreak.tie_info
+    tie_text = (f"drop_tied excludes the entry==event packages ({ti['tied_events']} events + "
+                f"{ti['tied_censored']} censored; {ti['n_tied']} of {ti['n_incident']} "
+                f"incident packages).")
+    if _NON_DEFAULT:
+        lines = [f"# Review-9 S1 refit on the extended incident cohort (window origin "
+                 f"{_ARGS.origin}; version table `{_ARGS.versions_csv}`)", "",
+                 "## S1 Cox entry-tie convention (extended series)",
+                 "Primary = eps_0.5 (paper). Variants: 0.25 d, 1.0 d offsets; " + tie_text,
+                 "", drift.to_markdown(index=False), "",
+                 "Only S1 is refit under a non-default window; S2-S6 remain protocol-window "
+                 "quantities in `reports/presub_review9_sensitivities.md`.",
+                 "Anti-causal firewall: all quantities descriptive/diagnostic; none identifies "
+                 "a December-9 effect. Data cutoff 2026-05-10."]
+        out = REPORTS / f"presub_review9_sensitivities{_SUFFIX}.md"
+        out.write_text("\n".join(lines))
+        logger.info("wrote %s", out)
+        return 0
     s2 = s2_its_cluster_bootstrap()
     s3, cases = s3_s5_logistic()
     perclass = s4_perclass()
@@ -281,8 +393,7 @@ def main() -> int:
 
     lines = ["# Review-9 sensitivity batch (2026-07-14)", ""]
     lines += ["## S1 Cox entry-tie convention",
-              "Primary = eps_0.5 (paper). Variants: 0.25 d, 1.0 d offsets; drop_tied "
-              "excludes the entry==event packages (85 events + 1 censored).", "",
+              "Primary = eps_0.5 (paper). Variants: 0.25 d, 1.0 d offsets; " + tie_text, "",
               drift.to_markdown(index=False), ""]
     lines += ["## S2 ITS package-cluster bootstrap (top tier, canonical spec)",
               f"beta2 point {s2['beta2_point']:.2f} pp; percentile CI "
@@ -303,7 +414,7 @@ def main() -> int:
               f"top-minus-tail difference-series Newey-West "
               f"p={s6['p_diffseries_hac']:.4f} "
               f"(lag {s6['diff_lag']}, {s6['n_pre_weeks']} pre weeks).", ""]
-    lines += ["Descriptive-only framing: all quantities descriptive/diagnostic; "
+    lines += ["Anti-causal firewall: all quantities descriptive/diagnostic; "
               "none identifies a December-9 effect. Data cutoff 2026-05-10."]
     (REPORTS / "presub_review9_sensitivities.md").write_text("\n".join(lines))
     logger.info("wrote reports/presub_review9_sensitivities.md")

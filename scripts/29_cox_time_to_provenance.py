@@ -1,3 +1,36 @@
+"""
+Task 5 Step 5.3 — Cox PH: time-to-first-provenance per package.
+
+Survival setup:
+  Origin t=0 = 2025-08-01 (window start)
+  Event time = days from origin to first version with has_attestation = True
+  Censoring = right-censored at 2026-05-10 if never attested in window
+  Unit = package (each package contributes one (duration, event) row)
+
+Covariates (deps.dev-tier PRIMARY):
+  log1p(deps.dev_dependents_count)
+  log1p(weekly_downloads_avg)
+  log1p(package_age_days)
+  log1p(maintainers_count)
+  github_owner_is_org  (1 if github_owner_type == "Organization")
+  has_dependabot
+  has_issue_template
+  is_scoped_package
+  tier_top / tier_mid (vs tail as reference)
+
+MANDATORY diagnostics:
+  - Schoenfeld residuals test for PH assumption (lifelines `check_assumptions`)
+  - Report HR with 95% CI for each covariate (effect size, not just p)
+  - Visual: KM survival by tier (deps.dev) for descriptive context
+
+Output:
+  data/cox_results.csv
+  reports/task_5_cox.md
+  paper/figures/cox_km_by_tier.png
+  paper/figures/cox_schoenfeld_diagnostic.png
+
+Run: conda run --no-capture-output -n stage2c python scripts/29_cox_time_to_provenance.py
+"""
 from __future__ import annotations
 
 import csv
@@ -29,7 +62,7 @@ OUT_DIAG_PNG = PAPER_DIR / "cox_schoenfeld_diagnostic.png"
 
 ORIGIN = pd.Timestamp("2025-08-01", tz="UTC")
 CENSOR = pd.Timestamp("2026-05-10 23:59:59", tz="UTC")
-MAX_DURATION = (CENSOR - ORIGIN).days
+MAX_DURATION = (CENSOR - ORIGIN).days  # 282
 
 
 def dpc_tier(dpc: int) -> str:
@@ -41,18 +74,19 @@ def dpc_tier(dpc: int) -> str:
 
 
 def build_survival_data() -> pd.DataFrame:
-
+    """Return one row per package with (duration, event, covariates)."""
+    # Load versions, compute per-package first-attested timestamp
     versions = pd.read_csv(VERSIONS_CSV, parse_dates=["published_at"])
     versions["published_at"] = pd.to_datetime(versions["published_at"], utc=True)
     versions = versions[(versions["published_at"] >= ORIGIN) &
                         (versions["published_at"] <= CENSOR)].copy()
 
-
+    # First attested version per package
     attested = versions[versions["has_attestation"].astype(str).str.lower() == "true"]
     first_att = attested.groupby("package")["published_at"].min().reset_index()
     first_att.columns = ["package", "first_attested_at"]
 
-
+    # All packages with any version in window
     all_pkgs = versions["package"].drop_duplicates().reset_index(drop=True)
     sd = pd.DataFrame({"package": all_pkgs})
     sd = sd.merge(first_att, on="package", how="left")
@@ -60,7 +94,7 @@ def build_survival_data() -> pd.DataFrame:
     sd.loc[sd["event"] == 0, "first_attested_at"] = CENSOR
     sd["duration_days"] = (sd["first_attested_at"] - ORIGIN).dt.days.clip(lower=1)
 
-
+    # Influence metrics + deps.dev tier
     inf = pd.read_csv(INFLUENCE_CSV)
     sd = sd.merge(inf, on="package", how="left")
 
@@ -71,25 +105,26 @@ def build_survival_data() -> pd.DataFrame:
         lambda x: dpc_tier(int(x)) if pd.notna(x) else "missing"
     )
 
-
+    # Filter: exclude `missing` deps.dev tier (consistent with Task 4 primary frame)
     sd = sd[sd["depsdev_tier"].isin(["top", "mid", "tail"])].copy()
 
-
+    # Build numeric covariates
     sd["log_dependents"] = np.log1p(sd["depsdev_dependents_count"].astype(float))
     sd["log_weekly_downloads"] = np.log1p(pd.to_numeric(sd["weekly_downloads_avg"], errors="coerce"))
     sd["log_age_days"] = np.log1p(pd.to_numeric(sd["package_age_days"], errors="coerce"))
     sd["log_maintainers"] = np.log1p(pd.to_numeric(sd["maintainers_count"], errors="coerce"))
     sd["owner_is_org"] = (sd["github_owner_type"] == "Organization").astype(int)
-
-
+    # CSV columns came back as Python booleans (True/False/NaN), not "true"/"false" strings;
+    # use astype(str).lower() to canonicalize both.
     for src, dst in [("has_dependabot", "has_dependabot_int"),
                      ("has_issue_template", "has_issue_template_int"),
                      ("is_scoped_package", "is_scoped_int")]:
         sd[dst] = (sd[src].astype(str).str.lower() == "true").astype(int)
     sd["tier_top"] = (sd["depsdev_tier"] == "top").astype(int)
     sd["tier_mid"] = (sd["depsdev_tier"] == "mid").astype(int)
+    # tail is reference
 
-
+    # Drop rows with missing covariates
     keep_cols = [
         "duration_days", "event",
         "log_dependents", "log_weekly_downloads", "log_age_days", "log_maintainers",
@@ -102,14 +137,21 @@ def build_survival_data() -> pd.DataFrame:
 
 
 def _style_schoenfeld(fig: "plt.Figure") -> None:
+    """Recolor lifelines' Schoenfeld residual figure to the shared palette.
+
+    Scatter residual points -> figstyle.ACCENT; the dashed zero reference line
+    (drawn by ax.hlines as a LineCollection) -> figstyle.REF. The lowess trend
+    (a Line2D) is left as lifelines drew it, for eyeball contrast against the
+    coloured points. Cosmetic only -- no residual value is altered.
+    """
     from matplotlib.collections import LineCollection, PathCollection
 
     for ax in fig.axes:
         for coll in ax.collections:
-            if isinstance(coll, PathCollection):
+            if isinstance(coll, PathCollection):        # scatter residuals
                 coll.set_facecolor(figstyle.ACCENT)
                 coll.set_edgecolor(figstyle.ACCENT)
-            elif isinstance(coll, LineCollection):
+            elif isinstance(coll, LineCollection):       # hlines zero reference
                 coll.set_color(figstyle.REF)
 
 
@@ -121,8 +163,8 @@ def main() -> int:
     print(f"Survival dataset: {len(sd)} packages "
           f"(events={sd['event'].sum()}, censored={(1-sd['event']).sum()})", flush=True)
 
-
-    fig, ax = plt.subplots(figsize=(8, 5))
+    # ---- KM by deps.dev tier (descriptive) ----
+    fig, ax = plt.subplots(figsize=(5.0, 3.1))
     for t in ("top", "mid", "tail"):
         sub = sd[sd["depsdev_tier"] == t]
         if len(sub) == 0:
@@ -141,9 +183,11 @@ def main() -> int:
     fig.tight_layout()
     fig.savefig(OUT_KM_PNG, bbox_inches="tight")
     plt.close(fig)
-    print(f" Saved {OUT_KM_PNG}", flush=True)
+    print(f"✓ Saved {OUT_KM_PNG}", flush=True)
 
-
+    # ---- Cox PH ----
+    # Drop log_dependents (perfect collinearity with tier_top + tier_mid; we keep tier
+    # dummies because the research question is tier-stratified).
     cox_cols = [
         "duration_days", "event",
         "log_weekly_downloads", "log_age_days", "log_maintainers",
@@ -157,29 +201,34 @@ def main() -> int:
     print(f"\nCox PH fitted. Concordance = {cph.concordance_index_:.4f}", flush=True)
     print(summary[["exp(coef)", "exp(coef) lower 95%", "exp(coef) upper 95%", "p"]].round(3), flush=True)
 
-
+    # ---- Schoenfeld residuals PH test ----
     try:
         ph_test = proportional_hazard_test(cph, sd[cox_cols],
                                             time_transform="rank")
         ph_df = ph_test.summary
         print(f"\nSchoenfeld PH test (rank transform):", flush=True)
         print(ph_df[["test_statistic", "p"]].round(4), flush=True)
-        global_p = ph_df["p"].min()
+        global_p = ph_df["p"].min()  # most-stringent single covariate
     except Exception as e:
         ph_df = pd.DataFrame()
         global_p = None
-        print(f" Schoenfeld test failed: {e}", flush=True)
+        print(f"⚠ Schoenfeld test failed: {e}", flush=True)
 
-
+    # ---- Schoenfeld plot: per-covariate PH-test p-values (lollipop) ----
+    # Visualizes the SAME Schoenfeld p-values (ph_df) reported in the HR table,
+    # so the figure supports the "N of 9 covariates fail PH" reading directly.
+    # No new statistics are computed here; this replaces lifelines'
+    # check_assumptions rendering, which emitted one figure per covariate and
+    # therefore saved only the last covariate.
     try:
         d = ph_df.reindex(cox_cols).dropna(subset=["p"]).sort_values("p")
         covs = list(d.index)
         pvals = [float(v) for v in d["p"].values]
-        ypos = list(range(len(covs) - 1, -1, -1))
+        ypos = list(range(len(covs) - 1, -1, -1))  # smallest p at top
         colors = [figstyle.ACCENT if p < 0.05 else figstyle.REF for p in pvals]
         n_fail = sum(p < 0.05 for p in pvals)
 
-        fig, ax = plt.subplots(figsize=(6.4, 4.2))
+        fig, ax = plt.subplots(figsize=(4.8, 3.3))
         ax.hlines(ypos, 0, pvals, color=colors, linewidth=2.0, alpha=0.75, zorder=2)
         ax.scatter(pvals, ypos, c=colors, s=62, zorder=3,
                    edgecolor="white", linewidth=0.6)
@@ -206,12 +255,12 @@ def main() -> int:
         figstyle.legend_outside(ax, handles=handles)
         fig.savefig(OUT_DIAG_PNG)
         plt.close("all")
-        print(f" Saved {OUT_DIAG_PNG} (lollipop; {n_fail} of {len(covs)} fail PH)",
+        print(f"✓ Saved {OUT_DIAG_PNG} (lollipop; {n_fail} of {len(covs)} fail PH)",
               flush=True)
     except Exception as e:
-        print(f" Schoenfeld plot failed: {e}", flush=True)
+        print(f"⚠ Schoenfeld plot failed: {e}", flush=True)
 
-
+    # ---- Save CSV ----
     out_rows = []
     for cov in summary.index:
         out_rows.append({
@@ -230,15 +279,15 @@ def main() -> int:
         w.writeheader()
         for r in out_rows:
             w.writerow(r)
-    print(f"\n Saved {OUT_CSV}", flush=True)
+    print(f"\n✓ Saved {OUT_CSV}", flush=True)
 
-
+    # ---- Markdown summary ----
     lines = [
-        "# — Cox PH on time-to-first-provenance",
+        "# Task 5 Step 5.3 — Cox PH on time-to-first-provenance",
         "",
         f"**Date**: 2026-05-18  ",
         f"**Sample**: {len(sd)} packages (events={sd['event'].sum()}, censored={(1-sd['event']).sum()})  ",
-        f"**Window**: {ORIGIN.date()}  {CENSOR.date()} (max duration {MAX_DURATION} days)  ",
+        f"**Window**: {ORIGIN.date()} → {CENSOR.date()} (max duration {MAX_DURATION} days)  ",
         f"**Model**: Cox PH with robust SE, lifelines CoxPHFitter  ",
         f"**Concordance index**: {cph.concordance_index_:.4f}",
         "",
@@ -250,7 +299,7 @@ def main() -> int:
     for r in out_rows:
         sf_p = f"{r['schoenfeld_p']:.3f}" if r['schoenfeld_p'] is not None else "—"
         sig = "***" if r["p"] < 0.01 else ("**" if r["p"] < 0.05 else ("*" if r["p"] < 0.10 else ""))
-        ph_flag = " " if r['schoenfeld_p'] is not None and r['schoenfeld_p'] < 0.05 else ""
+        ph_flag = " ⚠" if r['schoenfeld_p'] is not None and r['schoenfeld_p'] < 0.05 else ""
         lines.append(
             f"| `{r['covariate']}` | {r['HR']:.3f}{sig} | "
             f"[{r['HR_ci_low']:.3f}, {r['HR_ci_high']:.3f}] | {r['p']:.4f} | "
@@ -258,36 +307,36 @@ def main() -> int:
         )
 
     ph_verdict = "PASS (all covariates p > 0.05)" if global_p is not None and global_p > 0.05 else (
-        f" FAIL (min covariate p = {global_p:.3f})  PH assumption violated for at least one covariate"
+        f"⚠ FAIL (min covariate p = {global_p:.3f}) → PH assumption violated for at least one covariate"
     ) if global_p is not None else "n/a"
 
     lines += ["",
               "## Schoenfeld residuals PH test (MANDATORY diagnostic)",
               "",
               f"- Global verdict: **{ph_verdict}**",
-              "- Per-covariate Schoenfeld p-values in last column of table above (`` if p<0.05)",
+              "- Per-covariate Schoenfeld p-values in last column of table above (`⚠` if p<0.05)",
               "",
               "## Construct caveats (carried)",
               "",
               "- Tier source = deps.dev snapshot 2026-05-05 (PRIMARY frame)",
-              "- 62 packages excluded (missing-dd) — see strata-shift report",
+              "- 62 packages excluded (missing-dd) — see Task 3 strata-shift report",
               "- Class C / E construct caveats apply for downstream interpretation",
               "- Causal interpretation bounded to association unless PH assumption holds AND no unmeasured confounding",
               "",
               "## Headline interpretation",
               "",
-              "HR > 1  covariate  associates with FASTER first-provenance adoption.",
-              "HR < 1  slower / lower hazard.",
+              "HR > 1 → covariate ↑ associates with FASTER first-provenance adoption.",
+              "HR < 1 → slower / lower hazard.",
               "Significant HRs:",
               ""]
     for r in out_rows:
         if r["p"] < 0.05:
             direction = "FASTER" if r["HR"] > 1 else "SLOWER"
             lines.append(f"- `{r['covariate']}`: HR={r['HR']:.3f} [{r['HR_ci_low']:.3f}, {r['HR_ci_high']:.3f}] "
-                         f" {direction} (p={r['p']:.4f})")
+                         f"→ {direction} (p={r['p']:.4f})")
 
     OUT_MD.write_text("\n".join(lines) + "\n")
-    print(f" Saved {OUT_MD}", flush=True)
+    print(f"✓ Saved {OUT_MD}", flush=True)
     return 0
 
 

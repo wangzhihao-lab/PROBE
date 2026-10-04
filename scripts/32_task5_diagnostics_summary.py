@@ -1,3 +1,21 @@
+"""
+Task 5 Round 1 revision — machine-readable diagnostic summary.
+
+Per methodologist + PI Round 1: existing data/*.csv files don't surface all
+mandatory diagnostics. This script reads the 4 model artifacts + the placebo
+artifact and emits a single JSON file covering:
+  - ITS: per-tier β2/CI/p, β3/CI/p, DW, LB min-p
+  - DiD: β3 main + γ3 pre-trend coefficient + CI + p
+  - Cox: n_packages, events, censored, concordance, global Schoenfeld p,
+         failing covariate list (Schoenfeld p < 0.05)
+  - Logistic: n_versions, n_packages, AUC + 95% CI, Brier, HL χ² + p,
+              pseudo-R²
+  - ITS placebo: 3 cutoffs with β2/CI/p
+
+Output: data/task_5_diagnostics_summary.json
+
+Run: conda run --no-capture-output -n stage2c python scripts/32_task5_diagnostics_summary.py
+"""
 from __future__ import annotations
 
 import csv
@@ -63,6 +81,8 @@ def its_placebo() -> dict:
 
 
 def did() -> dict:
+    """Re-derive DiD numbers + parallel-trends γ3 by re-running the model.
+    The CSV in data/did_results.csv lacks γ3/CI; we re-run to capture both."""
     from datetime import date
     import statsmodels.api as sm
 
@@ -74,7 +94,7 @@ def did() -> dict:
     df["rate_pp"] = df["rate"].astype(float) * 100
     df["t"] = (df["week_start_dt"] - df["week_start_dt"].min()).dt.days // 7
 
-
+    # Main DiD
     df["post_x_top"] = df["post"] * df["top"]
     X = sm.add_constant(df[["post", "top", "post_x_top"]])
     fit = sm.OLS(df["rate_pp"].values, X.values).fit(cov_type="HC1")
@@ -90,7 +110,7 @@ def did() -> dict:
         "n_clusters": 2,
     }
 
-
+    # Parallel-trends γ3
     df_pre = df[df["post"] == 0].copy()
     df_pre["t_x_top"] = df_pre["t"] * df_pre["top"]
     X_pre = sm.add_constant(df_pre[["t", "top", "t_x_top"]])
@@ -105,7 +125,7 @@ def did() -> dict:
 
 
 def cox() -> dict:
-
+    # Re-derive event counts + concordance from the survival data + CSV.
     out = {"per_covariate": []}
     failing = []
     with (DATA_DIR / "cox_results.csv").open() as f:
@@ -122,7 +142,7 @@ def cox() -> dict:
             out["per_covariate"].append(entry)
             if entry["ph_fail"]:
                 failing.append(r["covariate"])
-
+    # Re-derive n / events / censored / concordance from the survival data
     import importlib.util
     spec = importlib.util.spec_from_file_location(
         "cox_mod", Path(__file__).parent / "29_cox_time_to_provenance.py")
@@ -148,7 +168,7 @@ def cox() -> dict:
 
 
 def logistic() -> dict:
-
+    # Re-fit to capture AUC/HL diagnostics in a single audit pass.
     from datetime import date
     import statsmodels.api as sm
     from sklearn.metrics import brier_score_loss, roc_auc_score
@@ -197,7 +217,7 @@ def logistic() -> dict:
     auc = float(roc_auc_score(df["y"].values, p_hat))
     brier = float(brier_score_loss(df["y"].values, p_hat))
 
-
+    # Bootstrap AUC CI
     rng = np.random.default_rng(42)
     n = len(df)
     boot = []
@@ -210,7 +230,7 @@ def logistic() -> dict:
     boot = np.array(sorted(boot))
     auc_lo, auc_hi = float(boot[5]), float(boot[-6])
 
-
+    # HL
     tmp = pd.DataFrame({"y": df["y"].values, "p": p_hat.values})
     tmp["dec"] = pd.qcut(tmp["p"], q=10, duplicates="drop", labels=False)
     g = tmp.groupby("dec").agg(n=("y", "size"), obs=("y", "sum"), exp=("p", "sum"))
@@ -235,9 +255,9 @@ def logistic() -> dict:
 
 def main() -> int:
     summary = {
-        "task": "Task 5 (association analysis; demoted from causal per review)",
-        "round": "1.5",
-        "tier_frame": "deps.dev-tier PRIMARY (per )",
+        "task": "Task 5 (association analysis; demoted from causal per methodologist+pi Round 1)",
+        "round": "1.5 (Round 1 revision applied)",
+        "tier_frame": "deps.dev-tier PRIMARY (per Task 4 Round 3)",
         "ITS": its(),
         "ITS_placebo": its_placebo(),
         "DiD": did(),
@@ -245,9 +265,9 @@ def main() -> int:
         "Logistic": logistic(),
     }
     OUT_JSON.write_text(json.dumps(summary, indent=2, default=str))
-    print(f" Saved {OUT_JSON}", flush=True)
+    print(f"✓ Saved {OUT_JSON}", flush=True)
 
-
+    # Print critical re-derived values for verification
     print(f"\n=== Re-derived for audit ===", flush=True)
     print(f"DiD β3: {summary['DiD']['β3_did_pp']:+.4f}  γ3: {summary['DiD']['γ3_pre_trend_pp_per_week']:+.4f}  PT verdict: {summary['DiD']['parallel_trends_verdict']}", flush=True)
     print(f"Cox n={summary['Cox']['n_packages']}, events={summary['Cox']['events']}, censored={summary['Cox']['censored']}, concordance={summary['Cox']['concordance_index']:.4f}", flush=True)

@@ -1,3 +1,32 @@
+"""
+Task 5 Step 5.2 — DiD: top tier (treatment) vs tail tier (control).
+
+Setup (deps.dev-tier primary):
+  Treatment group: top tier (DPC > 500)        — most-depended-on packages
+  Control group  : tail tier (DPC ≤ 10)        — least-depended-on packages
+  Pre period     : 2025-08-01 .. 2025-12-07 (week_start < 2025-12-08)
+  Post period    : 2025-12-08 .. 2026-05-10
+  Outcome        : weekly attestation rate (%)
+
+Model:
+  rate_it = α + β1·post_t + β2·top_i + β3·(post_t × top_i) + ε_it
+  β3 = DiD estimate
+
+MANDATORY diagnostics (per methodologist AGENTS.md):
+  - parallel-trends test: F-test for joint significance of pre-period
+    week-level coefficients in event-study form (β_pre,k = 0 for all k < 0)
+  - visual diagnostic: event-study plot with pre-trend coefficients shown
+
+Cluster-robust SE at tier level (only 2 clusters → use HAC + bootstrap CI optional);
+fall back to OLS heteroskedasticity-robust HC1 + acknowledge low-cluster cost.
+
+Output:
+  data/did_results.csv
+  reports/task_5_did.md
+  paper/figures/did_event_study.png
+
+Run: conda run --no-capture-output -n stage2c python scripts/28_did_top_vs_tail.py
+"""
 from __future__ import annotations
 
 import csv
@@ -37,7 +66,7 @@ def main() -> int:
     df["top"] = (df["tier"] == "top").astype(int)
     df["rate_pp"] = df["rate"].astype(float) * 100
     df["t"] = (df["week_start_dt"] - df["week_start_dt"].min()).dt.days // 7
-
+    # Center t at deadline week so β2_event reads as "weeks since deadline"
     deadline_t = df.loc[df["post"] == 1, "t"].min()
     df["event_week"] = df["t"] - deadline_t
     df = df.sort_values(["tier", "t"]).reset_index(drop=True)
@@ -46,7 +75,7 @@ def main() -> int:
     print(f"Pre weeks: {df.loc[df['post']==0, 'week_start'].nunique()}; "
           f"Post weeks: {df.loc[df['post']==1, 'week_start'].nunique()}", flush=True)
 
-
+    # ---- DiD model: rate = α + β1·post + β2·top + β3·(post*top) ----
     df["post_x_top"] = df["post"] * df["top"]
     X = df[["post", "top", "post_x_top"]].copy()
     X = sm.add_constant(X)
@@ -65,20 +94,22 @@ def main() -> int:
     print(f"\nDiD β3 (interaction) = {did_est:+.2f} pp  "
           f"[{did_ci_lo:+.2f}, {did_ci_hi:+.2f}]  p={did_p:.4f}", flush=True)
 
-
+    # ---- Pre-period parallel-trends test (parsimonious; avoids rank deficiency) ----
+    # In PRE period only, fit: rate = γ0 + γ1·t + γ2·top + γ3·(t × top) + ε
+    # PT test: γ3 = 0 (no differential pre-period slope).
     df_pre = df[df["post"] == 0].copy()
     df_pre["t_x_top"] = df_pre["t"] * df_pre["top"]
     X_pre = df_pre[["t", "top", "t_x_top"]].copy()
     X_pre = sm.add_constant(X_pre)
     fit_pre = sm.OLS(df_pre["rate_pp"].values, X_pre.values).fit(cov_type="HC1")
-    pt_coef = fit_pre.params[3]
+    pt_coef = fit_pre.params[3]   # γ3
     pt_se = fit_pre.bse[3]
     pt_p = float(fit_pre.pvalues[3])
     pt_t = float(fit_pre.tvalues[3])
-    pt_f = pt_t ** 2
+    pt_f = pt_t ** 2  # equivalent to F-test on single restriction
     pt_ci_lo, pt_ci_hi = fit_pre.conf_int(alpha=0.05)[3][0], fit_pre.conf_int(alpha=0.05)[3][1]
 
-
+    # Event-study coefficients for visualization (per actual event_week; OLS with HC1 — no F-test)
     df_es = df.copy()
     event_weeks_sorted = sorted(df_es["event_week"].unique())
     ref_week = -1
@@ -88,7 +119,7 @@ def main() -> int:
             es_coefs.append({"event_week": ew, "beta": 0.0, "se": 0.0,
                              "ci_lo": 0.0, "ci_hi": 0.0, "p": np.nan})
             continue
-
+        # gap-from-ref: rate(top, ew) − rate(tail, ew) − [rate(top, ref) − rate(tail, ref)]
         gap_ew = (df_es.loc[(df_es["event_week"] == ew) & (df_es["top"] == 1), "rate_pp"].mean()
                   - df_es.loc[(df_es["event_week"] == ew) & (df_es["top"] == 0), "rate_pp"].mean())
         gap_ref = (df_es.loc[(df_es["event_week"] == ref_week) & (df_es["top"] == 1), "rate_pp"].mean()
@@ -100,11 +131,11 @@ def main() -> int:
     es_coefs_df = pd.DataFrame(es_coefs).sort_values("event_week").reset_index(drop=True)
 
     pt_verdict = "PASS (p > 0.05)" if pt_p is not None and pt_p > 0.05 else (
-        f" FAIL (p={pt_p:.3f})" if pt_p is not None else "n/a"
+        f"⚠ FAIL (p={pt_p:.3f})" if pt_p is not None else "n/a"
     )
     print(f"Parallel-trends F-test: F={pt_f}, p={pt_p:.4f}  {pt_verdict}", flush=True)
 
-
+    # ---- Save results CSV ----
     with OUT_CSV.open("w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["metric", "value"])
@@ -119,11 +150,11 @@ def main() -> int:
         w.writerow(["parallel_trends_p", pt_p if pt_p is not None else ""])
         w.writerow(["n_pre_weeks", int((df["post"] == 0).sum() / 2)])
         w.writerow(["n_post_weeks", int((df["post"] == 1).sum() / 2)])
-    print(f" Saved {OUT_CSV}", flush=True)
+    print(f"✓ Saved {OUT_CSV}", flush=True)
 
-
+    # ---- Markdown summary ----
     lines = [
-        "# — DiD top tier vs tail tier",
+        "# Task 5 Step 5.2 — DiD top tier vs tail tier",
         "",
         f"**Date**: 2026-05-18  ",
         f"**Source**: `data/rq1_weekly_attestation_rate_depsdev.csv` (deps.dev-tier PRIMARY)  ",
@@ -158,19 +189,19 @@ def main() -> int:
         "",
         "## Cluster-count caveat",
         "",
-        "Only 2 clusters (top + tail)  wild-cluster bootstrap inference is preferred but not feasible at 2 clusters. We report HC1 heteroskedasticity-robust SE; this likely understates uncertainty. The reviewer should treat the DiD estimate as a descriptive contrast pending an alternative inference scheme.",
+        "Only 2 clusters (top + tail) → wild-cluster bootstrap inference is preferred but not feasible at 2 clusters. We report HC1 heteroskedasticity-robust SE; this likely understates uncertainty. The methodologist should treat the DiD estimate as a descriptive contrast pending an alternative inference scheme.",
         "",
         "## Construct caveats (carried)",
         "",
         "- Tier source = deps.dev snapshot 2026-05-05",
         "- Causal interpretation bounded to association unless PT test passes AND inference is honest",
-        "- C/E construct caveats from apply when class-level interpretation surfaces",
+        "- C/E construct caveats from Task 2 apply when class-level interpretation surfaces",
     ]
     OUT_MD.write_text("\n".join(lines) + "\n")
-    print(f" Saved {OUT_MD}", flush=True)
+    print(f"✓ Saved {OUT_MD}", flush=True)
 
-
-    fig, ax = plt.subplots(figsize=(10, 5))
+    # ---- Event-study figure (no CIs because per-week sample is 2; show point estimates only) ----
+    fig, ax = plt.subplots(figsize=(5.6, 2.9))
     ax.plot(es_coefs_df["event_week"], es_coefs_df["beta"],
             "o-", color=figstyle.ACCENT, markersize=4, linewidth=1.2,
             label="Event-study gap (top − tail, rel. to ew=-1)")
@@ -183,7 +214,7 @@ def main() -> int:
     fig.tight_layout()
     fig.savefig(OUT_PNG, bbox_inches="tight")
     plt.close(fig)
-    print(f" Saved {OUT_PNG}", flush=True)
+    print(f"✓ Saved {OUT_PNG}", flush=True)
     return 0
 
 

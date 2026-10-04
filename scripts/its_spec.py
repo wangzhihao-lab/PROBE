@@ -1,3 +1,34 @@
+"""Canonical ITS specification (Batch-8, 2026-07-11) — shared by all ITS scripts.
+
+One function, one estimand, used verbatim by scripts/27, 34, 37, 46 so the
+weekly model, the monthly model, the window grid, the placebo grid, and the
+all-cutoff rank scan can never diverge in time-axis convention again.
+
+Estimand: the ACTUAL-DATE discontinuity. The model is
+
+    rate_t = b0 + b1*(t - c) + b2*post_t + b3*(t - c)*post_t + e_t
+
+where t is the TRUE CALENDAR position of each period (weeks or months elapsed
+since the series origin — gaps are preserved, never re-indexed away), c is the
+calendar position of the cutoff DATE on the same axis, and post_t = 1 iff the
+period starts on/after the cutoff date. Periods that straddle the cutoff
+(start < cutoff < next start) are excluded, so every retained period is
+cleanly pre or post; the excluded period leaves a real gap in t.
+
+Under this parameterization b2 is the vertical distance between the post and
+pre fitted lines evaluated AT the cutoff date, and b3 is the slope change.
+This replaces the Batch-7 interim spec, which dropped the straddling period
+and then re-indexed with arange(), silently compressing the calendar axis by
+one step at the seam (ANOMALY_REPORT.md, Anomaly 9).
+
+SEs: Newey-West HAC, maxlags = ceil(n^0.25). Diagnostics: Durbin-Watson +
+Ljung-Box (as in the Task 5 spec). b2 AND b3 are both returned with 95% CIs
+so placebo/rank analyses can rank either coefficient.
+
+This module fits; it does not read files. Anti-causal firewall applies to
+every consumer: b2/b3 are descriptive trajectory coefficients, not causal
+effects of any cutoff.
+"""
 from __future__ import annotations
 
 import calendar
@@ -13,6 +44,7 @@ _DATE_MAX = date.max
 
 
 def _calendar_t(starts: list[date], granularity: str) -> np.ndarray:
+    """Calendar position of each period start (weeks or months since origin)."""
     o = starts[0]
     if granularity == "W":
         return np.array([(d - o).days / 7.0 for d in starts])
@@ -23,6 +55,7 @@ def _calendar_t(starts: list[date], granularity: str) -> np.ndarray:
 
 
 def _cutoff_c(origin: date, cutoff: date, granularity: str) -> float:
+    """Calendar position of the cutoff date on the same axis as _calendar_t."""
     if granularity == "W":
         return (cutoff - origin).days / 7.0
     if granularity == "MS":
@@ -35,6 +68,20 @@ def _cutoff_c(origin: date, cutoff: date, granularity: str) -> float:
 def fit_its(sub: pd.DataFrame, cutoff, *, period_col: str = "period_start",
             rate_col: str = "rate", granularity: str = "W",
             min_pre: int = 2, min_post: int = 2) -> Optional[dict]:
+    """Fit the canonical cutoff-date-centered ITS on one tier's period series.
+
+    Args:
+        sub: rows for ONE tier; needs period_col (datetime-like) and rate_col
+            (fraction in [0, 1]; multiplied by 100 to percentage points).
+        cutoff: cutoff date (datetime/Timestamp/date).
+        granularity: "W" (weekly panel) or "MS" (month-start panel).
+        min_pre / min_post: admissibility floor on RETAINED clean periods.
+
+    Returns:
+        dict of coefficients/CIs/diagnostics (keys below), or None if the
+        partition is inadmissible. 'sub_df' carries x/post/t columns and
+        'fit_obj' the statsmodels results object, for plotting.
+    """
     sub = sub.sort_values(period_col).reset_index(drop=True).copy()
     if len(sub) < min_pre + min_post:
         return None
@@ -55,7 +102,7 @@ def fit_its(sub: pd.DataFrame, cutoff, *, period_col: str = "period_start",
         return None
 
     x = t - c
-    y = sub[rate_col].astype(float).values * 100
+    y = sub[rate_col].astype(float).values * 100  # percentage points
     X = sm.add_constant(np.column_stack([x, post, x * post]))
     n = len(sub)
     lag = max(1, int(np.ceil(n ** 0.25)))

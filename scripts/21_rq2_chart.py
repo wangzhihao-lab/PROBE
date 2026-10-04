@@ -1,3 +1,22 @@
+"""
+Task 4 Step 4.4b — RQ2 chart: A-F class distribution by tier.
+
+Uses pubfig 0.3.0 for publication-grade rendering.
+
+Reads: data/classification.csv
+Outputs:
+  paper/figures/rq2_classification.png
+  paper/figures/rq2_classification.pdf
+
+Chart design:
+- Grouped bar chart: x-axis = tier (top/mid/tail), groups = class (A/B/C/D/E)
+- F excluded from the analytic A-E pool per kickoff
+- Y-axis: % of tier's A-E pool
+- Caveat in caption: C = possible external CI publish path; E = no visible
+  package publish workflow in inspected sources (NOT asserted manual publish)
+
+Run: conda run --no-capture-output -n stage2c python scripts/21_rq2_chart.py
+"""
 from __future__ import annotations
 
 import csv
@@ -32,8 +51,8 @@ def main() -> int:
 
     classes = list("ABCDE")
     tiers = ["top", "mid", "tail"]
-
-
+    # pubfig.bar expects data shape (n_categories, n_series) for grouped — i.e., one row per
+    # category on x-axis (tier) and one column per series in legend (class).
     data = np.zeros((len(tiers), len(classes)))
     for i, t in enumerate(tiers):
         total_ae = sum(tier_class[t][c] for c in classes)
@@ -42,7 +61,7 @@ def main() -> int:
         for j, c in enumerate(classes):
             data[i, j] = tier_class[t][c] / total_ae * 100
 
-
+    # Short labels for legend (full descriptions in caption)
     class_labels = ["A", "B", "C", "D", "E"]
 
     fig = pubfig.bar(
@@ -63,7 +82,7 @@ def main() -> int:
     pdf_paths = pubfig.save_figure(fig, str(PAPER_DIR / "rq2_classification.pdf"))
     plt.close(fig)
     for p in png_paths + pdf_paths:
-        print(f"   {p}", flush=True)
+        print(f"  ✓ {p}", flush=True)
     return 0
 
 

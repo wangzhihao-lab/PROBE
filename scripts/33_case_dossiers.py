@@ -1,3 +1,22 @@
+"""
+Task 6 Step 6.1 — Build per-case data dossiers.
+
+For each of the 5 selected packages (axios, lodash, typescript, webpack,
+@types/sinon as DefinitelyTyped representative), assemble:
+  - Tier under ecosyste.ms vs deps.dev (with shift status)
+  - Versions in 2025-08-01..2026-05-10 window with has_attestation
+  - Cached workflow YAMLs in data/workflows_raw/
+  - Classification + reason from data/classification.csv (only for the
+    500-row non-prov sample — most cases won't be sampled)
+  - influence_metrics.csv fields (downloads, stars, dependabot, etc.)
+  - First-attested version time / event status (from Cox dataset prep)
+
+Outputs:
+  data/task_6_case_dossiers.json  (machine-readable)
+  reports/task_6_case_dossiers.md (human-readable raw dossier)
+
+Run: conda run --no-capture-output -n stage2c python scripts/33_case_dossiers.py
+"""
 from __future__ import annotations
 
 import csv
@@ -44,7 +63,7 @@ def load_data():
 def build_case(pkg, packages, versions, cls, inf, depsdev):
     out = {"package": pkg}
 
-
+    # Sampling-frame meta
     p_row = packages[packages["name"] == pkg]
     if not p_row.empty:
         out["in_3000_sample"] = True
@@ -56,7 +75,7 @@ def build_case(pkg, packages, versions, cls, inf, depsdev):
     else:
         out["in_3000_sample"] = False
 
-
+    # deps.dev tier
     dd_row = depsdev[depsdev["name"] == pkg]
     if not dd_row.empty:
         out["dd_dependents"] = int(dd_row["dependents_count"].iloc[0])
@@ -65,12 +84,12 @@ def build_case(pkg, packages, versions, cls, inf, depsdev):
         out["dd_dependents"] = None
         out["dd_tier"] = "missing"
 
-
+    # Tier-shift status
     out["tier_shift"] = "n/a"
     if out["in_3000_sample"] and out["dd_tier"] is not None:
-        out["tier_shift"] = "same" if out["eco_tier"] == out["dd_tier"] else f"{out['eco_tier']}{out['dd_tier']}"
+        out["tier_shift"] = "same" if out["eco_tier"] == out["dd_tier"] else f"{out['eco_tier']}→{out['dd_tier']}"
 
-
+    # Influence metrics
     inf_row = inf[inf["package"] == pkg]
     if not inf_row.empty:
         for fld in ["weekly_downloads_avg", "github_stars", "github_forks",
@@ -80,7 +99,7 @@ def build_case(pkg, packages, versions, cls, inf, depsdev):
             v = inf_row[fld].iloc[0]
             out[fld] = None if pd.isna(v) else (str(v) if isinstance(v, (str, bool)) else float(v))
 
-
+    # Versions in window
     pv = versions[versions["package"] == pkg].sort_values("published_at")
     pv_in_window = pv[(pv["published_at"] >= pd.Timestamp("2025-08-01", tz="UTC")) &
                        (pv["published_at"] <= pd.Timestamp("2026-05-10 23:59:59", tz="UTC"))]
@@ -89,18 +108,18 @@ def build_case(pkg, packages, versions, cls, inf, depsdev):
     out["n_attested_versions_in_window"] = int(len(pv_in_window_attested))
     out["attestation_rate_in_window"] = (out["n_attested_versions_in_window"] / out["n_versions_in_window"]
                                           if out["n_versions_in_window"] else None)
-
+    # First attested version
     first_att = pv[pv["has_attestation"].astype(str).str.lower() == "true"]
     out["first_attested_version"] = first_att.iloc[0]["version"] if not first_att.empty else None
     out["first_attested_at"] = (str(first_att.iloc[0]["published_at"])
                                 if not first_att.empty else None)
-
+    # Last version in window
     if not pv_in_window.empty:
         out["last_version_in_window"] = pv_in_window.iloc[-1]["version"]
         out["last_version_published_at"] = str(pv_in_window.iloc[-1]["published_at"])
         out["last_version_attested"] = bool(pv_in_window.iloc[-1]["has_attestation"])
 
-
+    # Pre/post deadline split
     pre = pv_in_window[pv_in_window["published_at"] < DEADLINE]
     post = pv_in_window[pv_in_window["published_at"] >= DEADLINE]
     out["pre_deadline_n"] = int(len(pre))
@@ -108,7 +127,7 @@ def build_case(pkg, packages, versions, cls, inf, depsdev):
     out["post_deadline_n"] = int(len(post))
     out["post_deadline_attested"] = int((post["has_attestation"].astype(str).str.lower() == "true").sum())
 
-
+    # Sample membership: is THIS package in the 500-row non-prov sample?
     cls_rows = cls[cls["package"] == pkg]
     out["in_500_classification_sample"] = bool(len(cls_rows) > 0)
     if not cls_rows.empty:
@@ -120,7 +139,7 @@ def build_case(pkg, packages, versions, cls, inf, depsdev):
                 "reason": row["reason"],
             })
 
-
+    # Workflow files cached
     repo_url = out.get("repo_url") or ""
     if "github.com" in repo_url:
         tail = repo_url.split("github.com/")[-1]
@@ -145,11 +164,11 @@ def main() -> int:
     dossiers = [build_case(p, packages, versions, cls, inf, depsdev) for p in CASES]
     payload = {"task": "Task 6 — case dossiers", "cases": dossiers}
     OUT_JSON.write_text(json.dumps(payload, indent=2, default=str))
-    print(f" Saved {OUT_JSON}", flush=True)
+    print(f"✓ Saved {OUT_JSON}", flush=True)
 
-
-    lines = ["# case dossiers (raw)", "",
-             "Auto-generated by `scripts/33_case_dossiers.py` for the 5 cases:",
+    # Markdown summary
+    lines = ["# Task 6 case dossiers (raw)", "",
+             "Auto-generated by `scripts/33_case_dossiers.py` for the 5 Task 6 cases:",
              "axios, lodash, typescript, webpack, @types/sinon."]
 
     for d in dossiers:
@@ -165,7 +184,7 @@ def main() -> int:
         if "github_owner" in d:
             lines.append(f"- GitHub: {d['github_owner']}/{d['github_repo']}  "
                          f"(owner_type={d.get('github_owner_type', 'unknown')})")
-
+        # Influence metrics
         if "weekly_downloads_avg" in d:
             lines.append(f"- Weekly downloads: {d['weekly_downloads_avg']:,.0f}")
         if "github_stars" in d and d['github_stars']:
@@ -183,14 +202,14 @@ def main() -> int:
                          f"{d.get('is_scoped_package')}")
 
         lines.append("")
-        lines.append("### Versions in window 2025-08-01  2026-05-10")
+        lines.append("### Versions in window 2025-08-01 → 2026-05-10")
         lines.append(f"- Total versions in window: {d['n_versions_in_window']}")
         lines.append(f"- Attested in window: {d['n_attested_versions_in_window']}")
         if d.get('attestation_rate_in_window') is not None:
             lines.append(f"- Attestation rate in window: {d['attestation_rate_in_window']*100:.1f}%")
-        lines.append(f"- Pre-deadline (08-01  12-08): {d['pre_deadline_n']} versions, "
+        lines.append(f"- Pre-deadline (08-01 → 12-08): {d['pre_deadline_n']} versions, "
                      f"{d['pre_deadline_attested']} attested")
-        lines.append(f"- Post-deadline (12-09  05-10): {d['post_deadline_n']} versions, "
+        lines.append(f"- Post-deadline (12-09 → 05-10): {d['post_deadline_n']} versions, "
                      f"{d['post_deadline_attested']} attested")
         if d.get('first_attested_version'):
             lines.append(f"- First attested version (ever): {d['first_attested_version']} "
@@ -205,7 +224,7 @@ def main() -> int:
         lines.append("### Classification (500-sample membership)")
         if d.get('in_500_classification_sample'):
             for cv in d['classified_versions']:
-                lines.append(f"- {cv['version']}  class **{cv['class']}** — {cv['reason']}")
+                lines.append(f"- {cv['version']} → class **{cv['class']}** — {cv['reason']}")
         else:
             lines.append("- NOT in the 500-row non-prov classification sample.")
 
@@ -213,19 +232,19 @@ def main() -> int:
         lines.append("### Cached GHA workflows")
         if "cached_workflows" in d and d["cached_workflows"]:
             for wf in d["cached_workflows"]:
-
+                # Display short name (drop owner__repo__ prefix)
                 short = wf.split("__", 2)[-1] if "__" in wf else wf
                 lines.append(f"- `{short}`")
         else:
             lines.append("- (no cached workflows)")
 
     OUT_MD.write_text("\n".join(lines) + "\n")
-    print(f" Saved {OUT_MD}", flush=True)
+    print(f"✓ Saved {OUT_MD}", flush=True)
 
-
+    # Console summary
     print(f"\n=== Case summary ===", flush=True)
     for d in dossiers:
-        in_sample = "" if d.get('in_3000_sample') else ""
+        in_sample = "✓" if d.get('in_3000_sample') else "✗"
         eco = d.get('eco_tier', '?')
         dd = d.get('dd_tier', '?')
         n_in = d.get('n_versions_in_window', 0)

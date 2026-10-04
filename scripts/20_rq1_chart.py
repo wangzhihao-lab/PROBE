@@ -1,3 +1,24 @@
+"""
+Task 4 Step 4.4a — RQ1 chart: monthly attestation rate timeline.
+
+Uses pubfig 0.3.0 for publication-grade rendering.
+
+Reads: data/rq1_monthly_attestation_rate.csv
+Outputs:
+  paper/figures/rq1_timeline.png
+  paper/figures/rq1_timeline.pdf
+
+Chart design:
+- 4 line series: tier='all' (bold), top, mid, tail
+- X-axis: month (2025-08 to 2026-05)
+- Y-axis: attestation rate (%)
+- Vertical dashed line at 2025-12 marking npm Dec-9 deadline
+- Title: "Monthly provenance attestation rate, 2025-08 – 2026-05"
+- Caveat in caption: rates from 3000-package sample (Task 1); tier from
+  ecosyste.ms current-state metadata pending BQ strata-shift check
+
+Run: conda run --no-capture-output -n stage2c python scripts/20_rq1_chart.py
+"""
 from __future__ import annotations
 
 import csv
@@ -25,7 +46,7 @@ def main() -> int:
     series_order = ["all", "top", "mid", "tail"]
     series_names = ["Overall", "Top tier (DPC>500)", "Mid tier (10<DPC≤500)", "Tail tier (DPC≤10)"]
 
-
+    # pubfig.line expects data shape (n_points, n_series) for 2D input
     data = np.zeros((len(months), len(series_order)))
     for i, t in enumerate(series_order):
         m_to_r = dict(series[t])
@@ -50,7 +71,7 @@ def main() -> int:
     ax = fig.axes[0]
     ax.set_xticks(x)
     ax.set_xticklabels(months, rotation=45, ha="right")
-
+    # Mark Dec-9 deadline (2025-12 = index 4 in series); short annotation outside main band
     if "2025-12" in months:
         deadline_x = months.index("2025-12")
         ax.axvline(deadline_x, linestyle="--", color="#a02525", alpha=0.5, linewidth=1.0)
@@ -61,7 +82,7 @@ def main() -> int:
     pdf_paths = pubfig.save_figure(fig, str(PAPER_DIR / "rq1_timeline.pdf"))
     plt.close(fig)
     for p in png_paths + pdf_paths:
-        print(f"   {p}", flush=True)
+        print(f"  ✓ {p}", flush=True)
     return 0
 
 

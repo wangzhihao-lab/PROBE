@@ -1,3 +1,23 @@
+"""
+Task 2 Step 2.6 — Prepare the rater-2 handoff package.
+
+Inputs:
+  data/classification.csv          (rater A's 500 labels — leaked field, NOT exposed)
+  data/classification_step21.csv   (repo_url + github_owner + github_repo)
+  data/repo_status.csv             (repo_status, workflow_count)
+  data/workflows_raw/              (cached YAMLs)
+
+Outputs:
+  data/classification_rater2_input.csv   (100 rows; NO class/reason leak)
+    fields: package, version, repo_url, github_owner, github_repo,
+            repo_status, workflow_files
+  data/workflows_for_rater2/<owner>__<repo>__<wf>   (subset YAMLs)
+
+Stratification: 100 sample, stratified by rater A's class, with min 3 per class (or
+all if class smaller). Top up with largest classes to hit 100. RNG seed=42.
+
+Run: conda run --no-capture-output -n stage2c python scripts/08_prepare_rater2.py
+"""
 from __future__ import annotations
 
 import csv
@@ -8,7 +28,7 @@ from collections import defaultdict
 from pathlib import Path
 
 DATA_DIR = Path(__file__).parent.parent / "data"
-RATER1_CSV = DATA_DIR / "classification.csv"
+RATER_A_CSV = DATA_DIR / "classification.csv"
 STEP21_CSV = DATA_DIR / "classification_step21.csv"
 STATUS_CSV = DATA_DIR / "repo_status.csv"
 WORKFLOWS_DIR = DATA_DIR / "workflows_raw"
@@ -21,36 +41,36 @@ RNG = random.Random(42)
 
 
 def main() -> int:
-
-    rater1_class: dict[tuple[str, str], str] = {}
-    with RATER1_CSV.open() as f:
+    # Load rater A's labels (for stratification only — NOT exposed)
+    rater_a_class: dict[tuple[str, str], str] = {}
+    with RATER_A_CSV.open() as f:
         for r in csv.DictReader(f):
-            rater1_class[(r["package"], r["version"])] = r["class"]
-    print(f"Loaded {len(rater1_class)} primary-rater labels", flush=True)
+            rater_a_class[(r["package"], r["version"])] = r["class"]
+    print(f"Loaded {len(rater_a_class)} rater-A labels", flush=True)
 
-
+    # Load step21 for repo metadata
     step21: dict[tuple[str, str], dict] = {}
     with STEP21_CSV.open() as f:
         for r in csv.DictReader(f):
             step21[(r["package"], r["version"])] = r
 
-
+    # Load repo_status
     repo_status: dict[tuple[str, str], dict] = {}
     if STATUS_CSV.exists():
         with STATUS_CSV.open() as f:
             for r in csv.DictReader(f):
                 repo_status[(r["package"], r["version"])] = r
 
-
+    # Bucket by class
     by_class: dict[str, list[tuple[str, str]]] = defaultdict(list)
-    for k, c in rater1_class.items():
+    for k, c in rater_a_class.items():
         by_class[c].append(k)
 
     print(f"\n=== Class distribution (rater_A) ===", flush=True)
     for c, items in sorted(by_class.items()):
         print(f"  {c}: {len(items)}", flush=True)
 
-
+    # Stratified sample with min 3 per class
     sample_keys: list[tuple[str, str]] = []
     available_after_min: dict[str, list[tuple[str, str]]] = {}
     for cls, items in by_class.items():
@@ -61,24 +81,24 @@ def main() -> int:
         available_after_min[cls] = shuffled[take:]
 
     remaining_budget = SAMPLE_SIZE - len(sample_keys)
-
+    # Distribute remaining proportional to original class size (excluding already-taken)
     if remaining_budget > 0:
-
+        # Build flat list weighted; we just round-robin through largest classes
         pool: list[tuple[str, str]] = []
         for cls, items in available_after_min.items():
             pool.extend(items)
         RNG.shuffle(pool)
         sample_keys.extend(pool[:remaining_budget])
 
-
+    # Truncate if over
     if len(sample_keys) > SAMPLE_SIZE:
         sample_keys = sample_keys[:SAMPLE_SIZE]
 
-
+    # Deterministic order
     sample_keys = sorted(set(sample_keys))
     print(f"\nSelected {len(sample_keys)} rows for rater2", flush=True)
 
-
+    # Build output rows + copy workflows
     if OUT_WF_DIR.exists():
         shutil.rmtree(OUT_WF_DIR)
     OUT_WF_DIR.mkdir(parents=True, exist_ok=True)
@@ -91,14 +111,14 @@ def main() -> int:
         owner = s21.get("github_owner", "")
         repo = s21.get("github_repo", "")
 
-
+        # Identify workflows for this repo
         wf_files: list[str] = []
         if owner and repo:
             prefix = f"{owner}__{repo}__"
             for wf_path in WORKFLOWS_DIR.glob(f"{prefix}*"):
                 rel = wf_path.name
                 wf_files.append(rel)
-
+                # Copy to rater2 dir (dedup naturally — same filename in target)
                 target = OUT_WF_DIR / rel
                 if not target.exists():
                     shutil.copy2(wf_path, target)
@@ -120,11 +140,11 @@ def main() -> int:
         w.writeheader()
         for r in out_rows:
             w.writerow(r)
-    print(f"\n Saved {OUT_CSV} ({len(out_rows)} rows; NO class/reason)", flush=True)
-    print(f" Copied {copied} unique workflow YAMLs to {OUT_WF_DIR}", flush=True)
+    print(f"\n✓ Saved {OUT_CSV} ({len(out_rows)} rows; NO class/reason)", flush=True)
+    print(f"✓ Copied {copied} unique workflow YAMLs to {OUT_WF_DIR}", flush=True)
 
-
-    sample_cls = [rater1_class[k] for k in sample_keys]
+    # Report sample class breakdown (audit)
+    sample_cls = [rater_a_class[k] for k in sample_keys]
     print(f"\n=== Sample class breakdown (audit only — not shown to rater2) ===", flush=True)
     seen: dict[str, int] = {}
     for c in sample_cls:

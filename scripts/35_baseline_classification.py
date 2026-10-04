@@ -1,3 +1,35 @@
+"""Task 7 Baseline 2 (B2) — Classification method sensitivity.
+
+Tests robustness of Task 2 A-F class distribution + Task 6 case anchors to
+alternative classification rules. The optional multinomial class-prediction
+model is a NEW Task-7 artifact and is NOT a Task 5 logistic re-run (PI Round 0
+fix carried).
+
+Sub-baselines:
+  B2a — A-F final (reference)
+  B2b — Conservative: keep B only if reason has "(strong-keyword)" AND
+        "id-token scope=job"; otherwise demote to UNCERTAIN. Demote all C
+        to UNCERTAIN (single weak heuristic per Task 2).
+  B2c — Strict binary: per-package adoption rate from versions.csv (attested
+        / total in window); A/B/C/E rows of the 500 sample all map to
+        "non-attested" by construction; comparison is at package-level not
+        version-level.
+  B2d — C/E swap-test: relabel all C as "external-CI hypothesis only" and all
+        E as "publish path not inferable"; report Task 6 case-anchor changes.
+
+Optional B2e: multinomial class-prediction model (class ~ Task 5 covariates)
+  under each rule (kept as a NEW Task-7 artifact; skipped silently if
+  separation/sparsity makes the fit uninformative).
+
+Outputs:
+  data/baselines/task_7_b2_classification_variants.csv
+  data/baselines/task_7_b2_case_anchor_changes.csv
+  data/baselines/task_7_b2_rq2_distribution.csv
+  data/baselines/task_7_b2_classmodel_or_grid.csv   (optional)
+  reports/task_7_baseline_2.md
+
+Run: conda run --no-capture-output -n stage2c python scripts/35_baseline_classification.py
+"""
 from __future__ import annotations
 
 import logging
@@ -30,11 +62,18 @@ OUT_REPORT = REPORTS_DIR / "task_7_baseline_2.md"
 TASK6_CASES = ["axios", "lodash", "typescript", "webpack", "@types/sinon"]
 
 
+# --- variant constructors -----------------------------------------------------
+
 def variant_final(cls: pd.DataFrame) -> pd.Series:
+    """B2a — reference. Returns the per-row class as-is."""
     return cls["class"].astype(str)
 
 
 def variant_conservative(cls: pd.DataFrame) -> pd.Series:
+    """B2b — keep B only if strong-keyword AND job-scope id-token; collapse
+    others to UNCERTAIN. Demote all C to UNCERTAIN (single weak heuristic).
+    A/E/F/D unchanged.
+    """
     out = cls["class"].astype(str).copy()
     reason = cls["reason"].fillna("").astype(str)
     is_b = out == "B"
@@ -47,6 +86,9 @@ def variant_conservative(cls: pd.DataFrame) -> pd.Series:
 
 
 def variant_strict_binary(versions: pd.DataFrame) -> pd.DataFrame:
+    """B2c — per-package binary: any-attested-in-window vs none-attested-in-window.
+    Operates on the FULL 3000-package versions.csv (not just the 500-row sample).
+    """
     v = versions.copy()
     v["has_attestation_int"] = (v["has_attestation"].astype(str).str.lower() == "true").astype(int)
     agg = (v.groupby("package")
@@ -59,14 +101,21 @@ def variant_strict_binary(versions: pd.DataFrame) -> pd.DataFrame:
 
 
 def variant_ce_swap(cls: pd.DataFrame) -> pd.Series:
+    """B2d — relabel C and E. C → 'C_external-CI-hypothesis'; E → 'E_publish-path-uninferable'."""
     out = cls["class"].astype(str).copy()
     out[out == "C"] = "C_external-CI-hypothesis"
     out[out == "E"] = "E_publish-path-uninferable"
     return out
 
 
+# --- optional multinomial class-prediction model -----------------------------
+
 def fit_multinomial_classmodel(cls: pd.DataFrame, inf: pd.DataFrame, variant_name: str
                                 ) -> Optional[pd.DataFrame]:
+    """Fit a multinomial logistic class~covariates model. Returns a DataFrame
+    of ORs (vs reference class). Returns None if the fit is uninformative
+    (sparse class, separation issue, model fails).
+    """
     try:
         from sklearn.linear_model import LogisticRegression
         from sklearn.preprocessing import StandardScaler
@@ -74,7 +123,8 @@ def fit_multinomial_classmodel(cls: pd.DataFrame, inf: pd.DataFrame, variant_nam
         logger.info(f"[{variant_name}] sklearn missing; skipping multinomial model")
         return None
 
-
+    # Build covariates frame at package level (cls is at sampled-version level;
+    # one package can appear multiple times but covariates are at package level)
     base = cls.drop_duplicates(subset="package")[["package", "class"]].rename(
         columns={"class": variant_name})
     df = base.merge(inf, on="package", how="left")
@@ -82,7 +132,7 @@ def fit_multinomial_classmodel(cls: pd.DataFrame, inf: pd.DataFrame, variant_nam
     df["log_downloads"] = np.log1p(df["weekly_downloads_avg"].astype(float))
     df["log_age_days"] = np.log1p(df["package_age_days"].astype(float))
 
-
+    # Build the Task 5 covariate set
     df["owner_org_int"] = (df["github_owner_type"] == "Organization").astype(int)
     for src, dst in [
         ("has_dependabot", "has_dependabot_int"),
@@ -103,7 +153,7 @@ def fit_multinomial_classmodel(cls: pd.DataFrame, inf: pd.DataFrame, variant_nam
         return None
 
     classes, counts = np.unique(df[variant_name], return_counts=True)
-
+    # Drop classes with < 5 obs (sparse)
     keep_classes = classes[counts >= 5]
     df = df[df[variant_name].isin(keep_classes)]
     if df[variant_name].nunique() < 3:
@@ -122,7 +172,7 @@ def fit_multinomial_classmodel(cls: pd.DataFrame, inf: pd.DataFrame, variant_nam
         logger.warning(f"[{variant_name}] fit failed: {e}")
         return None
 
-
+    # sklearn multinomial coefs are per-class; map to OR per unit std change
     rows = []
     for ci, cls_label in enumerate(clf.classes_):
         for fi, fname in enumerate(feats):
@@ -138,7 +188,10 @@ def fit_multinomial_classmodel(cls: pd.DataFrame, inf: pd.DataFrame, variant_nam
     return pd.DataFrame(rows)
 
 
+# --- RQ2 distribution table ---------------------------------------------------
+
 def rq2_distribution(variants_df: pd.DataFrame, depsdev: pd.DataFrame) -> pd.DataFrame:
+    """RQ2 class distribution per variant per tier (deps.dev-tier PRIMARY)."""
     dd_map = dict(zip(depsdev["name"], depsdev["dependents_count"]))
     def dd_tier(n):
         if pd.isna(n): return "missing"
@@ -168,7 +221,10 @@ def rq2_distribution(variants_df: pd.DataFrame, depsdev: pd.DataFrame) -> pd.Dat
     return pd.DataFrame(rows)
 
 
+# --- case anchor changes ------------------------------------------------------
+
 def case_anchor_changes(variants_df: pd.DataFrame) -> pd.DataFrame:
+    """Per Task 6 case, what's its class under each variant?"""
     rows = []
     variant_cols = [c for c in variants_df.columns
                     if c.startswith("class_") or c == "strict_binary"]
@@ -188,16 +244,18 @@ def case_anchor_changes(variants_df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+# --- main ---------------------------------------------------------------------
+
 def write_report(variants_df: pd.DataFrame, rq2_df: pd.DataFrame,
                  cases_df: pd.DataFrame, classmodel_df: Optional[pd.DataFrame]) -> None:
     lines = [
-        "# Baseline 2 — Classification Method Sensitivity",
+        "# Task 7 Baseline 2 — Classification Method Sensitivity",
         "",
         "**Date**: auto-generated 2026-05-18 by `scripts/35_baseline_classification.py`",
-        "**Scope**: B2 tests robustness of A-F class distribution + case "
+        "**Scope**: B2 tests robustness of Task 2 A-F class distribution + Task 6 case "
         "anchors to alternative classification rules. The optional multinomial class-"
-        "prediction model is a NEW Task-7 artifact and NOT a logistic re-run.",
-        "**Framing**: descriptive only; no causal claims.",
+        "prediction model is a NEW Task-7 artifact and NOT a Task 5 logistic re-run.",
+        "**Framing**: descriptive only; no causal claims (Task 5 PI Round 2 mandate carried).",
         "",
         "## B2 variants",
         "",
@@ -206,7 +264,7 @@ def write_report(variants_df: pd.DataFrame, rq2_df: pd.DataFrame,
         "`id-token scope=job`; otherwise demote to UNCERTAIN. Demote all C to UNCERTAIN.",
         "- **B2c — Strict binary** (package-level): per-package any-attested vs none-attested "
         "over versions.csv (full 3000 sample, not the 500-row classification sample)",
-        "- **B2d — C/E swap**: relabel C  `C_external-CI-hypothesis`; E  "
+        "- **B2d — C/E swap**: relabel C → `C_external-CI-hypothesis`; E → "
         "`E_publish-path-uninferable`",
         "",
         "## RQ2 class distribution under each variant (deps.dev-tier PRIMARY)",
@@ -215,7 +273,7 @@ def write_report(variants_df: pd.DataFrame, rq2_df: pd.DataFrame,
     if rq2_df.empty:
         lines.append("- (no rows)")
     else:
-
+        # Pivot for readability: variant × class × dd_tier
         for var in sorted(rq2_df["variant"].unique()):
             sub = rq2_df[rq2_df["variant"] == var].sort_values(["dd_tier", "class"])
             lines += [f"### Variant: `{var}`", "",
@@ -225,8 +283,8 @@ def write_report(variants_df: pd.DataFrame, rq2_df: pd.DataFrame,
                 lines.append(f"| {r['dd_tier']} | {r['class']} | {int(r['n'])} | "
                              f"{100*r['share_in_tier']:.2f}% |")
             lines += [""]
-    lines += ["## case-anchor changes", "",
-              "Each of the 5 cases under each B2 variant:", ""]
+    lines += ["## Task 6 case-anchor changes", "",
+              "Each of the 5 Task 6 cases under each B2 variant:", ""]
     if cases_df.empty:
         lines.append("- (no rows)")
     else:
@@ -238,19 +296,20 @@ def write_report(variants_df: pd.DataFrame, rq2_df: pd.DataFrame,
             else:
                 lines.append(f"| {r['package']} | {r.get('variant','')} | "
                              f"{r.get('labels','')} |")
-    lines += ["", "**Reading**: if a case anchor shifts class label "
-              "across variants, the narrative interpretation must be checked.",
+    lines += ["", "**Reading**: if a Task 6 case anchor shifts class label "
+              "across variants, the Task 6 narrative interpretation must be checked.",
               "Conservative rule may demote some B (OIDC drift) cases to UNCERTAIN; "
               "C/E swap renames labels but does not change the underlying class membership."]
     lines += ["", "## Optional multinomial class-prediction model (NEW Task-7 artifact)", ""]
     if classmodel_df is None or classmodel_df.empty:
-        lines.append("- Skipped: sparse class counts or separation issue.")
+        lines.append("- Skipped: sparse class counts or separation issue (per PI Round 0.5 minor — "
+                     "optional and may be skipped if uninformative).")
     else:
         for var in sorted(classmodel_df["variant"].unique()):
             sub = classmodel_df[classmodel_df["variant"] == var]
             lines += [f"### Variant: `{var}`", "",
                       "**Disclaimer**: This is a NEW Task-7 multinomial model "
-                      "(class ~ covariates), NOT a re-run of the logistic "
+                      "(class ~ Task 5 covariates), NOT a re-run of the Task 5 logistic "
                       "(which predicts has_attestation, not class).",
                       "",
                       "| Class | Feature | coef (per std) | OR (per std) |",
@@ -263,9 +322,9 @@ def write_report(variants_df: pd.DataFrame, rq2_df: pd.DataFrame,
     lines += ["", "## Decision gate for downstream baselines",
               "",
               "- If conservative rule (B2b) reclassifies > 20% of B as UNCERTAIN, "
-              "flag this in summary; otherwise downstream uses A-F final.",
-              "- If any case-anchor changes substantively (e.g. webpack B  UNCERTAIN), "
-              "narrative interpretation gets a follow-up note (NOT a re-write).",
+              "flag this in Task 7 summary; otherwise downstream uses A-F final.",
+              "- If any Task 6 case-anchor changes substantively (e.g. webpack B → UNCERTAIN), "
+              "Task 6 narrative interpretation gets a follow-up note (NOT a re-write).",
               "- C/E swap is presentational only; downstream uses A-F final labels.",
               "",
               "## NEXT",
@@ -285,7 +344,7 @@ def main() -> int:
     inf = pd.read_csv(INFLUENCE_CSV)
     depsdev = pd.read_csv(DEPSDEV_CSV)
 
-
+    # Build per-row variant columns
     logger.info("computing variants...")
     cls["class_final"] = variant_final(cls)
     cls["class_conservative"] = variant_conservative(cls)
@@ -294,31 +353,34 @@ def main() -> int:
     logger.info(f"  conservative: {cls['class_conservative'].value_counts().to_dict()}")
     logger.info(f"  ce_swap: {cls['class_ce_swap'].value_counts().to_dict()}")
 
-
+    # B2c strict binary at package level
     strict = variant_strict_binary(versions)
     logger.info(f"  strict_binary: {strict['strict_binary'].value_counts().to_dict()}")
 
-
+    # Merge: cls is at sampled-version level; one row per sampled version
+    # For RQ2-style distribution + case anchors we want per-package mapping
+    # but classification has one row per (package, version) sampled, so we keep
+    # the version-level frame for variants_df.
     variants_df = cls[["package", "version", "class_final", "class_conservative",
                        "class_ce_swap"]].copy()
-
+    # Attach strict binary as package-level
     sb_map = dict(zip(strict["package"], strict["strict_binary"]))
     variants_df["strict_binary"] = variants_df["package"].map(sb_map)
 
     variants_df.to_csv(OUT_VARIANTS, index=False)
     logger.info(f"wrote {OUT_VARIANTS}")
 
-
+    # RQ2 distribution
     rq2_df = rq2_distribution(variants_df, depsdev)
     rq2_df.to_csv(OUT_RQ2, index=False)
     logger.info(f"wrote {OUT_RQ2}")
 
-
+    # Task 6 case anchors
     cases_df = case_anchor_changes(variants_df)
     cases_df.to_csv(OUT_CASES, index=False)
     logger.info(f"wrote {OUT_CASES}")
 
-
+    # Optional B2e: multinomial class-prediction model under each variant
     cm_parts = []
     for var_col in ["class_final", "class_conservative", "class_ce_swap"]:
         cl_sub = cls[["package", var_col, "reason"]].rename(columns={var_col: "class"})

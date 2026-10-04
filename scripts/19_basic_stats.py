@@ -1,3 +1,22 @@
+"""
+Task 4 Step 4.3 — Basic stats / coverage / Class × influence-metric correlations.
+
+Inputs:
+  data/versions.csv             (100,168 version rows; tier from Task 1)
+  data/classification.csv       (500 non-prov sample with 6-class A-F)
+  data/influence_metrics.csv    (3000 packages × 16 cols)
+
+Outputs:
+  reports/task_4_basic_stats.md
+  data/rq2_class_influence_corr.csv   (class × influence-metric Spearman ρ)
+
+Construct caveats carried forward:
+  - C/E semantics from Task 2 PI Round 2 (NOT interpreted as confirmed publish path)
+  - is_scoped_package = NOT org-owner indicator; use github_owner_type for that
+  - depsdev_dependents_count = pending; correlations involving it deferred to post-2026-06-01
+
+Run: conda run --no-capture-output -n stage2c python scripts/19_basic_stats.py
+"""
 from __future__ import annotations
 
 import csv
@@ -15,7 +34,7 @@ SAMPLE_CSV = DATA_DIR / "non_provenance_sample.csv"
 OUT_MD = REPORTS_DIR / "task_4_basic_stats.md"
 OUT_CORR_CSV = DATA_DIR / "rq2_class_influence_corr.csv"
 
-
+# Numeric metrics to summarize
 NUMERIC_FIELDS = [
     "weekly_downloads_avg", "github_stars", "github_forks",
     "package_age_days", "maintainers_count", "release_freq_12m",
@@ -29,31 +48,31 @@ def median_safe(values: list[float]) -> float:
 
 
 def main() -> int:
-
+    # Load influence_metrics
     inf: dict[str, dict] = {}
     with INFLUENCE_CSV.open() as f:
         for r in csv.DictReader(f):
             inf[r["package"]] = r
     print(f"Loaded {len(inf)} influence rows", flush=True)
 
-
+    # Load class for 500-row sample
     cls: dict[tuple[str, str], str] = {}
     with CLASS_CSV.open() as f:
         for r in csv.DictReader(f):
             cls[(r["package"], r["version"])] = r["class"]
 
-
+    # Load sample tier
     tier: dict[tuple[str, str], str] = {}
     with SAMPLE_CSV.open() as f:
         for r in csv.DictReader(f):
             tier[(r["package"], r["version"])] = r["tier"]
 
-    lines = ["# Basic stats + coverage + class × influence correlations",
+    lines = ["# Task 4 — Basic stats + coverage + class × influence correlations",
              "",
              f"Source files: `data/versions.csv` (100,168 rows) + `data/classification.csv` (500 rows) + `data/influence_metrics.csv` (3,000 × 16 cols)",
              ""]
 
-
+    # 1. influence_metrics coverage / missingness
     lines.append("## Influence metrics coverage (3000 packages × 16 cols)")
     lines.append("")
     lines.append("| Field | Non-empty | % | Min / Med / Max (numeric) or True% |")
@@ -91,7 +110,7 @@ def main() -> int:
         breakdown = ", ".join(f"{v} {k or 'empty'}" for k, v in ct.most_common())
         lines.append(f"| `{fld}` | {non_empty} | {pct:.1f}% | {breakdown} |")
 
-
+    # 2. Tier × numeric-metric median distribution (3000 packages)
     lines += ["", "## Tier × influence-metric distribution (median across 3000 packages)",
               "",
               "| metric | top (med) | mid (med) | tail (med) |",
@@ -115,7 +134,8 @@ def main() -> int:
         cells = [f"{median_safe(tier_vals[t][fld]):,.0f}" for t in ("top", "mid", "tail")]
         lines.append(f"| `{fld}` | " + " | ".join(cells) + " |")
 
-
+    # 3. Class × influence-metric Spearman correlation (on 500 sample, F excluded)
+    # Compute Spearman manually (avoid scipy dep — though scipy already loaded via sklearn)
     lines += ["", "## Class × influence-metric distribution (median per class, F excluded)",
               "",
               "| metric | A | B | C | D | E |",
@@ -137,10 +157,10 @@ def main() -> int:
         cells = [f"{median_safe(class_vals[c][fld]):,.0f}" for c in "ABCDE"]
         lines.append(f"| `{fld}` | " + " | ".join(cells) + " |")
 
-
+    # 4. Construct caveats and gates
     lines += ["", "## Construct caveats (carried forward)",
               "",
-              "- Tier from ecosyste.ms current-state metadata; post-2026-06-01 BQ strata-shift required",
+              "- Tier from Task 1 ecosyste.ms current-state metadata; post-2026-06-01 BQ strata-shift required",
               "- Class C = possible external CI publish path (not verified)",
               "- Class E = no visible package publish workflow (not asserted manual publish)",
               "- `is_scoped_package` ≠ org-owner; for org-owner use `github_owner_type`",
@@ -148,7 +168,7 @@ def main() -> int:
               ""]
 
     OUT_MD.write_text("\n".join(lines) + "\n")
-    print(f"\n Saved {OUT_MD}", flush=True)
+    print(f"\n✓ Saved {OUT_MD}", flush=True)
     print(f"  Headline tier-medians:", flush=True)
     for fld in NUMERIC_FIELDS:
         cells = " ".join(f"{t}:{median_safe(tier_vals[t][fld]):,.0f}" for t in ("top", "mid", "tail"))

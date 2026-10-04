@@ -1,3 +1,25 @@
+"""
+Task 4 Step 4.1 — RQ1 monthly + weekly attestation rate.
+
+From data/versions.csv (100,168 versions in 2025-08-01..2026-05-10 window):
+- Bucket each version by its published_at month (YYYY-MM) AND week (YYYY-WW, ISO).
+- Per bucket × tier: count total versions, count has_attestation=True, compute rate.
+- Also compute overall (all tiers combined) per bucket.
+
+Outputs:
+  data/rq1_monthly_attestation_rate.csv  (cols: month, tier, total, attested, rate)
+  data/rq1_weekly_attestation_rate.csv   (cols: week_start, tier, total, attested, rate)
+
+The Dec 9 npm classic-token revocation deadline is NOT marked here (it's a chart
+concern); however, the weekly granularity supports a fine-grained ITS analysis
+in Task 5 with the deadline as the intervention timestamp.
+
+Construct caveats carried forward:
+- versions.csv has tier from Task 1 sampling-frame (ecosyste.ms current-state
+  metadata). Post-2026-06-01 BQ strata-shift must re-validate per-tier rate.
+
+Run: conda run --no-capture-output -n stage2c python scripts/17_monthly_attestation_rate.py
+"""
 from __future__ import annotations
 
 import csv
@@ -20,7 +42,7 @@ def parse_dt(s: str) -> datetime | None:
 
 
 def main() -> int:
-    monthly: dict[tuple[str, str], Counter] = defaultdict(Counter)
+    monthly: dict[tuple[str, str], Counter] = defaultdict(Counter)  # (month, tier) → {total, attested}
     weekly: dict[tuple[str, str], Counter] = defaultdict(Counter)
     stats = {"rows_read": 0, "parse_fail": 0}
 
@@ -33,7 +55,7 @@ def main() -> int:
                 stats["parse_fail"] += 1
                 continue
             month = f"{pub.year:04d}-{pub.month:02d}"
-
+            # ISO week: Monday-start; align to Monday of that week
             week_start = (pub.date() - timedelta(days=pub.weekday())).isoformat()
             tier = r["tier"]
             has_att = r["has_attestation"].lower() == "true"
@@ -47,14 +69,14 @@ def main() -> int:
 
     def write(out_path: Path, bucket: dict, key_field: str):
         rows = []
-
+        # Per-tier rows
         for (key, tier), c in sorted(bucket.items()):
             total = c["total"]
             attested = c["attested"]
             rate = attested / total if total else 0
             rows.append({key_field: key, "tier": tier, "total": total,
                          "attested": attested, "rate": f"{rate:.4f}"})
-
+        # Combined rows (tier='all')
         combined: dict[str, Counter] = defaultdict(Counter)
         for (key, _), c in bucket.items():
             combined[key]["total"] += c["total"]
@@ -71,20 +93,20 @@ def main() -> int:
             w.writeheader()
             for r in rows:
                 w.writerow(r)
-        print(f" Saved {out_path} ({len(rows)} rows)", flush=True)
+        print(f"✓ Saved {out_path} ({len(rows)} rows)", flush=True)
         return rows
 
     monthly_rows = write(MONTHLY_OUT, monthly, "month")
     weekly_rows = write(WEEKLY_OUT, weekly, "week_start")
 
-
+    # Print headline numbers — monthly rate overall
     print(f"\n=== Monthly overall (tier='all') ===", flush=True)
     print(f"  {'Month':<10s}  {'Total':>7s}  {'Att':>7s}  {'Rate':>6s}", flush=True)
     for r in monthly_rows:
         if r["tier"] == "all":
             print(f"  {r['month']:<10s}  {int(r['total']):>7,}  {int(r['attested']):>7,}  {float(r['rate'])*100:>5.1f}%", flush=True)
 
-
+    # Per-tier rate at deadline boundary (Nov 2025, Dec 2025, Jan 2026, Feb 2026)
     print(f"\n=== Rate around Dec 9 deadline (per tier) ===", flush=True)
     print(f"  {'Month':<10s}  {'top':>6s}  {'mid':>6s}  {'tail':>6s}", flush=True)
     for month in ("2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03"):

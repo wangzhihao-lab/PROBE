@@ -1,0 +1,10 @@
+tier,quantity,point_pp,ci95_low,ci95_high,n_boot,n_packages
+top,nov_to_dec_2024,-3.425,-7.775,1.549,2000,452
+top,nov_to_dec_2025,-3.632,-7.549,1.723,2000,452
+top,yoy_difference,-0.207,-5.056,5.157,2000,452
+mid,nov_to_dec_2024,4.158,-0.051,8.826,2000,688
+mid,nov_to_dec_2025,3.968,-2.981,10.626,2000,688
+mid,yoy_difference,-0.19,-7.842,6.135,2000,688
+tail,nov_to_dec_2024,-1.273,-6.798,2.977,2000,186
+tail,nov_to_dec_2025,5.303,-2.993,14.826,2000,186
+tail,yoy_difference,6.575,-2.436,16.137,2000,186

@@ -1,0 +1,4 @@
+window,estimand,n_pre_weeks,n_post_weeks,beta2_level_change_pp,ci95_beta2_low,ci95_beta2_high,pval_beta2,DW,LB_min_pval,placebo_rank,n_candidates,rank_fraction
+protocol,version_weighted,19,21,-4.4173,-12.1491,3.3145,0.2628,1.692,0.1756,17,28,0.607
+protocol,equal_package,19,21,-4.5601,-11.0113,1.8912,0.1659,2.024,0.148,5,28,0.179
+protocol,version_weighted_drop_top5,19,21,-7.3308,-21.4101,6.7485,0.3075,1.681,0.5277,14,28,0.5

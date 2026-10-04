@@ -1,3 +1,21 @@
+"""
+Task 3 Step 3.1 — Packument-derived influence metrics.
+
+From data/packuments_raw/, extract per-package:
+  package_age_days     = (2026-05-10 - time['created']) in days; - if packument lacks
+  maintainers_count    = len(packument.maintainers) (0 when field missing)
+  release_freq_12m     = count of versions with published_at in [2025-05-10, 2026-05-10]
+  is_scoped_package    = True iff package name starts with @ (e.g., @scope/name).
+                         Renamed Round 1 PI 2026-05-17 from has_org_owner — @scope only
+                         measures scoped-package status, not actual org ownership.
+                         A real org-owner covariate is provided separately via
+                         github_owner_type from /users/{owner} (scripts/15).
+
+Output: data/packument_metrics.csv
+  columns: package, package_age_days, maintainers_count, release_freq_12m, is_scoped_package
+
+Run: conda run --no-capture-output -n stage2c python scripts/11_packument_metrics.py
+"""
 from __future__ import annotations
 
 import csv
@@ -27,7 +45,7 @@ def parse_dt(s: str) -> datetime | None:
 
 
 def main() -> int:
-
+    # Load package list
     packages: list[str] = []
     with PACKAGES_FILE.open() as f:
         header = next(f).rstrip("\n").split("\t")
@@ -75,7 +93,7 @@ def main() -> int:
             continue
         stats["with_packument"] += 1
 
-
+        # package_age_days from time.created
         times = data.get("time", {}) or {}
         created_str = times.get("created") or ""
         created_dt = parse_dt(created_str)
@@ -85,7 +103,7 @@ def main() -> int:
         else:
             age_days = max(0, (CUTOFF - created_dt).days)
 
-
+        # maintainers_count
         maintainers = data.get("maintainers") or []
         if not isinstance(maintainers, list):
             maintainers = []
@@ -93,7 +111,7 @@ def main() -> int:
             stats["missing_maintainers"] += 1
         m_count = len(maintainers)
 
-
+        # release_freq_12m: count versions with published_at in window
         release_count = 0
         for ver, ts in times.items():
             if ver in ("created", "modified"):
@@ -104,7 +122,7 @@ def main() -> int:
             if WINDOW_START <= t <= CUTOFF:
                 release_count += 1
 
-
+        # is_scoped_package heuristic: @scoped → True
         has_org = "true" if pkg.startswith("@") else "false"
 
         rows.append({
@@ -115,7 +133,7 @@ def main() -> int:
             "is_scoped_package": has_org,
         })
 
-
+    # Write
     fields = ["package", "package_age_days", "maintainers_count",
               "release_freq_12m", "is_scoped_package"]
     with OUT_CSV.open("w", newline="") as f:
@@ -123,14 +141,14 @@ def main() -> int:
         w.writeheader()
         for r in rows:
             w.writerow(r)
-    print(f"\n Saved {OUT_CSV} ({len(rows)} rows)", flush=True)
+    print(f"\n✓ Saved {OUT_CSV} ({len(rows)} rows)", flush=True)
 
-
+    # Stats
     print(f"\n=== Extraction stats ===", flush=True)
     for k, v in stats.items():
         print(f"  {k}: {v}", flush=True)
 
-
+    # Summary distributions (only over rows with packument)
     ages = [int(r["package_age_days"]) for r in rows if r["package_age_days"] != ""]
     maints = [int(r["maintainers_count"]) for r in rows if r["maintainers_count"] != ""]
     freqs = [int(r["release_freq_12m"]) for r in rows if r["release_freq_12m"] != ""]

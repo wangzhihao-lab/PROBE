@@ -31,10 +31,12 @@ request. `SHA256_MANIFEST.txt` identifies the exact snapshot analyzed.
 ## Layout
 
 ```
-scripts/         analysis pipeline, scripts/01_*.py … scripts/54_*.py
+scripts/         analysis pipeline, scripts/01_*.py … scripts/76_*.py
                  (+ its_spec.py, figstyle.py shared modules)
 data/            frozen derived tables (CSV/JSON) the scripts consume
-                 - versions.csv .............. per-version has_attestation outcome
+                 - versions.csv .............. per-version has_attestation outcome (protocol window)
+                 - versions_extended.csv ..... same, 2024-01-01 → 2026-05-10 (revision; re-read from the frozen packuments)
+                 - tse_r1_*.csv .............. every revision-added table (grid, placebo scans, seasonality, MDE, RQ2 composition, B/C/E structure, sampling flow)
                  - classification.csv ........ 500-row A–F evidence-state sample
                  - classification_construct_reasons.csv .. final-construct phrasing
                  - CODEBOOK_classification.md . reason-trace codebook
@@ -77,6 +79,56 @@ public package (see below) — and writes model diagnostic figures to a
 (`cox_incident_primary.csv`, `logistic_sensitivity.csv`, and the RQ3 tables),
 so the headline RQ3 numbers are available here without re-running it; full
 re-execution requires the raw slice through the access-gated channel.
+
+
+**Revision path (TSE R1; frozen `data/` only).** The revision-added analyses
+that run off the shipped tables:
+
+```bash
+python scripts/56_long_window_trajectory.py     # 28-month panels + seasonal baseline (cluster bootstrap)
+python scripts/57_long_window_its_placebo.py    # extended ITS + 110-candidate placebo scans, 3 estimands
+python scripts/60_extended_its_spec_sensitivity.py  # window x specification grid (Table II)
+python scripts/61_power_mde_equivalence.py      # MDE / TOST table
+python scripts/58_rq3_window_comparison.py      # RQ3 protocol vs extended (reads shipped CSVs)
+python scripts/59_rq2_cross_boundary.py         # RQ2 composition across the boundary (package constancy)
+python scripts/63_class_b_cause_space.py        # Class B sub-states
+python scripts/65_class_e_structure.py          # Class E six sub-states
+python scripts/67_rq2_eco_frame_table.py        # RQ2 on the sampling frame
+```
+
+Four verification fetches (September 2, 2026) and a pagination check of two
+of them (September 3, 2026) are shipped as scripts with their derived tables;
+the fetches need network access and a GitHub token, read only
+immutable or current-state third-party objects, and are **not** required to
+reproduce any number in the frozen tables above (their raw responses join the
+access-gated slice):
+
+```bash
+python scripts/70_attestation_timestamp_audit.py   # Sigstore bundle signing time vs publish time (300 sampled versions)
+python scripts/71_class_c_external_ci_audit.py     # Class C external-CI configuration read (49 rows)
+python scripts/72_workflow_history_audit.py        # publish-workflow git history vs cached labels (486 rows)
+python scripts/73_workflow_history_prewindow.py    # the same labels replayed at three 2024-2025 dates (separate history read)
+python scripts/74_workflow_history_pagination_check.py  # completeness check of the 72/73 commit listings (cached; offline re-run)
+```
+
+Two offline follow-ups after an independent audit (no network; frozen tables only):
+
+```bash
+python scripts/75_protocol_window_estimand_its.py   # equal-package / drop-top-5 ITS companions on the protocol window
+python scripts/76_provenance_flag_read.py          # explicit --provenance request in the cached publish workflows (Class A/B rows)
+```
+
+Scripts that need the access-gated raw slice (`data/packuments_raw/`,
+`data/workflows_raw/`) and therefore will not complete from this public
+package alone: `55` (construct audit over packuments), `62` and `66` (they
+rebuild the RQ3 frame through `scripts/52`), `64` (re-runs the publish
+detector over cached workflows), and the extended-window runs of `47`/`52`
+(`--origin 2024-01-01 --versions-csv versions_extended.csv`). Their outputs
+are shipped frozen (`*_tse_r1_long.csv`, `tse_r1_class_c_audit.csv`,
+`tse_r1_sampling_flow.csv`, `tse_r1_or_mechanism.csv`). `68` and `69`
+regenerate manuscript tables and figures and expect the paper tree; they
+exit cleanly without it. Default (no-argument) runs of `03`, `47`, and `52`
+reproduce the as-submitted outputs byte-for-byte.
 
 Scripts are numbered in pipeline order; a later script consumes CSVs written by
 earlier ones. Stages 01–14 build the dataset from the raw pulls (not shipped)

@@ -1,3 +1,32 @@
+"""
+Rebuttal A1 — Logistic clustering: naive vs cluster-robust vs GEE.
+
+SUPERSEDED (audit-trail only). This is an early clustering sensitivity. The
+paper's PRIMARY version-level logistic is now scripts/52 (12-covariate,
+missingness-explicit, package-cluster-robust SE); scripts/30 is its
+pre-missingness predecessor. This GEE variant is retained only to document the
+clustering exploration and is not cited as the primary model anywhere in the
+paper (see Section~\\ref{sec:replication} / paper/sections/12_replication.tex).
+
+Reviewer concern: the version-level logistic ignores per-package clustering.
+FACT: the primary logistic (scripts/52, and already scripts/30 before it) fits
+cluster-robust SE at the package level (cov_type="cluster"). The reported OR CIs
+are therefore already cluster-robust; the GEE below is a corroborating check.
+
+This script makes the clustering explicit by comparing three SE treatments on
+the identical design matrix:
+
+  M-naive   : Logit, conventional (non-robust) SE  -- what the reviewer fears
+  M-cluster : Logit, package-cluster-robust SE     -- the actual main model
+  M-gee     : GEE, Binomial + Exchangeable working correlation, grouped by
+              package -- the "more robust" sensitivity the user requested
+
+Point estimates (OR) are the same for naive/cluster (same MLE); only SE/p
+change. GEE re-estimates coefficients under an exchangeable within-package
+correlation, so its OR can shift slightly. We report all three.
+
+Run: conda run --no-capture-output -n stage2c python scripts/43_logistic_gee_sensitivity.py
+"""
 from __future__ import annotations
 
 import sys
@@ -95,8 +124,8 @@ def main() -> int:
     for i, cov in enumerate(names):
         if cov == "const":
             continue
-        or_logit = float(np.exp(m_naive.params[cov]))
-        or_gee = float(np.exp(np.asarray(m_gee.params)[i]))
+        or_logit = float(np.exp(m_naive.params[cov]))          # Logit: column-name index
+        or_gee = float(np.exp(np.asarray(m_gee.params)[i]))    # GEE: positional index
         rows.append({
             "covariate": cov,
             "OR": round(or_logit, 3),
@@ -113,7 +142,7 @@ def main() -> int:
     print("\n=== OR + p across SE treatments ===", flush=True)
     print(comp[["covariate", "OR", "p_naive", "p_cluster", "OR_gee", "p_gee"]].to_string(index=False), flush=True)
 
-
+    # which covariates change significance (0.05) between naive and cluster/gee
     def sig(p):
         return p < 0.05
     flips = [r["covariate"] for r in rows
@@ -156,8 +185,8 @@ def main() -> int:
         "predictive associations (the Hosmer-Lemeshow calibration caveat still applies).",
     ]
     OUT_MD.write_text("\n".join(md) + "\n")
-    print(f"\n Saved {OUT_CSV}", flush=True)
-    print(f" Saved {OUT_MD}", flush=True)
+    print(f"\n✓ Saved {OUT_CSV}", flush=True)
+    print(f"✓ Saved {OUT_MD}", flush=True)
     return 0
 
 

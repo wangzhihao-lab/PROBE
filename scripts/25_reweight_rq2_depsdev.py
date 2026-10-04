@@ -1,3 +1,15 @@
+"""
+Task 4 Round 3 Step 2 — RQ2 class A-F distribution under deps.dev-tier.
+
+Mirrors scripts/18 but uses deps.dev `dependents_count` (snapshot 2026-05-05)
+to assign tier per package. Per PI Round 2 (c).
+
+Outputs:
+  data/rq2_class_distribution_depsdev.csv (long-form)
+  reports/task_4_rq2_summary_depsdev.txt   (human-readable)
+
+Run: conda run --no-capture-output -n stage2c python scripts/25_reweight_rq2_depsdev.py
+"""
 from __future__ import annotations
 
 import csv
@@ -25,7 +37,7 @@ def dpc_tier(dpc: int) -> str:
 
 
 def main() -> int:
-
+    # Build pkg → depsdev_tier mapping
     pkg_tier: dict[str, str] = {}
     with DEPSDEV_CSV.open() as f:
         for r in csv.DictReader(f):
@@ -34,13 +46,13 @@ def main() -> int:
             except ValueError:
                 continue
 
-
+    # Load classifications
     cls: dict[tuple[str, str], str] = {}
     with CLASS_CSV.open() as f:
         for r in csv.DictReader(f):
             cls[(r["package"], r["version"])] = r["class"]
 
-
+    # Per row, assign depsdev_tier (or 'missing')
     rows: list[dict] = []
     overall: Counter = Counter()
     tier_class: dict[str, Counter] = {"top": Counter(), "mid": Counter(),
@@ -55,11 +67,11 @@ def main() -> int:
           f"{sum(sum(tier_class[t].values()) for t in ('top','mid','tail'))}", flush=True)
     print(f"  with missing tier: {sum(tier_class['missing'].values())}", flush=True)
 
-
+    # Build long-form output rows
     overall_total = sum(overall.values())
     overall_excl_f = sum(v for k, v in overall.items() if k != "F")
 
-
+    # 1. Overall (same as scripts/18; included for reference)
     for c in CLASSES:
         n = overall.get(c, 0)
         pct = n / overall_total * 100 if overall_total else 0
@@ -68,7 +80,7 @@ def main() -> int:
                      "n": n, "pct_of_total": f"{pct:.2f}",
                      "pct_excl_F": f"{pct_excl_f:.2f}" if pct_excl_f is not None else "—"})
 
-
+    # 2. By depsdev-tier
     for t in ("top", "mid", "tail", "missing"):
         tier_total = sum(tier_class[t].values())
         tier_excl_f = sum(v for k, v in tier_class[t].items() if k != "F")
@@ -85,11 +97,11 @@ def main() -> int:
         w.writeheader()
         for r in rows:
             w.writerow(r)
-    print(f"\n Saved {OUT_CSV} ({len(rows)} rows)", flush=True)
+    print(f"\n✓ Saved {OUT_CSV} ({len(rows)} rows)", flush=True)
 
-
+    # Human-readable summary
     lines = [
-        "# RQ2 — Class distribution under deps.dev-tier",
+        "# Task 4 Round 3 RQ2 — Class distribution under deps.dev-tier",
         "",
         f"Source: data/classification.csv (500 non-prov sample, v3 rules + selective PI) joined to",
         f"deps.dev `dependents_count` snapshot 2026-05-05 (Task 3.7).",
@@ -109,7 +121,7 @@ def main() -> int:
         excl_str = f"{pct_excl_f:.1f}%" if pct_excl_f is not None else "—"
         lines.append(f"| {c} | {n} | {pct:.1f}% | {excl_str} |")
     lines.append("")
-    lines.append(f"Total: 500 versions (F={overall.get('F', 0)} excluded  {overall_excl_f} in A-E pool)")
+    lines.append(f"Total: 500 versions (F={overall.get('F', 0)} excluded → {overall_excl_f} in A-E pool)")
     lines += [
         "",
         "## depsdev-tier × class (% of tier's A-E pool; F excluded from denominator)",
@@ -121,7 +133,7 @@ def main() -> int:
         tier_total = sum(tier_class[t].values())
         tier_excl_f = sum(v for k, v in tier_class[t].items() if k != "F")
         cells = []
-        for c in CLASSES[:-1]:
+        for c in CLASSES[:-1]:  # skip UNCERTAIN
             n = tier_class[t].get(c, 0)
             if c == "F":
                 cells.append(f"{n}")
@@ -130,7 +142,7 @@ def main() -> int:
                 cells.append(f"{n} ({pct:.1f}%)")
         lines.append(f"| {t} | " + " | ".join(cells) + f" | {tier_excl_f} / {tier_total} |")
 
-
+    # Side-by-side comparison vs ecosyste.ms-tier (read from existing rq2_class_distribution.csv)
     eco_class: dict[str, Counter] = {"top": Counter(), "mid": Counter(), "tail": Counter()}
     try:
         with (DATA_DIR / "rq2_class_distribution.csv").open() as f:
@@ -157,13 +169,13 @@ def main() -> int:
             direction = "▲" if delta > 1 else ("▼" if delta < -1 else "≈")
             lines.append(f"| {t} | {c} | {eco_pct:.1f}% | {dd_pct:.1f}% | {delta:+.1f} | {direction} |")
 
-
+    # Headline interpretation (informational, mirrors PI's findings)
     lines += [
         "",
-        "## Headline interpretation (verified against review prediction)",
+        "## Headline interpretation (verified against PI Round 2 prediction)",
         "",
     ]
-
+    # B share monotonicity
     b_eco = {t: (eco_class[t].get("B", 0) / max(1, sum(v for k, v in eco_class[t].items() if k != "F")) * 100) for t in ("top", "mid", "tail")}
     b_dd = {t: (tier_class[t].get("B", 0) / max(1, sum(v for k, v in tier_class[t].items() if k != "F")) * 100) for t in ("top", "mid", "tail")}
     e_dd = {t: (tier_class[t].get("E", 0) / max(1, sum(v for k, v in tier_class[t].items() if k != "F")) * 100) for t in ("top", "mid", "tail")}
@@ -174,9 +186,9 @@ def main() -> int:
     lines.append(f"- C share under deps.dev-tier: top {c_dd['top']:.1f}% / mid {c_dd['mid']:.1f}% / tail {c_dd['tail']:.1f}% — {'mid-tier dominant (PI prediction verified)' if c_dd['mid'] > c_dd['top'] and c_dd['mid'] > c_dd['tail'] else 'other pattern'}")
 
     OUT_TXT.write_text("\n".join(lines) + "\n")
-    print(f" Saved {OUT_TXT}", flush=True)
+    print(f"✓ Saved {OUT_TXT}", flush=True)
 
-
+    # Print summary
     print(f"\n=== depsdev-tier × class headline ===", flush=True)
     for t in ("top", "mid", "tail", "missing"):
         ae = sum(v for k, v in tier_class[t].items() if k != "F")

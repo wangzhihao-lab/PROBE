@@ -1,3 +1,47 @@
+"""Pre-submission — Estimand sensitivity of the tier-level attestation rates
+(acting-PI batch, 2026-07-11; frozen rows only, no new collection).
+
+Motivation: the RQ1/Task-7 headline rates are VERSION-weighted, so a handful
+of high-velocity publishers can dominate a tier (top tier: the @opencode-ai/*
+pair alone contributes ~44% of version rows). This script recomputes the
+tier-level adoption picture under alternative estimands and asks whether the
+8-week pre/post contrast around the 2025-12-09 deadline is estimand-robust.
+
+Estimands (per deps.dev tier; full window AND 8-week pre vs 8-week post):
+  (1) version-weighted attestation rate          (current paper estimand)
+  (2) equal-package mean of per-package rates    (each package weighted 1)
+  (3) any-attested package share                 (>=1 attested version)
+  (4) stable-only version-weighted rate          (drop semver prereleases,
+                                                  i.e. version contains '-')
+  (5) top tier only: version-weighted rate excluding the 5 packages with the
+      most top-tier rows (exclusion set fixed on full-window counts).
+
+Contrasts: 8-week post-minus-pre difference per tier under estimands
+(1)/(2)/(4), each with a package-cluster bootstrap 95% percentile CI
+(resample packages with replacement, B=2000, seed 42; identical package
+resamples reused across the three estimands within a tier).
+
+Windows: pre = [2025-10-14, 2025-12-09), post = [2025-12-09, 2026-02-03);
+these reproduce the Task 7 B4c version counts exactly (assertion-checked
+against data/baselines/task_7_b4_pre_post_contrast.csv). Full window = all
+frozen rows [2025-08-01, 2026-05-10].
+
+Inputs:
+  data/versions.csv                              (frozen; cutoff 2026-05-10)
+  data/depsdev_dependents_2026_05_05.csv         (primary tier frame)
+  data/baselines/task_7_b4_pre_post_contrast.csv (B4c consistency check)
+
+Outputs:
+  data/estimand_sensitivity.csv
+  reports/presub_estimand_sensitivity.md
+
+Caveats carried: deps.dev primary tier frame (top >500, mid 11-500, tail
+<=10 dependents; missing excluded); all quantities are descriptive — no
+estimand is causal and none identifies a Dec-9 effect (anti-causal firewall
+intact); data cutoff 2026-05-10 untouched.
+
+Run: conda run --no-capture-output -n stage2c python scripts/51_estimand_sensitivity.py
+"""
 from __future__ import annotations
 
 import logging
@@ -23,7 +67,7 @@ B4C_CSV = DATA_DIR / "baselines" / "task_7_b4_pre_post_contrast.csv"
 OUT_CSV = DATA_DIR / "estimand_sensitivity.csv"
 OUT_MD = REPORTS_DIR / "presub_estimand_sensitivity.md"
 
-
+# Constants identical to scripts/37 and scripts/45.
 DEADLINE = pd.Timestamp("2025-12-09", tz="UTC")
 ORIGIN = pd.Timestamp("2025-08-01", tz="UTC")
 CENSOR = pd.Timestamp("2026-05-10 23:59:59", tz="UTC")
@@ -51,6 +95,7 @@ def dd_tier(n) -> str:
 
 
 def load_versions_with_tier() -> pd.DataFrame:
+    """Identical loading path to scripts/45 (Task 7 B4 conventions)."""
     versions = pd.read_csv(VERSIONS_CSV)
     versions["published_at"] = pd.to_datetime(versions["published_at"], utc=True, errors="coerce")
     versions = versions.dropna(subset=["published_at"])
@@ -64,6 +109,7 @@ def load_versions_with_tier() -> pd.DataFrame:
 
 
 def window_bounds() -> Dict[str, Tuple[pd.Timestamp, pd.Timestamp]]:
+    """Pre-declared windows; pre/post replicate the Task 7 B4c 8-week frame."""
     return {
         "full": (ORIGIN, CENSOR + pd.Timedelta(seconds=1)),
         "pre_8wk": (DEADLINE - pd.Timedelta(weeks=PREPOST_WEEKS), DEADLINE),
@@ -72,6 +118,7 @@ def window_bounds() -> Dict[str, Tuple[pd.Timestamp, pd.Timestamp]]:
 
 
 def check_b4c_consistency(counts: Dict[Tuple[str, str], int]) -> None:
+    """The 8wk windows must reproduce the published B4c version counts."""
     b4c = pd.read_csv(B4C_CSV)
     for _, ref in b4c.iterrows():
         got = counts[(ref["tier"], ref["period"])]
@@ -84,6 +131,7 @@ def check_b4c_consistency(counts: Dict[Tuple[str, str], int]) -> None:
 
 
 def level_estimands(g: pd.DataFrame) -> Dict[str, float]:
+    """Estimands (1)-(4) in percent over one tier x window frame."""
     per_pkg = g.groupby("package")["y"]
     stable = g[~g["is_prerelease"]]
     return {
@@ -95,6 +143,7 @@ def level_estimands(g: pd.DataFrame) -> Dict[str, float]:
 
 
 def package_pre_post_counts(pre: pd.DataFrame, post: pd.DataFrame) -> pd.DataFrame:
+    """Per-package n/k (all rows and stable-only) for the two 8wk windows."""
     def agg(sub: pd.DataFrame, tag: str) -> pd.DataFrame:
         out = sub.groupby("package").agg(**{
             f"n_{tag}": ("y", "size"), f"k_{tag}": ("y", "sum")})
@@ -107,6 +156,12 @@ def package_pre_post_counts(pre: pd.DataFrame, post: pd.DataFrame) -> pd.DataFra
 
 
 def bootstrap_contrasts(tbl: pd.DataFrame, rng: np.random.Generator) -> Dict[str, dict]:
+    """8wk post-minus-pre contrast + package-cluster bootstrap percentile CI.
+
+    One (B x n_pkg) package-index matrix is drawn per tier and reused across
+    estimands (1), (2), (4) so the estimand comparison is on identical
+    resamples. Replicates with an empty pre or post side are dropped (NaN).
+    """
     n_pkg = len(tbl)
     idx = rng.integers(0, n_pkg, size=(N_BOOT, n_pkg))
     cols = {c: tbl[c].to_numpy(dtype=float) for c in
@@ -152,7 +207,7 @@ def main() -> int:
                 100 * versions["is_prerelease"].mean())
     bounds = window_bounds()
 
-
+    # ---- Estimand-5 exclusion set: 5 packages with most top-tier rows (full window).
     top_counts = (versions[versions["dd_tier"] == "top"]
                   .groupby("package").size().sort_values(ascending=False))
     excluded = top_counts.head(N_EXCLUDE_TOP)
@@ -164,7 +219,7 @@ def main() -> int:
     rows: List[dict] = []
     counts_8wk: Dict[Tuple[str, str], int] = {}
 
-
+    # ---- Levels: estimands (1)-(4) per tier x window, (5) top tier only.
     for window, (lo, hi) in bounds.items():
         wv = versions[(versions["published_at"] >= lo) & (versions["published_at"] < hi)]
         for tier in TIERS:
@@ -196,7 +251,7 @@ def main() -> int:
 
     check_b4c_consistency(counts_8wk)
 
-
+    # ---- 8wk contrasts with package-cluster bootstrap CIs.
     rng = np.random.default_rng(SEED)
     contrasts: Dict[str, Dict[str, dict]] = {}
     for tier in TIERS:
@@ -243,7 +298,7 @@ def write_report(out: pd.DataFrame, contrasts: Dict[str, Dict[str, dict]],
         "",
         "**Date**: 2026-07-11 (acting-PI pre-submission batch; frozen rows only, "
         "no new collection). Descriptive sensitivity only — no estimand is causal; "
-        "descriptive-only framing intact; data cutoff 2026-05-10 untouched.",
+        "anti-causal firewall intact; data cutoff 2026-05-10 untouched.",
         "",
         "The paper's headline rates are version-weighted, so high-velocity",
         "publishers dominate: the 5 highest-volume top-tier packages contribute",
@@ -320,9 +375,9 @@ def write_report(out: pd.DataFrame, contrasts: Dict[str, Dict[str, dict]],
         "the version-weighted CIs span 0.",
         "- No estimand identifies a Dec-9 effect; a bootstrap CI excluding zero is",
         "  a precision statement about a descriptive pre/post difference, not a",
-        "  causal claim — descriptive-only framing applies to every cell above.",
+        "  causal claim — anti-causal firewall applies to every cell above.",
         "",
-        "Artifacts: `data/estimand_sensitivity.csv`; windows replicate ",
+        "Artifacts: `data/estimand_sensitivity.csv`; windows replicate Task 7 B4c",
         "version counts exactly (assertion-checked).",
     ]
     OUT_MD.write_text("\n".join(lines) + "\n")

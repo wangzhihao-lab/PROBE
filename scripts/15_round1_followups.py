@@ -1,3 +1,20 @@
+"""
+Task 3 Round 1 PI revision supplementary fetches:
+
+(1) .github/dependabot.yaml fallback (PI minor m-4):
+    For rows with has_dependabot=false, also probe .github/dependabot.yaml.
+    Update github_repo_meta.csv has_dependabot=true if found.
+
+(2) github_owner_type (PI Major #3):
+    Distinct owners from github_repo_meta.csv → /users/{owner} → returns
+    `type` ∈ {User, Organization}. Output: data/github_owner_type.csv
+    (owner, type). Used by 14_merge to add `github_owner_type` column.
+
+Cache: re-uses GitHub API; resume-safe via row-by-row append (dependabot)
+and small per-owner cache (owner_type).
+
+Run: source ~/.zshenv && conda run --no-capture-output -n stage2c python scripts/15_round1_followups.py
+"""
 from __future__ import annotations
 
 import csv
@@ -22,7 +39,7 @@ HEADERS = {
     "Authorization": f"Bearer {GITHUB_TOKEN}",
     "Accept": "application/vnd.github+json",
     "X-GitHub-Api-Version": "2022-11-28",
-    "User-Agent": "stage2c-research/1.0",
+    "User-Agent": "stage2c-research/1.0 (Task 3 Round 1 followups)",
 }
 
 SLEEP = 0.3
@@ -57,6 +74,7 @@ def github_request(url: str) -> tuple[int, dict | None]:
 
 
 def step_dependabot_yaml() -> int:
+    """Probe .github/dependabot.yaml for rows currently has_dependabot=false."""
     print("\n=== Step 1: dependabot.yaml fallback ===", flush=True)
     rows: list[dict] = []
     with GITHUB_CSV.open() as f:
@@ -76,17 +94,18 @@ def step_dependabot_yaml() -> int:
             print(f"  [{i:>4}/{len(targets)}] updated={updated}", flush=True)
         time.sleep(SLEEP)
 
-
+    # Write back full file (preserve order)
     with GITHUB_CSV.open("w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=rows[0].keys())
         w.writeheader()
         for r in rows:
             w.writerow(r)
-    print(f"   {updated} rows flipped has_dependabot falsetrue via .yaml fallback", flush=True)
+    print(f"  ✓ {updated} rows flipped has_dependabot false→true via .yaml fallback", flush=True)
     return updated
 
 
 def step_owner_type() -> int:
+    """Fetch /users/{owner} type for distinct owners."""
     print("\n=== Step 2: github_owner_type via /users/{owner} ===", flush=True)
     owners: set[str] = set()
     with GITHUB_CSV.open() as f:
@@ -95,7 +114,7 @@ def step_owner_type() -> int:
                 owners.add(r["owner"])
     print(f"  Distinct owners: {len(owners)}", flush=True)
 
-
+    # Load cache
     cache: dict[str, str] = {}
     if OWNER_TYPE_CSV.exists():
         with OWNER_TYPE_CSV.open() as f:
@@ -129,7 +148,7 @@ def step_owner_type() -> int:
         time.sleep(SLEEP)
     fh.close()
 
-
+    # Final distribution over all owners
     final_counts = {"User": 0, "Organization": 0, "unknown": 0}
     for o, t in cache.items():
         final_counts[t] = final_counts.get(t, 0) + 1

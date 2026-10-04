@@ -1,3 +1,24 @@
+"""Citation lint — refuses to compile if any `\\cite{*_PLACEHOLDER*}` keys are
+referenced in active paper prose.
+
+Phase 4 entry condition per PI Round 1 Phase 3 review (review/task_9_round1_pi.md):
+the `_PLACEHOLDER` suffix in `paper/refs.bib` is a source-visible convention
+that LaTeX would otherwise happily resolve at compile time. This script
+explicitly rejects any `\\cite{...}` (or its variants) that names a placeholder
+key inside `paper/` (excluding `paper/refs.bib` itself, where placeholder
+entries are intentional until verified).
+
+Usage:
+  python scripts/40_citation_lint.py
+  python scripts/40_citation_lint.py --paper-dir paper
+
+Exit codes:
+  0 — no placeholder citations found in active prose
+  1 — at least one placeholder citation found; build should fail
+  2 — invocation error
+
+Run: conda run --no-capture-output -n stage2c python scripts/40_citation_lint.py
+"""
 from __future__ import annotations
 
 import argparse
@@ -8,10 +29,11 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 DEFAULT_PAPER_DIR = ROOT / "paper"
 
-
+# `\cite{...}` and common variants in TeX (natbib / biblatex):
+# \cite, \citet, \citep, \citealt, \citealp, \citeauthor, \citeyear, etc.
 CITE_PATTERN = re.compile(
     r"\\cite[a-zA-Z]*\*?\s*"
-    r"(?:\[[^\]]*\]\s*)*"
+    r"(?:\[[^\]]*\]\s*)*"  # optional [pre]/[post] args
     r"\{([^}]+)\}"
 )
 
@@ -19,6 +41,8 @@ PLACEHOLDER_TOKEN = "_PLACEHOLDER"
 
 
 def scan_file(path: Path) -> list[tuple[int, str, str]]:
+    """Return a list of (line_number, full_cite, offending_key) tuples for
+    every \\cite{..._PLACEHOLDER...} occurrence in the file."""
     findings: list[tuple[int, str, str]] = []
     try:
         text = path.read_text(encoding="utf-8")
@@ -27,12 +51,12 @@ def scan_file(path: Path) -> list[tuple[int, str, str]]:
         return findings
     for match in CITE_PATTERN.finditer(text):
         key_blob = match.group(1)
-
+        # multi-key form: \cite{key1,key2}
         keys = [k.strip() for k in key_blob.split(",")]
         offending = [k for k in keys if PLACEHOLDER_TOKEN in k]
         if not offending:
             continue
-
+        # compute line number
         line_no = text[: match.start()].count("\n") + 1
         for k in offending:
             findings.append((line_no, match.group(0), k))
@@ -52,7 +76,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: paper directory not found: {paper_dir}", file=sys.stderr)
         return 2
 
-
+    # By default, also skip the .bib file — placeholder bibtex entries live
+    # there intentionally until verified, but they don't appear as \cite{}.
     exclude_paths = {(paper_dir / e).resolve() for e in args.exclude}
     exclude_paths.add((paper_dir / "refs.bib").resolve())
 

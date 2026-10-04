@@ -69,6 +69,8 @@ from lifelines.statistics import proportional_hazard_test
 from sklearn.metrics import brier_score_loss, roc_auc_score
 from sklearn.model_selection import GroupShuffleSplit
 
+import argparse
+
 DATA = Path(__file__).parent.parent / "data"
 REPORTS = Path(__file__).parent.parent / "reports"
 RAW = DATA / "packuments_raw"
@@ -106,6 +108,40 @@ LOGIT_COLS_PRIMARY = LOGIT_COLS + ["log_prewin_release_freq", "github_unobserved
 KEY_ORS = ["has_dependabot_int", "has_issue_template_int", "is_scoped_int",
            "tier_top", "log_age_days", "post_deadline", "log_prewin_release_freq",
            "owner_is_org", "log_maintainers"]
+
+# --- TSE R1 revision: window is configurable, defaults reproduce the paper -----
+# Every function below reads these module globals at call time, so rebinding them
+# here reroutes the whole pipeline without touching the estimation code. Defaults
+# are the as-submitted values; --origin only moves the LOWER bound. CENSOR stays
+# pinned to the 2026-05-10 data cutoff and is never configurable.
+FIG_SUFFIX = ""
+
+
+def configure(origin_iso: str, versions_csv: str, out_suffix: str) -> None:
+    """Rebind window globals and output paths for a non-default refit."""
+    if (origin_iso, versions_csv) != ("2025-08-01", "versions.csv") and not out_suffix:
+        raise ValueError("configure(): a non-default window or version table needs a "
+                         "non-empty out_suffix so the as-submitted outputs are not overwritten")
+    global ORIGIN, WINDOW_START, PREWIN_START, VERSIONS_CSV, FIG_SUFFIX
+    global OUT_COX_CSV, OUT_COX_SENS_CSV, OUT_COX_ISSUETPL_2X2_CSV, OUT_LOG_CSV, OUT_MD
+    ORIGIN = pd.Timestamp(origin_iso, tz="UTC")
+    WINDOW_START = datetime.strptime(origin_iso, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    # Pre-window release opportunity keeps its 12-month definition, relative to
+    # whatever the window start is, so it can never overlap the outcome window.
+    PREWIN_START = WINDOW_START.replace(year=WINDOW_START.year - 1)
+    VERSIONS_CSV = DATA / versions_csv
+    FIG_SUFFIX = out_suffix
+    if out_suffix:
+        OUT_COX_CSV = DATA / f"cox_incident_primary{out_suffix}.csv"
+        OUT_COX_SENS_CSV = DATA / f"cox_incident_entry_at_start_sensitivity{out_suffix}.csv"
+        OUT_COX_ISSUETPL_2X2_CSV = DATA / f"cox_issue_template_2x2{out_suffix}.csv"
+        OUT_LOG_CSV = DATA / f"logistic_sensitivity{out_suffix}.csv"
+        OUT_MD = REPORTS / f"presub_rq3_sensitivity{out_suffix}.md"
+    assert CENSOR == pd.Timestamp("2026-05-10 23:59:59", tz="UTC"), \
+        "CENSOR must stay pinned to the 2026-05-10 data cutoff"
+    assert ORIGIN < CENSOR, "--origin must precede the data cutoff"
+    print(f"[configure] origin={ORIGIN.date()} prewin={PREWIN_START.date()} "
+          f"versions={VERSIONS_CSV.name} suffix='{out_suffix or 'none'}'", flush=True)
 
 
 def parse_dt(s: str):
@@ -276,13 +312,14 @@ def _km_incident_figure(sd_inc: pd.DataFrame) -> None:
                 entry=sub["entry_days"], label=name)
         kmf.plot_survival_function(ax=ax, ci_show=True, ci_alpha=0.15,
                                    color=figstyle.TIER[name], linewidth=2)
-    ax.set_xlabel("Days since 2025-08-01")
+    ax.set_xlabel(f"Days since {ORIGIN.date()}")
     ax.set_ylabel("Share with no in-window attested release yet")
     ax.set_ylim(0, 1.02)
     ax.legend(title="deps.dev tier", frameon=True, framealpha=0.9,
               edgecolor="0.8", loc="lower left")
     fig.tight_layout()
-    out = Path(__file__).parent.parent / "paper" / "figures" / "km_incident_by_tier.png"
+    out = (Path(__file__).parent.parent / "paper" / "figures"
+           / f"km_incident_by_tier{FIG_SUFFIX}.png")
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out)
     plt.close(fig)
@@ -299,11 +336,15 @@ def part1_cox_incident() -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     prewin = prewindow_release_counts()
     sd = build_survival(prevalent, prewin)
     sd_inc = sd[sd["prevalent"] == 0].copy()
-    n_tie = int((sd_inc["entry_days"] >= sd_inc["duration_days"] - 0.5).sum())
+    tie_mask = sd_inc["entry_days"] >= sd_inc["duration_days"] - 0.5
+    n_tie = int(tie_mask.sum())
+    n_tie_events = int(sd_inc.loc[tie_mask, "event"].sum())
     meta = {"n_full": len(sd), "events_full": int(sd["event"].sum()),
             "n_prevalent": int(sd["prevalent"].sum()),
             "n": len(sd_inc), "events": int(sd_inc["event"].sum()),
             "n_entry_tie": n_tie,
+            "n_entry_tie_events": n_tie_events,
+            "n_entry_tie_censored": n_tie - n_tie_events,
             "entry_median_days": float(sd_inc["entry_days"].median())}
     print(f"[Part 1] Full cohort: {meta['n_full']} pkgs, {meta['events_full']} events, "
           f"prevalent={meta['n_prevalent']}", flush=True)
@@ -510,7 +551,7 @@ def _primary_logistic_figures(y: np.ndarray, p: np.ndarray) -> None:
     ax.set_ylabel("True positive rate")
     ax.legend(loc="lower right", frameon=True, framealpha=0.9, edgecolor="0.8")
     fig.tight_layout()
-    fig.savefig(figdir / "logistic_roc.png")
+    fig.savefig(figdir / f"logistic_roc{FIG_SUFFIX}.png")
     plt.close(fig)
 
     _, _, _, g = hosmer_lemeshow(y, p, n_bins=10)
@@ -528,9 +569,9 @@ def _primary_logistic_figures(y: np.ndarray, p: np.ndarray) -> None:
     ax.set_ylim(0, 1)
     ax.legend(loc="upper left", frameon=True, framealpha=0.9, edgecolor="0.8")
     fig.tight_layout()
-    fig.savefig(figdir / "logistic_hl_calibration.png")
+    fig.savefig(figdir / f"logistic_hl_calibration{FIG_SUFFIX}.png")
     plt.close(fig)
-    print(f"[Part 2] Regenerated logistic_roc.png + logistic_hl_calibration.png "
+    print(f"[Part 2] Regenerated logistic_roc{FIG_SUFFIX}.png + logistic_hl_calibration{FIG_SUFFIX}.png "
           f"for the PRIMARY model", flush=True)
 
 
@@ -728,14 +769,15 @@ def write_report(cox_tab: pd.DataFrame, cox_sens: pd.DataFrame,
         "",
         "## Part 1 — Cox PRIMARY: incident cohort, delayed entry, 11 covariates",
         "",
-        f"Incident cohort (never attested before 2025-08-01): "
+        f"Incident cohort (never attested before {ORIGIN.date()}): "
         f"n = {cox_meta['n']}, events = {cox_meta['events']} "
         f"(full cohort n = {cox_meta['n_full']}, events = {cox_meta['events_full']}, "
         f"prevalent excluded = {cox_meta['n_prevalent']}). "
         f"Delayed entry at first in-window release: median entry "
         f"{cox_meta['entry_median_days']:.1f} days after window start; "
         f"{cox_meta['n_entry_tie']} packages whose entry ties its endpoint "
-        f"(85 events + 1 final-day censored) enter at duration − 0.5 d. "
+        f"({cox_meta['n_entry_tie_events']} events + "
+        f"{cox_meta['n_entry_tie_censored']} censored) enter at duration − 0.5 d. "
         f"Concordance = {cox_meta['c_index']:.3f}. Robust SE; Schoenfeld "
         "(auxiliary entry-at-start fit) = rank time-transform.",
         "",
@@ -818,6 +860,20 @@ def write_report(cox_tab: pd.DataFrame, cox_sens: pd.DataFrame,
 
 
 def main() -> int:
+    ap = argparse.ArgumentParser(description="RQ3 Cox + logistic (configurable window)")
+    ap.add_argument("--origin", default="2025-08-01",
+                    help="Window start (YYYY-MM-DD). Default = as-submitted protocol.")
+    ap.add_argument("--versions-csv", default="versions.csv",
+                    help="Filename under data/. Default = as-submitted panel.")
+    ap.add_argument("--out-suffix", default="",
+                    help="Suffix for every output file; empty overwrites the paper's.")
+    args = ap.parse_args()
+    non_default = (args.origin, args.versions_csv) != ("2025-08-01", "versions.csv")
+    if non_default and not args.out_suffix:
+        ap.error("--out-suffix is required whenever --origin or --versions-csv is "
+                 "non-default (protects the as-submitted artefacts)")
+    if non_default or args.out_suffix:
+        configure(args.origin, args.versions_csv, args.out_suffix)
     REPORTS.mkdir(parents=True, exist_ok=True)
     cox_tab, cox_sens, cox_meta = part1_cox_incident()
     log_tab, log_meta = part2_logistic()

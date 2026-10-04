@@ -1,3 +1,27 @@
+"""Task 8 — Monthly collision monitoring.
+
+Hybrid script:
+  1. Auto-queries arXiv (cs.SE + cs.CR) for papers matching the 5 D-4 keyword
+     groups submitted in the last 30 days. arXiv has a free Atom REST API
+     (http://export.arxiv.org/api/query); Google Scholar has no API so its
+     queries stay manual.
+  2. Emits a monthly report at `monitoring/collision_scan_YYYY-MM.md` that
+     includes (a) auto-queried arXiv results, (b) escalation flags, (c) the
+     manual-checklist for Scholar / s3c2 / conferences from
+     `dryrun_baseline/D-4_collision_scan/monitoring_setup.md`, and (d) a diff
+     vs the previous monthly file (if any).
+
+Cadence: monthly. Run once near end of month, then review + sign by PI before
+filing the manual portions.
+
+Outputs:
+  monitoring/collision_scan_YYYY-MM.md
+  monitoring/arxiv_raw_YYYY-MM.json
+  monitoring/README.md  (cadence + usage, written once)
+
+Run: conda run --no-capture-output -n stage2c python scripts/39_monthly_collision_monitor.py
+     [--month YYYY-MM]  (defaults to current month)
+"""
 from __future__ import annotations
 
 import argparse
@@ -19,10 +43,20 @@ logger = logging.getLogger(__name__)
 ROOT = Path(__file__).parent.parent
 MONITORING_DIR = ROOT / "monitoring"
 
-
+# arXiv API endpoint (https: arXiv deprecated plain-http API access, and some
+# networks drop the http request outright)
 ARXIV_API = "https://export.arxiv.org/api/query"
 
-
+# Single combined arXiv query to avoid rate-limit (429) on burst.
+# Round 1 PI Major-1 fix: standalone OIDC + standalone Rekor coverage added so
+# the combined query faithfully covers all 5 D-4 groups from monitoring_setup.md.
+# Batch-5 fix (2026-07-10, ANOMALY 7): arXiv 2606.22593 ("On Good Authority",
+# release-authority measurement over the same public control-plane evidence)
+# was NOT matched by the query below --- its abstract contains none of the
+# phrases --- and was caught only by a manual literature pull. Added phrase
+# groups: "release authority", "publish path" / "publishing path", and
+# "package attestation" (standalone "attestation" deliberately excluded: it
+# floods the scan with TEE/remote-attestation papers in cs.CR).
 ARXIV_COMBINED_QUERY = (
     '("trusted publishing" OR "npm provenance" OR "classic token" OR '
     '"dist.attestations" OR OIDC OR sigstore OR rekor OR '
@@ -30,7 +64,8 @@ ARXIV_COMBINED_QUERY = (
     '"package attestation")'
 )
 
-
+# Per-paper attribution rules (keyword → query group label). Each paper is
+# tagged with every group whose keyword(s) match in title+summary.
 QUERY_GROUP_RULES = [
     ("trusted_publishing", ["trusted publishing"]),
     ("npm_provenance", ["npm provenance", "provenance npm"]),
@@ -41,14 +76,16 @@ QUERY_GROUP_RULES = [
                                 "publishing path", "package attestation"]),
 ]
 
-
+# Escalation keyword rules (per monitoring_setup.md)
 ESCALATE_TERMS_PRIMARY = ["provenance", "trusted publishing", "classic token", "attestation", "OIDC"]
 ESCALATE_TERMS_SECONDARY = ["migration", "adoption", "interrupted time series", "difference-in-differences", "survival"]
-ESCALATE_LABS = ["Williams", "Davis", "Torres-Arias", "Enck"]
+ESCALATE_LABS = ["Williams", "Davis", "Torres-Arias", "Enck"]  # check author lastnames
 
 
 def arxiv_search(query: str, max_results: int = 50, categories: tuple = ("cs.SE", "cs.CR"),
                   max_retries: int = 3) -> list[dict]:
+    """Atom-XML query against export.arxiv.org. Returns list of paper dicts.
+    Handles 429 with exponential backoff (arXiv asks for ~3s between requests)."""
     cat_filter = " OR ".join(f"cat:{c}" for c in categories)
     full_query = f"({cat_filter}) AND all:{query}"
     params = {
@@ -94,7 +131,7 @@ def arxiv_search(query: str, max_results: int = 50, categories: tuple = ("cs.SE"
     papers = []
     for entry in root.findall("atom:entry", ns):
         pid_full = entry.findtext("atom:id", default="", namespaces=ns).strip()
-
+        # id looks like http://arxiv.org/abs/2604.21111v1
         m = re.search(r"abs/(\d{4}\.\d{5})", pid_full)
         arxiv_id = m.group(1) if m else pid_full
         title = (entry.findtext("atom:title", default="", namespaces=ns) or "").strip().replace("\n", " ")
@@ -114,15 +151,16 @@ def arxiv_search(query: str, max_results: int = 50, categories: tuple = ("cs.SE"
 
 
 def assess_escalation(paper: dict) -> list[str]:
+    """Apply escalation rules from monitoring_setup.md. Returns list of triggered flags."""
     flags = []
     title_lower = paper["title"].lower()
-
+    # Rule A: npm AND (provenance|trusted publishing|classic token|attestation|OIDC)
     if "npm" in title_lower:
         if any(term.lower() in title_lower for term in ESCALATE_TERMS_PRIMARY):
             flags.append("ESCALATE_A: npm + primary-term in title")
         if any(term.lower() in title_lower for term in ESCALATE_TERMS_SECONDARY):
             flags.append("ESCALATE_B: npm + secondary-term in title")
-
+    # Rule D: from labs of interest touching npm/sigstore
     authors_concat = " ".join(paper.get("authors", [])).lower()
     for lab in ESCALATE_LABS:
         if lab.lower() in authors_concat and ("npm" in title_lower or "sigstore" in title_lower):
@@ -132,6 +170,7 @@ def assess_escalation(paper: dict) -> list[str]:
 
 
 def filter_recent(papers: list[dict], days: int = 30) -> list[dict]:
+    """Keep only papers submitted in the last `days` days."""
     cutoff = datetime.now(tz=timezone.utc) - timedelta(days=days)
     out = []
     for p in papers:
@@ -145,12 +184,16 @@ def filter_recent(papers: list[dict], days: int = 30) -> list[dict]:
 
 
 def load_prior_arxiv_ids(current_raw_path: Path) -> set[str]:
+    """Set of arXiv IDs surfaced in any monthly raw file STRICTLY BEFORE the
+    current file. Round 1 PI Major-2 fix: caller passes the explicit current
+    raw_path (which may differ in fixture mode); the prior set excludes it.
+    """
     seen = set()
     for f in sorted(MONITORING_DIR.glob("arxiv_raw_*.json")):
         if f.resolve() == current_raw_path.resolve():
-            continue
+            continue  # skip current month's file
         if "FIXTURE" in f.name:
-            continue
+            continue  # skip fixture files in real-cadence diff
         try:
             for p in json.loads(f.read_text()):
                 seen.add(p.get("arxiv_id", ""))
@@ -160,6 +203,7 @@ def load_prior_arxiv_ids(current_raw_path: Path) -> set[str]:
 
 
 def write_readme():
+    """One-time monitoring/README.md if it doesn't exist."""
     readme = MONITORING_DIR / "README.md"
     if readme.exists():
         return
@@ -190,19 +234,19 @@ conference pages) and sign off by PI. Escalation rules: see
 - `--max-results N` — max arXiv hits for the single combined query (default: 50)
 - `--overwrite` — allow overwriting a non-empty same-month raw file with an
   empty failure result. Without this flag, an arXiv failure preserves the
-  previously successful raw file.
+  previously successful raw file (Round 1 PI Minor-1 protection).
 - `--fixture` — skip arXiv API and use a hardcoded sample paper list to
   exercise attribution + escalation + diff logic. Writes to
   `monitoring/arxiv_raw_YYYY-MM_FIXTURE.json` + `collision_scan_YYYY-MM.md`
   with the original month label. Fixture files are excluded from
-  prior-month diff load.
+  prior-month diff load (Round 1 PI Minor-2 validation path).
 
-## Per closure
+## Per Task 0 closure
 
 The dryrun D-4 baseline established 9 adjacent papers (0 collisions) as of
 2026-05-14. Subsequent months should diff against the union of all prior
 monthly files, not just May 2026. The diff loader strictly excludes the
-current month's file and any FIXTURE file.
+current month's file and any FIXTURE file (Round 1 PI Major-2 fix).
 """)
     logger.info(f"wrote {readme}")
 
@@ -224,7 +268,7 @@ def write_report(month: str, all_papers: list[dict], recent_papers: list[dict],
     ]
     if arxiv_unavailable:
         lines += [
-            " **arXiv API was unavailable this run** (HTTP 429 / timeout after exponential backoff). "
+            "⚠ **arXiv API was unavailable this run** (HTTP 429 / timeout after exponential backoff). "
             "Skip auto-arXiv this cycle; **manual checklist below must cover the gap**. Re-run later "
             "if needed: `conda run --no-capture-output -n stage2c python scripts/39_monthly_collision_monitor.py --month "
             f"{month}`.",
@@ -238,7 +282,7 @@ def write_report(month: str, all_papers: list[dict], recent_papers: list[dict],
         "",
     ]
     if escalations:
-        lines += ["###  Escalations (review immediately)", ""]
+        lines += ["### ⚠ Escalations (review immediately)", ""]
         for p in escalations:
             lines.append(f"- arxiv:{p['arxiv_id']} — {p['title']}")
             lines.append(f"  - Authors: {', '.join(p['authors'])}")
@@ -247,12 +291,12 @@ def write_report(month: str, all_papers: list[dict], recent_papers: list[dict],
             lines.append(f"  - Excerpt: {p['summary_excerpt'][:200]}...")
             lines.append("")
     else:
-        lines += ["###  No escalation-flagged papers this month", ""]
+        lines += ["### ✓ No escalation-flagged papers this month", ""]
     if new_in_month:
         lines += ["### New papers (last 30 days, not in prior monthly union)", ""]
         for p in new_in_month:
             flags = p.get("_flags", [])
-            flag_str = " " if flags else ""
+            flag_str = " ⚠" if flags else ""
             lines.append(f"- arxiv:{p['arxiv_id']}{flag_str} — {p['title']}")
             lines.append(f"  - Authors: {', '.join(p['authors'])}")
             lines.append(f"  - URL: {p['url']}")
@@ -284,6 +328,10 @@ def write_report(month: str, all_papers: list[dict], recent_papers: list[dict],
 
 
 def _fixture_papers() -> list[dict]:
+    """Hardcoded sample papers exercising attribution + escalation + diff for
+    the fixture mode (Round 1 PI Minor-2 fix). Each row tests one or more
+    rules; the resulting report should be reviewed manually for positive-path
+    correctness."""
     today = datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     return [
         {
@@ -350,7 +398,7 @@ def main() -> int:
         all_papers = arxiv_search(ARXIV_COMBINED_QUERY, max_results=args.max_results)
         arxiv_unavailable = (len(all_papers) == 0
                               and getattr(arxiv_search, "_last_failed", False))
-
+    # Attribute each paper to one or more query groups by keyword
     for p in all_papers:
         text = (p["title"] + " " + p.get("summary_excerpt", "")).lower()
         matched_groups = [g for g, kws in QUERY_GROUP_RULES
@@ -359,8 +407,8 @@ def main() -> int:
 
     logger.info(f"arXiv hits: {len(all_papers)}")
     raw_path = MONITORING_DIR / f"arxiv_raw_{args.month}.json"
-
-
+    # Round 1 PI Minor-1 fix: do NOT silently overwrite a non-empty same-month
+    # raw file with [] when arXiv failed. Require --overwrite to clobber.
     if (arxiv_unavailable and not args.fixture and raw_path.exists()
             and not args.overwrite):
         try:
@@ -384,7 +432,7 @@ def main() -> int:
     recent_papers = filter_recent(all_papers, days=args.days)
     logger.info(f"submitted within last {args.days} days: {len(recent_papers)}")
 
-    prior_ids = load_prior_arxiv_ids(raw_path)
+    prior_ids = load_prior_arxiv_ids(raw_path)  # strictly prior files only
     new_in_month = [p for p in recent_papers if p["arxiv_id"] not in prior_ids]
     for p in new_in_month:
         p["_flags"] = assess_escalation(p)

@@ -1,0 +1,5 @@
+estimand,beta2_level_change_pp,ci95_beta2_low,ci95_beta2_high,pval_beta2,placebo_rank,n_candidates,rank_fraction
+version_weighted,-20.1283,-28.1503,-12.1063,0.0,7,110,0.0636
+equal_package,-4.0672,-7.2694,-0.8649,0.0128,40,110,0.3636
+any_attested_package,-4.4589,-7.6853,-1.2325,0.0068,33,110,0.3
+version_weighted_drop_top5,-10.542,-22.2099,1.126,0.0766,10,110,0.0909

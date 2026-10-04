@@ -1,3 +1,25 @@
+"""
+Task 3 Step 3.2 — npm Downloads API.
+
+For each of 3000 packages, fetch:
+  GET https://api.npmjs.org/downloads/range/2025-06-01:2026-05-10/{name}
+
+Window: 2025-06-01 → 2026-05-10 (344 days = 49.14 weeks).
+Cache raw responses to data/npm_downloads_raw/{safe_fname}.json (idempotent;
+resumable across runs).
+
+Output: data/npm_downloads_metrics.csv
+  columns: package, total_downloads_window, weekly_downloads_avg,
+           daily_downloads_avg, days_with_data, status
+
+`status` ∈ {'ok', 'no_data' (empty downloads), 'not_found' (404),
+            'rate_limited', 'error'}.
+
+Rate budget: no formal hard limit per the npmjs.org API docs, but we sleep 0.1s
+between requests for politeness; retry-with-backoff on 429/5xx.
+
+Run: conda run --no-capture-output -n stage2c python scripts/12_npm_downloads.py
+"""
 from __future__ import annotations
 
 import csv
@@ -17,12 +39,12 @@ OUT_CSV = DATA_DIR / "npm_downloads_metrics.csv"
 RAW_DIR.mkdir(parents=True, exist_ok=True)
 
 API_BASE = "https://api.npmjs.org/downloads/range/2025-06-01:2026-05-10"
-HEADERS = {"User-Agent": "stage2c-research/1.0", "Accept": "application/json"}
+HEADERS = {"User-Agent": "stage2c-research/1.0 (Task 3 downloads)", "Accept": "application/json"}
 
 SLEEP_BETWEEN = 0.1
 RETRY_BACKOFFS = [3, 10, 30]
 
-
+# Window: 2025-06-01 to 2026-05-10 inclusive
 TOTAL_DAYS = 344
 WEEKS = TOTAL_DAYS / 7.0
 
@@ -32,6 +54,7 @@ def safe_fname(pkg: str) -> str:
 
 
 def fetch_with_retry(pkg: str) -> tuple[dict | None, str]:
+    """Returns (json_payload, status)."""
     url = f"{API_BASE}/{quote(pkg, safe='/@')}"
     last_err = ""
     for attempt, backoff in enumerate([0, *RETRY_BACKOFFS]):
@@ -58,6 +81,7 @@ def fetch_with_retry(pkg: str) -> tuple[dict | None, str]:
 
 
 def compute_metrics(payload: dict) -> tuple[int, float, float, int]:
+    """Returns (total, weekly_avg, daily_avg, days_with_data)."""
     downloads = payload.get("downloads") or []
     total = 0
     days_with_data = 0
@@ -72,7 +96,7 @@ def compute_metrics(payload: dict) -> tuple[int, float, float, int]:
 
 
 def main() -> int:
-
+    # Load package list
     packages: list[str] = []
     with PACKAGES_FILE.open() as f:
         header = next(f).rstrip("\n").split("\t")
@@ -83,7 +107,7 @@ def main() -> int:
                 packages.append(parts[idx_name])
     print(f"Loaded {len(packages)} package names", flush=True)
 
-
+    # Resume
     rows: list[dict] = []
     counts = {"ok": 0, "no_data": 0, "not_found": 0, "rate_limited": 0,
               "error": 0, "cached": 0}
@@ -97,7 +121,7 @@ def main() -> int:
                 payload = json.loads(cache_path.read_text())
                 status = payload.get("_status", "ok") if isinstance(payload, dict) else "ok"
                 if status == "ok" and "downloads" not in payload:
-                    status = "error"
+                    status = "error"  # mid-write or stale cache
                 counts["cached"] += 1
             except Exception:
                 payload = None
@@ -109,11 +133,11 @@ def main() -> int:
                 payload = payload_data
             else:
                 payload = {"_status": status, "package": pkg}
-
+            # Cache result (including non-ok) for resumability
             cache_path.write_text(json.dumps(payload))
             time.sleep(SLEEP_BETWEEN)
 
-
+        # Compute metrics
         if status == "ok" and isinstance(payload, dict) and "downloads" in payload:
             total, weekly, daily, days = compute_metrics(payload)
             if total == 0 and days == 0:
@@ -140,7 +164,7 @@ def main() -> int:
         if i % 200 == 0 or i == len(packages):
             print(f"  [{i:>4}/{len(packages)}] {pkg[:40]:<40s}  status={status}", flush=True)
 
-
+    # Save
     fields = ["package", "total_downloads_window", "weekly_downloads_avg",
               "daily_downloads_avg", "days_with_data", "status"]
     with OUT_CSV.open("w", newline="") as f:
@@ -148,7 +172,7 @@ def main() -> int:
         w.writeheader()
         for r in rows:
             w.writerow(r)
-    print(f"\n Saved {OUT_CSV} ({len(rows)} rows)", flush=True)
+    print(f"\n✓ Saved {OUT_CSV} ({len(rows)} rows)", flush=True)
 
     print(f"\n=== Status counts ===", flush=True)
     for k in ("ok", "no_data", "not_found", "rate_limited", "error", "cached"):
@@ -156,7 +180,7 @@ def main() -> int:
         if v:
             print(f"  {k}: {v}", flush=True)
 
-
+    # Summary
     ok_dls = [float(r["weekly_downloads_avg"]) for r in rows
               if r["status"] == "ok" and r["weekly_downloads_avg"]]
     if ok_dls:

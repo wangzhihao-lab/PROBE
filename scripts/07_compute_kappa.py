@@ -1,3 +1,21 @@
+"""
+Task 2 Step 2.7 — Cohen's Kappa for rater A (rater1) vs rater B (rater2).
+
+Inputs:
+  data/classification.csv          (rater='rater_A'; 500 rows)
+  data/classification_rater2.csv   (rater='rater_B'; 100 rows expected, from the rater-B handoff)
+                                    schema: package, version, class, reason, rater
+
+Outputs:
+  reports/kappa_result.json        (kappa, confusion matrix, disagreement detail)
+  reports/kappa_summary.txt        (human-readable summary)
+
+Verdict:
+  kappa ≥ 0.7 → PASS (proceed to Task 3)
+  kappa < 0.7 → FAIL (analyze disagreement classes, revise rules, full re-classify)
+
+Run: conda run --no-capture-output -n stage2c python scripts/07_compute_kappa.py
+"""
 from __future__ import annotations
 
 import csv
@@ -11,7 +29,7 @@ from sklearn.metrics import cohen_kappa_score, confusion_matrix
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 REPORTS_DIR = Path(__file__).parent.parent / "reports"
-RATER1_CSV = DATA_DIR / "classification.csv"
+RATER_A_CSV = DATA_DIR / "classification.csv"
 RATER2_CSV = DATA_DIR / "classification_rater2.csv"
 OUT_JSON = REPORTS_DIR / "kappa_result.json"
 OUT_TXT = REPORTS_DIR / "kappa_summary.txt"
@@ -33,28 +51,28 @@ def load_classifications(path: Path) -> dict[tuple[str, str], str]:
 
 def main() -> int:
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
-    rater1 = load_classifications(RATER1_CSV)
+    rater_a = load_classifications(RATER_A_CSV)
     rater2 = load_classifications(RATER2_CSV)
-    print(f"rater-1 rows:  {len(rater1)}", flush=True)
+    print(f"Rater-A rows:  {len(rater_a)}", flush=True)
     print(f"Rater2 rows:  {len(rater2)}", flush=True)
 
-
-    common = sorted(set(rater1.keys()) & set(rater2.keys()))
+    # Intersection
+    common = sorted(set(rater_a.keys()) & set(rater2.keys()))
     if len(common) < 50:
-        print(f" intersection only {len(common)}; need ≥ 50 for meaningful kappa",
+        print(f"⚠ intersection only {len(common)}; need ≥ 50 for meaningful kappa",
               file=sys.stderr)
     print(f"Intersection: {len(common)}", flush=True)
 
-    y1 = [rater1[k] for k in common]
+    y1 = [rater_a[k] for k in common]
     y2 = [rater2[k] for k in common]
 
-
+    # Labels: only those that actually appear (avoid sklearn warning)
     labels = [c for c in ALL_CLASSES if c in (set(y1) | set(y2))]
 
     kappa = cohen_kappa_score(y1, y2, labels=labels)
     cm = confusion_matrix(y1, y2, labels=labels).tolist()
 
-
+    # Methodologist RR6 additions: Gwet AC1 + bootstrap CI for κ.
     def gwet_ac1(a, b, lbls):
         n = len(a)
         if n == 0:
@@ -75,7 +93,7 @@ def main() -> int:
 
     ac1 = gwet_ac1(y1, y2, labels)
 
-
+    # Bootstrap CI for kappa (RNG seed=42; 1000 resamples)
     rng = random.Random(42)
     n_boot = 1000
     kappas: list[float] = []
@@ -91,7 +109,7 @@ def main() -> int:
     ci_lo = kappas[int(0.025 * len(kappas))] if kappas else None
     ci_hi = kappas[int(0.975 * len(kappas))] if kappas else None
 
-
+    # Prevalence index (max marginal proportion)
     marginals = [
         max(sum(1 for x in y1 if x == lbl) / len(y1),
             sum(1 for y in y2 if y == lbl) / len(y2))
@@ -99,7 +117,7 @@ def main() -> int:
     ]
     prevalence_max = max(marginals) if marginals else None
 
-
+    # Per-class agreement
     per_class: dict[str, dict[str, int]] = {}
     for lbl in labels:
         c1 = sum(1 for a, b in zip(y1, y2) if a == lbl and b == lbl)
@@ -107,22 +125,22 @@ def main() -> int:
         rater2_total = sum(1 for b in y2 if b == lbl)
         per_class[lbl] = {
             "agree": c1,
-            "rater1_count": rater1_total,
+            "rater_a_count": rater1_total,
             "rater2_count": rater2_total,
         }
 
-
+    # Disagreement detail
     disagreements = []
     for k, (a, b) in zip(common, zip(y1, y2)):
         if a != b:
             disagreements.append({
                 "package": k[0],
                 "version": k[1],
-                "rater1": a,
+                "rater_a": a,
                 "rater2": b,
             })
 
-
+    # Verdict
     pass_ = kappa >= KAPPA_THRESHOLD
     verdict = "PASS" if pass_ else "FAIL"
 
@@ -142,9 +160,9 @@ def main() -> int:
         "bootstrap_n": n_boot,
     }
     OUT_JSON.write_text(json.dumps(result, indent=2))
-    print(f"\n Saved {OUT_JSON}", flush=True)
+    print(f"\n✓ Saved {OUT_JSON}", flush=True)
 
-
+    # Human summary
     ci_lo_str = f"{ci_lo:.4f}" if ci_lo is not None else "n/a"
     ci_hi_str = f"{ci_hi:.4f}" if ci_hi is not None else "n/a"
     ac1_str = f"{ac1:.4f}" if ac1 is not None else "n/a"
@@ -160,7 +178,7 @@ def main() -> int:
         f"Disagreements: {len(disagreements)} / {len(common)} ({len(disagreements)/len(common)*100:.1f}%)",
         "=" * 60,
         "",
-        "Confusion matrix (rows: rater 1, cols: Rater2):",
+        "Confusion matrix (rows: rater A, cols: rater B):",
         "        " + "  ".join(f"{l:>5}" for l in labels),
     ]
     for i, lbl in enumerate(labels):
@@ -168,7 +186,7 @@ def main() -> int:
     lines.append("")
     lines.append("Per-class counts:")
     for lbl, pc in per_class.items():
-        lines.append(f"  {lbl}: rater1={pc['rater1_count']:>3} rater2={pc['rater2_count']:>3} agree={pc['agree']:>3}")
+        lines.append(f"  {lbl}: rater_a={pc['rater_a_count']:>3} rater2={pc['rater2_count']:>3} agree={pc['agree']:>3}")
     summary_txt = "\n".join(lines)
     OUT_TXT.write_text(summary_txt + "\n")
     print("\n" + summary_txt, flush=True)

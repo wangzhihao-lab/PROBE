@@ -1,3 +1,28 @@
+"""
+Pre-submission Batch-4 — Composition facts behind the raw mid-vs-top
+attestation-rate inversion (acting-PI batch, 2026-07-08; frozen rows only).
+
+Motivation: RQ1 reports raw version-level attestation rates with the middle
+tier (~52%) far above the top tier (~19-23%), yet the RQ3 adjusted models
+find no significant tier coefficient. This script quantifies the covariate
+composition gap that reconciles the two: per-tier distributions, over the
+same 97,672-row modeling frame, of the covariates the logistic model finds
+strongly negative (log package age, scoped-package status) and positive
+(Dependabot).
+
+Inputs:
+  data/versions.csv, data/influence_metrics.csv,
+  data/depsdev_dependents_2026_05_05.csv
+
+Outputs:
+  data/tier_composition_gap.csv
+  reports/presub_tier_composition_gap.md
+
+Caveats carried: deps.dev primary tier frame; descriptive composition facts
+only — no causal decomposition; anti-causal firewall intact.
+
+Run: conda run --no-capture-output -n stage2c python scripts/48_tier_composition_gap.py
+"""
 from __future__ import annotations
 
 import sys
@@ -54,11 +79,11 @@ def main() -> int:
     out = pd.DataFrame(rows).set_index("tier").loc[["top", "mid", "tail"]]
     out.to_csv(OUT_CSV)
     print(out.to_string(), flush=True)
-    print(f" Saved {OUT_CSV}", flush=True)
+    print(f"✓ Saved {OUT_CSV}", flush=True)
 
     OUT_MD.write_text(
         "# Pre-submission — Tier composition facts behind the raw rate inversion\n\n"
-        "**Date**: 2026-07-08 (acting-PI ; frozen rows only)\n\n"
+        "**Date**: 2026-07-08 (acting-PI Batch-4; frozen rows only)\n\n"
         "Raw version-level attestation rates invert (mid > top) while adjusted tier\n"
         "coefficients are non-significant. Composition of the same version rows:\n\n"
         + out.to_markdown()
@@ -69,7 +94,7 @@ def main() -> int:
         "this is exactly what the non-significant adjusted tier coefficients say.\n"
         "No causal decomposition is claimed.\n"
     )
-    print(f" Saved {OUT_MD}", flush=True)
+    print(f"✓ Saved {OUT_MD}", flush=True)
     return 0
 
 

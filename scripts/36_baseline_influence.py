@@ -1,3 +1,43 @@
+"""Task 7 Baseline 3 (B3) — Influence metric sensitivity (tier-frame + covariate
+sensitivity merged).
+
+Part A — Tier-frame source (4 frames):
+  A1: deps.dev direct dependents (PRIMARY per Task 4 Round 3) — reference
+  A2: ecosyste.ms DPC (source-sensitivity)
+  A3: weekly downloads quantile (>500=top, >10=mid, else tail — same cuts as deps.dev
+      after rescale OR top-5% quantile cut)
+  A4: PCA composite (log1p of downloads/DPC/stars/maintainers/age; MinMaxScaler;
+      5-95 winsorization; full-sample fit; random_state=42; missing → drop-and-report)
+
+Part B — Covariate sensitivity (under primary tier frame):
+  Full Task 5 model (reference) + drop-one (9) + group-out (3) + univariate (9)
+
+Part B2 — Version-level drop-one (added 2026-07-11):
+  The FULL version-level Logistic primary spec (12 covariates: scripts/30's
+  10 + log_prewin_release_freq + github_unobserved; 97,672 version rows)
+  refit 12×, dropping one covariate per refit — so each retained covariate's
+  range below is taken over the 11 refits that keep it.
+  Plain MLE (canonical scripts/30 uses package-cluster SEs — identical
+  point estimates; CIs here are un-clustered). Additive only: the package-level
+  grid, forest plot, and all pre-existing output filenames are unchanged.
+
+Outputs:
+  data/baselines/task_7_b3_tier_shift_matrix.csv  (4-source pairwise agreement)
+  data/baselines/task_7_b3_pca_loadings.csv       (PCA loadings + variance)
+  data/baselines/task_7_b3_covariate_grid.csv     (Logistic OR + Cox HR per fit)
+  data/baselines/task_7_b3_versionlevel_dropone.csv (version-level drop-one ORs)
+  data/baselines/task_7_b3_forest.png             (forest plot per outcome)
+  reports/task_7_baseline_3.md
+
+Run: conda run --no-capture-output -n stage2c python scripts/36_baseline_influence.py
+
+TSE R1 (extended-series refit of the same grid; every output suffixed, the
+protocol artefacts above untouched; --out-suffix is mandatory whenever the
+window or the version table is non-default):
+  conda run --no-capture-output -n stage2c python scripts/36_baseline_influence.py \
+      --origin 2024-01-01 --versions-csv versions_extended.csv \
+      --out-suffix _tse_r1_long --fig-suffix _extended
+"""
 from __future__ import annotations
 
 import logging
@@ -17,12 +57,34 @@ import figstyle
 
 figstyle.apply()
 
+# TSE R1: the window lower bound and the version table are configurable so the
+# whole grid can be refit on the extended series. Defaults reproduce the
+# as-submitted run byte-for-byte; a non-default window without --out-suffix is
+# refused so no protocol artefact can be overwritten by accident.
+import argparse as _argparse
+_ap = _argparse.ArgumentParser(add_help=False)
+_ap.add_argument("--origin", default="2025-08-01")
+_ap.add_argument("--versions-csv", default="versions.csv")
+_ap.add_argument("--out-suffix", default="")
+_ap.add_argument("--fig-suffix", default=None,
+                 help="Figure-name suffix (default: same as --out-suffix).")
+_ARGS, _ = _ap.parse_known_args()
+_NON_DEFAULT = (_ARGS.origin, _ARGS.versions_csv) != ("2025-08-01", "versions.csv")
+if _NON_DEFAULT and not _ARGS.out_suffix:
+    raise SystemExit("--out-suffix is required whenever --origin or --versions-csv "
+                     "is non-default (protects the as-submitted artefacts)")
+_SUFFIX = _ARGS.out_suffix
+_FIG_SUFFIX = _ARGS.fig_suffix if _ARGS.fig_suffix is not None else _SUFFIX
 
+# Batch-9: reuse the clean pre-window opportunity builder from scripts/52 so B3
+# uses the same baseline release-opportunity covariate as the primary models.
 import importlib.util as _ilu
 _spec = _ilu.spec_from_file_location(
     "rq3_primary", str(Path(__file__).parent / "52_rq3_sensitivity.py"))
 _rq3 = _ilu.module_from_spec(_spec)
 _spec.loader.exec_module(_rq3)
+if _NON_DEFAULT:
+    _rq3.configure(_ARGS.origin, _ARGS.versions_csv, _ARGS.out_suffix)
 _PREWIN = _rq3.prewindow_release_counts()
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -34,23 +96,28 @@ BASELINES_DIR = DATA_DIR / "baselines"
 REPORTS_DIR = ROOT / "reports"
 
 PACKAGES_FULL = DATA_DIR / "packages_full.txt"
-VERSIONS_CSV = DATA_DIR / "versions.csv"
+VERSIONS_CSV = DATA_DIR / _ARGS.versions_csv
 INFLUENCE_CSV = DATA_DIR / "influence_metrics.csv"
 DEPSDEV_CSV = DATA_DIR / "depsdev_dependents_2026_05_05.csv"
 
-OUT_SHIFT = BASELINES_DIR / "task_7_b3_tier_shift_matrix.csv"
-OUT_PCA = BASELINES_DIR / "task_7_b3_pca_loadings.csv"
-OUT_GRID = BASELINES_DIR / "task_7_b3_covariate_grid.csv"
-OUT_VDROP = BASELINES_DIR / "task_7_b3_versionlevel_dropone.csv"
-OUT_FOREST = BASELINES_DIR / "task_7_b3_forest.png"
-OUT_REPORT = REPORTS_DIR / "task_7_baseline_3.md"
+OUT_SHIFT = BASELINES_DIR / f"task_7_b3_tier_shift_matrix{_SUFFIX}.csv"
+OUT_PCA = BASELINES_DIR / f"task_7_b3_pca_loadings{_SUFFIX}.csv"
+OUT_GRID = BASELINES_DIR / f"task_7_b3_covariate_grid{_SUFFIX}.csv"
+OUT_VDROP = BASELINES_DIR / f"task_7_b3_versionlevel_dropone{_SUFFIX}.csv"
+OUT_FOREST = BASELINES_DIR / f"task_7_b3_forest{_FIG_SUFFIX}.png"
+OUT_REPORT = REPORTS_DIR / f"task_7_baseline_3{_SUFFIX}.md"
 
-ORIGIN = pd.Timestamp("2025-08-01", tz="UTC")
+ORIGIN = pd.Timestamp(_ARGS.origin, tz="UTC")
 CENSOR = pd.Timestamp("2026-05-10 23:59:59", tz="UTC")
 DEADLINE = pd.Timestamp("2025-12-09", tz="UTC")
 RANDOM_SEED = 42
 
-
+# Batch-8: the grid re-fits the CURRENT primary specifications per frame —
+# Cox = incident cohort + delayed entry at first in-window release + robust SE;
+# Logistic = version-level 12-covariate primary (missingness-explicit +
+# release frequency; plain-MLE point estimates, canonical cluster CIs live in
+# scripts/52). Frame-missing packages are EXCLUDED from that frame's fits
+# (previously they fell silently into the reference tier).
 VERSION_COVS = [
     "post_deadline",
     "log_weekly_downloads", "log_age_days", "log_maintainers",
@@ -70,9 +137,11 @@ def dpc_tier(dpc) -> str:
 
 
 def prevalent_packages() -> set:
+    """Packages with >=1 attested version published before the window origin
+    (full packument history; copied from scripts/44/52)."""
     import json as _json
-    from datetime import datetime as _dt, timezone as _tz
-    window_start = _dt(2025, 8, 1, tzinfo=_tz.utc)
+    from datetime import datetime as _dt
+    window_start = ORIGIN.to_pydatetime()
 
     def _parse(s):
         try:
@@ -102,13 +171,22 @@ def prevalent_packages() -> set:
 
 
 def quantile_tier(score, top_q=0.95, mid_q=0.50) -> str:
-    return score
+    """Tier by quantile: top 5%, mid 50-95%, tail <50%."""
+    return score  # placeholder; vectorized version below
 
 
 def build_covariates(packages: pd.DataFrame, versions: pd.DataFrame,
                      inf: pd.DataFrame, depsdev: pd.DataFrame
                      ) -> pd.DataFrame:
-
+    """Build per-package covariate frame with all 4 tier frames attached.
+    Returns a frame keyed by `package` with:
+      duration_days, event (for Cox),
+      log_downloads, log_age, log_dependents, log_maintainers, owner_org_int,
+      has_dependabot_int, has_issue_template_int, is_scoped_int,
+      tier_dd, tier_eco, tier_dl, tier_pca,
+      tier_top_*, tier_mid_* for each frame.
+    """
+    # Per-package first-attested time + version count
     v = versions.copy()
     v["published_at"] = pd.to_datetime(v["published_at"], utc=True, errors="coerce")
     v = v[(v["published_at"] >= ORIGIN) & (v["published_at"] <= CENSOR)]
@@ -124,28 +202,28 @@ def build_covariates(packages: pd.DataFrame, versions: pd.DataFrame,
     sd["event"] = sd["first_attested_at"].notna().astype(int)
     sd.loc[sd["event"] == 0, "first_attested_at"] = CENSOR
     sd["duration_days"] = (sd["first_attested_at"] - ORIGIN).dt.days.clip(lower=1).astype(int)
-
-
+    # Delayed entry (Batch-8 primary Cox spec, cf. scripts/52): at risk only
+    # from the first in-window release; entry==event ties enter at -0.5 d.
     sd["entry_days"] = (sd["first_release_at"] - ORIGIN).dt.days.clip(lower=0).astype(float)
     sd["entry_days"] = np.minimum(sd["entry_days"], sd["duration_days"] - 0.5)
     sd["prevalent"] = sd["package"].isin(prevalent_packages()).astype(int)
 
-
+    # Merge influence metrics
     sd = sd.merge(inf, on="package", how="left")
     sd["log_prewin_release_freq_pkg"] = np.log1p(sd["package"].map(_PREWIN).fillna(0).astype(float))
     sd["github_unobserved_pkg"] = (sd["github_status"].astype(str) != "ok").astype(int)
 
-
+    # eco DPC + deps.dev dependents
     eco_map = dict(zip(packages["name"], packages["dependent_packages_count"]))
     dd_map = dict(zip(depsdev["name"], depsdev["dependents_count"]))
     sd["eco_dpc"] = sd["package"].map(eco_map)
     sd["dd_dep"] = sd["package"].map(dd_map)
 
-
+    # ---- Tier frames ----
     sd["tier_dd"] = sd["dd_dep"].apply(dpc_tier)
     sd["tier_eco"] = sd["eco_dpc"].apply(dpc_tier)
 
-
+    # Downloads quantile: top 5%, mid 50-95%, tail <50%
     dl = pd.to_numeric(sd["weekly_downloads_avg"], errors="coerce")
     q95 = np.nanpercentile(dl, 95)
     q50 = np.nanpercentile(dl, 50)
@@ -156,11 +234,11 @@ def build_covariates(packages: pd.DataFrame, versions: pd.DataFrame,
         return "tail"
     sd["tier_dl"] = dl.apply(dl_tier)
 
-
+    # PCA composite tier
     pca_inputs = sd[["weekly_downloads_avg", "eco_dpc", "github_stars", "maintainers_count", "package_age_days"]].copy()
     for c in pca_inputs.columns:
         pca_inputs[c] = pd.to_numeric(pca_inputs[c], errors="coerce")
-
+    # 5-95 winsorize per column
     for c in pca_inputs.columns:
         lo = np.nanpercentile(pca_inputs[c], 5)
         hi = np.nanpercentile(pca_inputs[c], 95)
@@ -173,7 +251,7 @@ def build_covariates(packages: pd.DataFrame, versions: pd.DataFrame,
     pcs = pca.fit_transform(scaled)
     sd["pca_score"] = np.nan
     sd.loc[valid_mask, "pca_score"] = pcs[:, 0]
-
+    # Sign: ensure positive correlation with downloads
     corr_dl = np.corrcoef(sd.loc[valid_mask, "pca_score"],
                            pca_inputs_log.loc[valid_mask, "weekly_downloads_avg"])[0, 1]
     if corr_dl < 0:
@@ -187,7 +265,7 @@ def build_covariates(packages: pd.DataFrame, versions: pd.DataFrame,
         return "tail"
     sd["tier_pca"] = sd["pca_score"].apply(pca_tier)
 
-
+    # ---- Numeric covariates ----
     sd["log_downloads"] = np.log1p(pd.to_numeric(sd["weekly_downloads_avg"], errors="coerce"))
     sd["log_age"] = np.log1p(pd.to_numeric(sd["package_age_days"], errors="coerce"))
     sd["log_dependents"] = np.log1p(pd.to_numeric(sd["dd_dep"], errors="coerce"))
@@ -198,12 +276,12 @@ def build_covariates(packages: pd.DataFrame, versions: pd.DataFrame,
                      ("is_scoped_package", "is_scoped_int")]:
         sd[dst] = (sd[src].astype(str).str.lower() == "true").astype(int)
 
-
+    # Tier dummies per frame
     for frame in ["dd", "eco", "dl", "pca"]:
         sd[f"tier_top_{frame}"] = (sd[f"tier_{frame}"] == "top").astype(int)
         sd[f"tier_mid_{frame}"] = (sd[f"tier_{frame}"] == "mid").astype(int)
 
-
+    # Save loadings
     loadings_df = pd.DataFrame({
         "input_feature": pca_inputs.columns,
         "pc1_loading": pca.components_[0],
@@ -214,11 +292,17 @@ def build_covariates(packages: pd.DataFrame, versions: pd.DataFrame,
 
 
 def _drop_constant(sub: pd.DataFrame, covariates: list[str]) -> list[str]:
+    """Drop zero-variance covariates (constant within this subset) — the source
+    of the singular-matrix failures when a frame's tier subset makes an
+    indicator (e.g. github_unobserved) constant."""
     return [c for c in covariates if sub[c].nunique(dropna=True) > 1]
 
 
 def fit_version_logistic(vdf: pd.DataFrame, covariates: list[str],
                          label: str) -> Optional[dict]:
+    """Version-level logistic (Batch-9 primary spec shape) with PACKAGE-CLUSTER
+    robust SEs (matching the paper's primary logistic), so the forest CIs are
+    the honest cluster CIs rather than plain-MLE CIs that understate them."""
     sub = vdf[covariates + ["y", "package"]].dropna()
     if len(sub) < 50:
         return None
@@ -254,6 +338,8 @@ def fit_version_logistic(vdf: pd.DataFrame, covariates: list[str],
 
 
 def fit_cox(df: pd.DataFrame, covariates: list[str], label: str) -> Optional[dict]:
+    """Batch-9 primary Cox shape: incident cohort (prevalent adopters
+    excluded), delayed entry at first in-window release, robust SE."""
     sub = df[df["prevalent"] == 0]
     sub = sub[covariates + ["duration_days", "entry_days", "event"]].dropna()
     if len(sub) < 50:
@@ -281,7 +367,7 @@ def fit_cox(df: pd.DataFrame, covariates: list[str], label: str) -> Optional[dic
             "feature": name,
             "coef": float(summary.loc[name, "coef"]),
             "se": float(summary.loc[name, "se(coef)"]),
-            "OR": float(summary.loc[name, "exp(coef)"]),
+            "OR": float(summary.loc[name, "exp(coef)"]),  # HR
             "OR_ci_low": float(summary.loc[name, "exp(coef) lower 95%"]),
             "OR_ci_high": float(summary.loc[name, "exp(coef) upper 95%"]),
             "pval": float(summary.loc[name, "p"]),
@@ -290,8 +376,17 @@ def fit_cox(df: pd.DataFrame, covariates: list[str], label: str) -> Optional[dic
     return {"rows": rows, "n_obs": len(sub)}
 
 
+# --- Part B2: version-level drop-one (scripts/30 full spec) — added 2026-07-11
+
+
 def build_version_frame(versions: pd.DataFrame, inf: pd.DataFrame,
                         depsdev: pd.DataFrame, sd: pd.DataFrame) -> pd.DataFrame:
+    """Version-level analysis frame (Batch-8): outcome y = has_attestation,
+    post_deadline = published_at >= 2025-12-09, package covariates
+    complete-case, PLUS log_prewin_release_freq + github_unobserved (primary spec)
+    and every frame's tier label/dummies from `sd` so each frame's fit can
+    exclude its own frame-missing packages instead of folding them into the
+    reference tier."""
     v = versions.copy()
     v["published_at"] = pd.to_datetime(v["published_at"], utc=True, errors="coerce")
     v["y"] = (v["has_attestation"].astype(str).str.lower() == "true").astype(int)
@@ -323,6 +418,11 @@ def build_version_frame(versions: pd.DataFrame, inf: pd.DataFrame,
 
 
 def versionlevel_dropone(vdf: pd.DataFrame) -> pd.DataFrame:
+    """Refit the FULL version-level Logit (the 12-covariate primary spec:
+    scripts/30's 10 + log_prewin_release_freq + github_unobserved) once as
+    reference, then 12× dropping one covariate per refit. Plain MLE (canonical
+    scripts/30 uses package-cluster SEs — identical point estimates; CIs here
+    are un-clustered). Returns long frame: covariate_dropped × remaining ORs."""
     rows: list[dict] = []
 
     def _fit(covs: list[str], dropped: str) -> None:
@@ -354,6 +454,10 @@ def versionlevel_dropone(vdf: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_fits_grid(sd: pd.DataFrame, vdf: pd.DataFrame) -> pd.DataFrame:
+    """All fits across frames and covariate variants, in the CURRENT primary
+    shapes: Cox = incident + delayed entry + release-freq + missingness
+    indicator (package level); Logistic = version-level 12-covariate primary.
+    Frame-missing packages are excluded from that frame's fits."""
     base_cov_no_tier = ["log_downloads", "log_age", "log_maintainers",
                         "owner_org_int", "has_dependabot_int",
                         "has_issue_template_int", "is_scoped_int"]
@@ -363,7 +467,7 @@ def build_fits_grid(sd: pd.DataFrame, vdf: pd.DataFrame) -> pd.DataFrame:
                   "log_prewin_release_freq", "github_unobserved"]
     all_rows = []
 
-
+    # --- Part A: full primary-shape model under each tier frame ---
     frames_cox_ok, frames_logit_ok = [], []
     for frame, label_frame in [("dd", "frame_dd_PRIMARY"), ("eco", "frame_eco"),
                                 ("dl", "frame_downloads"), ("pca", "frame_pca")]:
@@ -376,8 +480,8 @@ def build_fits_grid(sd: pd.DataFrame, vdf: pd.DataFrame) -> pd.DataFrame:
         r = fit_version_logistic(vdf_f, logit_base + tiers, f"{label_frame}_full")
         if r:
             all_rows.extend(r["rows"]); frames_logit_ok.append(frame)
-
-
+    # Fit-count assertion: never silently drop a frame. The paper must state the
+    # ACTUAL number of frames that fit, not a hard-coded "four".
     logger.info(f"Part A frames fitted: Cox {frames_cox_ok}, "
                 f"Logistic {frames_logit_ok}")
     if len(frames_cox_ok) < 4 or len(frames_logit_ok) < 4:
@@ -387,7 +491,7 @@ def build_fits_grid(sd: pd.DataFrame, vdf: pd.DataFrame) -> pd.DataFrame:
     build_fits_grid.frames_cox_ok = frames_cox_ok
     build_fits_grid.frames_logit_ok = frames_logit_ok
 
-
+    # --- Part B (under primary deps.dev frame; frame-missing excluded) ---
     sd_dd = sd[sd["tier_dd"] != "missing"]
     vdf_dd = vdf[vdf["tier_dd"] != "missing"]
     cox_primary = base_cov_no_tier + COX_EXTRA + ["tier_top_dd", "tier_mid_dd"]
@@ -399,7 +503,8 @@ def build_fits_grid(sd: pd.DataFrame, vdf: pd.DataFrame) -> pd.DataFrame:
         r = fit_version_logistic(vdf_dd, logit_covs, label)
         if r: all_rows.extend(r["rows"])
 
-
+    # Drop-one (over the shared 9-covariate skeleton; the two Batch-8
+    # additions stay in every fit so each variant remains primary-shaped).
     for drop_cox, drop_logit in zip(
             base_cov_no_tier + ["tier_top_dd", "tier_mid_dd"],
             ["log_weekly_downloads", "log_age_days", "log_maintainers",
@@ -409,7 +514,7 @@ def build_fits_grid(sd: pd.DataFrame, vdf: pd.DataFrame) -> pd.DataFrame:
              [c for c in logit_primary if c != drop_logit],
              f"frame_dd_dropone_{drop_cox}")
 
-
+    # Group-out: governance group, tier dummies, package-meta
     for grp_name, cox_grp, logit_grp in [
             ("governance",
              ["owner_org_int", "has_dependabot_int", "has_issue_template_int"],
@@ -424,7 +529,7 @@ def build_fits_grid(sd: pd.DataFrame, vdf: pd.DataFrame) -> pd.DataFrame:
              [c for c in logit_primary if c not in logit_grp],
              f"frame_dd_groupout_{grp_name}")
 
-
+    # Univariate: each skeleton covariate alone
     for cov_cox, cov_logit in zip(
             base_cov_no_tier + ["tier_top_dd", "tier_mid_dd"],
             ["log_weekly_downloads", "log_age_days", "log_maintainers",
@@ -436,6 +541,7 @@ def build_fits_grid(sd: pd.DataFrame, vdf: pd.DataFrame) -> pd.DataFrame:
 
 
 def tier_shift_matrix(sd: pd.DataFrame) -> pd.DataFrame:
+    """Pairwise tier-agreement matrix across 4 frames."""
     rows = []
     frames = [("dd", "deps.dev PRIMARY"), ("eco", "ecosyste.ms"),
               ("dl", "downloads quantile"), ("pca", "PCA composite")]
@@ -459,8 +565,14 @@ def tier_shift_matrix(sd: pd.DataFrame) -> pd.DataFrame:
 
 
 def make_forest(grid_df: pd.DataFrame) -> None:
+    """Forest plot: one row per covariate under the primary deps.dev frame —
+    full-model HR/OR with 95% CI, plus grey drop-one refit ticks below.
+    Batch-8: left = version-level logistic (12-cov primary), right = incident
+    delayed-entry Cox; the two panels use their own covariate-name conventions
+    but share a display label per row. The two Batch-8 additions
+    (log_prewin_release_freq, github_unobserved) carry only where they exist."""
     fig, axes = plt.subplots(1, 2, figsize=(6.6, 3.9), sharey=True)
-
+    # Shared display rows -> (cox feature name, logistic feature name); None = absent.
     rows_spec = [
         ("log_weekly_downloads", "log_downloads", "log_weekly_downloads"),
         ("log_age_days", "log_age", "log_age_days"),
@@ -521,16 +633,19 @@ def make_forest(grid_df: pd.DataFrame) -> None:
         else:
             ax.tick_params(labelleft=False)
         ax.grid(True, axis="x", alpha=0.3, linestyle=":")
-
-
+    # Shared legend below both panels (a forest fills the axes top-to-bottom,
+    # so an in-axes legend would sit on a row; a bottom strip occludes nothing).
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="lower center", ncol=2, frameon=True,
                framealpha=0.9, edgecolor="0.8", bbox_to_anchor=(0.5, -0.04))
     fig.tight_layout()
     fig.savefig(OUT_FOREST, dpi=400, bbox_inches="tight")
-
-
-    paper_forest = ROOT / "paper" / "figures" / "b3_forest.png"
+    # Also write to the location the paper actually \includegraphics's, so the
+    # rendered forest can never drift from the regenerated one.
+    if _NON_DEFAULT:
+        paper_forest = ROOT / "paper_tse" / "figures" / f"b3_forest{_FIG_SUFFIX}.png"
+    else:
+        paper_forest = ROOT / "paper" / "figures" / "b3_forest.png"
     fig.savefig(paper_forest, dpi=400, bbox_inches="tight")
     plt.close(fig)
     logger.info(f"wrote {OUT_FOREST} and {paper_forest}")
@@ -540,13 +655,17 @@ def write_report(grid_df: pd.DataFrame, shift_df: pd.DataFrame,
                  pca_loadings: pd.DataFrame, sd: pd.DataFrame,
                  vdrop_df: pd.DataFrame) -> None:
     lines = [
-        "# Baseline 3 — Influence Metric Sensitivity (tier + covariates merged)",
+        "# Task 7 Baseline 3 — Influence Metric Sensitivity (tier + covariates merged)",
         "",
-        "**Date**: auto-generated 2026-05-18 by `scripts/36_baseline_influence.py`",
+        "**Date**: auto-generated 2026-05-18 by `scripts/36_baseline_influence.py`"
+        if not _NON_DEFAULT else
+        f"**Date**: auto-generated {pd.Timestamp.now(tz='UTC').date()} by "
+        f"`scripts/36_baseline_influence.py` (window origin {ORIGIN.date()}, "
+        f"version table `{VERSIONS_CSV.name}`, outputs suffixed `{_SUFFIX}`)",
         "**Scope**: Part A: 4 tier-frame sources (dd PRIMARY / eco / downloads / PCA composite). "
         "Part B: covariate sensitivity (full / drop-one / group-out / univariate) under "
         "the primary deps.dev frame.",
-        "**Framing**: association-only.",
+        "**Framing**: association-only (Task 5 PI Round 2 mandate carried).",
         "",
         f"**Survival data**: n={len(sd):,} packages with versions in window; "
         f"events={int(sd['event'].sum()):,}; censored={int((1-sd['event']).sum()):,}. "
@@ -569,7 +688,7 @@ def write_report(grid_df: pd.DataFrame, shift_df: pd.DataFrame,
     lines += ["",
               "**Reading**: high pairwise agreement (>85%) means RQ1/RQ2 trajectories are "
               "robust to tier-frame source. Disagreement >15% triggers per-frame re-runs of "
-              "the headline models (already covered by the 'frame_xxx_full' rows in "
+              "the Task 5 headline models (already covered by the 'frame_xxx_full' rows in "
               "the covariate grid below).",
               "",
               "### PCA composite loadings",
@@ -588,7 +707,7 @@ def write_report(grid_df: pd.DataFrame, shift_df: pd.DataFrame,
             lines.append(f"\n_PCA explained variance ratio: PC1={evr[0]:.3f}, PC2={evr[1]:.3f}_")
     lines += ["", "## Part B — Covariate sensitivity grid (primary frame)", ""]
 
-
+    # Full model under primary frame, both outcomes (Batch-8 primary shapes).
     for outcome_label, header in [
         ("logistic_version_level",
          "### Logistic (version-level `has_attestation`, 12-covariate primary) — "
@@ -634,7 +753,7 @@ def write_report(grid_df: pd.DataFrame, shift_df: pd.DataFrame,
                              f"[{r['OR_ci_low']:.3f}, {r['OR_ci_high']:.3f}] | "
                              f"{int(r['n_obs'])} |")
             lines.append("")
-
+    # --- Part B2: version-level drop-one (Batch-8 primary 12-cov spec) ---
     lines += ["",
               "## Part B2 — Version-level drop-one (primary 12-covariate spec)",
               ""]
@@ -685,25 +804,29 @@ def write_report(grid_df: pd.DataFrame, shift_df: pd.DataFrame,
               "",
               "## Construct caveats (carried forward)",
               "",
-              "- TS + @types/sinon are governance-rich top-tier non-adopters; they should remain mis-predicted under "
+              "- TS + @types/sinon are governance-rich top-tier non-adopters (Task 6 "
+              "calibration counterexamples); they should remain mis-predicted under "
               "drop-one variants. If a single dropped covariate flips that prediction, "
               "flag it as a calibration-failure driver.",
               "- All Logistic ORs reported here are in-sample only; out-of-sample / "
-              "grouped CV is deferred to if needed.",
-              "- Missing-from-deps.dev scope: **62 packages in the full 3000-package Task 1 "
-              "sample** (per ) and **29 in the B3 survival subset** (1614 "
-              "packages; visible as 1614 − 1585 in the dd-vs-eco both_known cell of the "
-              "tier-shift matrix). Both carried as `tier='missing'`; not silently imputed.",
-              "- Descriptive-only framing preserved: all OR/HR estimates are "
+              "grouped CV is deferred to Task 9 if needed.",
+              f"- Missing-from-deps.dev scope: **{int((sd['tier_dd'] == 'missing').sum())} "
+              f"packages in this run's survival subset** ({len(sd):,} packages with an "
+              f"in-window version; {len(sd) - int((sd['tier_dd'] == 'missing').sum()):,} "
+              "carry a deps.dev tier). Carried as `tier='missing'`; not silently imputed.",
+              "- Anti-causal-language firewall preserved: all OR/HR estimates are "
               "associations, not causal effects.",
               "",
               "## Closure status",
-              " B3 contributed: "
-              "the <85% pairwise agreement gate is acknowledged as **load-bearing tier-frame "
-              "sensitivity** (no frame pair exceeds 85%; eco-vs-PCA at 82.1% is the highest). "
-              "Deps.dev PRIMARY remains canonical per .",
+              ("Task 7 closed at PI review round 2 (approved 2026-05-19). B3 contributed: "
+               "the <85% pairwise agreement gate is acknowledged as **load-bearing tier-frame "
+               "sensitivity** (no frame pair exceeds 85%; eco-vs-PCA at 82.1% is the highest). "
+               "Deps.dev PRIMARY remains canonical per Task 4 Round 3.")
+              if not _NON_DEFAULT else
+              ("TSE R1 extended-series refit of the Task 7 B3 grid (same code path, "
+               "non-default window); the as-submitted report above this one is unchanged."),
               "",
-              "Fit-count convention: **25 fits per outcome total** = "
+              "Fit-count convention (per PI Round 1 minor): **25 fits per outcome total** = "
               "4 tier-frame full models + 21 primary-frame sensitivity refits (9 drop-one + "
               "3 group-out + 9 univariate). 22 = primary-frame fits including the full model "
               "(1 + 21). Part B2 (2026-07-11 addition) contributes 13 further version-level "
@@ -747,8 +870,9 @@ def main() -> int:
     logger.info(f"wrote {OUT_GRID} (rows={len(grid_df)})")
 
     logger.info("Part B2: version-level drop-one (primary 12-cov spec)...")
-
-
+    # Restrict to the 97,672-row primary frame (deps.dev-missing excluded), so
+    # drop-one refits match the primary logistic and do not fold missing-tier
+    # packages back into the reference tier.
     vdf_dd = vdf[vdf["tier_dd"] != "missing"].reset_index(drop=True)
     logger.info(f"drop-one frame: n={len(vdf_dd):,} rows "
                 f"(deps.dev-missing excluded from {len(vdf):,})")

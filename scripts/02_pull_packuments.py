@@ -1,3 +1,31 @@
+"""
+Task 1 Step 1.2 — Pull npm packuments for the stratified sample.
+
+Reads data/packages_full.txt produced by 01_sample_packages.py, fetches each
+package's full packument from npm Registry, saves raw JSON to
+data/packuments_raw/<safe_name>.json.
+
+Idempotent: skips packages whose file already exists with non-trivial size.
+Parallel: ThreadPoolExecutor with N_WORKERS.
+Resilient: retries with exponential backoff; 404 saved as a marker.
+
+Per kickoff spec (Step 1.2): only ranges 2025-08-01 → 2026-05-10 will be used
+downstream (Step 1.3); here we save the full packument so the time filter is
+applied in 03_extract_versions.py.
+
+Run: conda run --no-capture-output -n stage2c python scripts/02_pull_packuments.py
+
+Reproducibility note (per methods review round 1, Minor-3):
+  - data/packuments_raw/ is excluded from git via .gitignore (1.8 GB total)
+  - To reconstruct from scratch: this script is fully idempotent — re-running
+    it after a fresh clone will download all packuments at ~7 packuments/s on
+    a 100 Mbps connection (~7 minutes wall time for 3000 packages, 10 workers)
+  - npm Registry does NOT require authentication for packument GETs and has
+    no documented rate limit for polite clients
+  - Disk needed: ~2 GB free; output average ~626 KB per packument
+  - For long-term paper replication packaging, consider uploading a packuments
+    snapshot to Zenodo / OSF (defer to Task 9)
+"""
 from __future__ import annotations
 
 import json
@@ -20,7 +48,7 @@ MAX_RETRIES = 3
 
 
 def safe_fname(pkg: str) -> str:
-
+    # Scoped packages contain / and @; replace for filesystem safety
     return pkg.replace("/", "_").replace("@", "at_") + ".json"
 
 
@@ -56,7 +84,7 @@ def main() -> int:
 
     packages: list[str] = []
     with PACKAGES_FILE.open() as f:
-        next(f)
+        next(f)  # header
         for line in f:
             parts = line.rstrip("\n").split("\t")
             if parts and parts[0]:
@@ -108,9 +136,9 @@ def main() -> int:
     success_rate = (stats["ok"] + stats["cached"] + stats["404"]) / len(packages)
     print(f"\nSuccess rate (incl. 404 as 'reached'): {success_rate*100:.1f}%", flush=True)
     if success_rate < 0.95:
-        print(f" Below 95% spec target", flush=True)
+        print(f"⚠ Below 95% spec target", flush=True)
         return 1
-    print(f" ≥ 95% reached", flush=True)
+    print(f"✅ Task 1 Step 1.2 PASS — ≥ 95% reached", flush=True)
     return 0
 
 

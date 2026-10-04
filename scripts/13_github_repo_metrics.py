@@ -1,3 +1,21 @@
+"""
+Task 3 Step 3.3 — GitHub repo metrics (stars, forks, dependabot, issue_template).
+
+For each of the 3000 packages with a GitHub repo (per data/packages_full.txt and
+packument fallback) collect:
+  stargazers_count, forks_count            via /repos/{owner}/{repo}
+  has_dependabot                           via /repos/.../contents/.github/dependabot.yml
+  has_issue_template                       via /repos/.../contents/.github/ISSUE_TEMPLATE
+                                          or /repos/.../contents/.github/ISSUE_TEMPLATE.md
+
+Resume-safe: writes data/github_repo_meta.csv row-by-row; skips packages already
+in cache. 3000 packages × ~3 API calls each ≈ 9k calls / 5000 hr limit → split
+over ~2 hours.
+
+Token: $GITHUB_TOKEN from ~/.zshenv (must be sourced before running).
+
+Run: source ~/.zshenv && conda run --no-capture-output -n stage2c python scripts/13_github_repo_metrics.py
+"""
 from __future__ import annotations
 
 import csv
@@ -24,7 +42,7 @@ HEADERS = {
     "Authorization": f"Bearer {GITHUB_TOKEN}",
     "Accept": "application/vnd.github+json",
     "X-GitHub-Api-Version": "2022-11-28",
-    "User-Agent": "stage2c-research/1.0",
+    "User-Agent": "stage2c-research/1.0 (Task 3 GitHub metrics)",
 }
 
 SLEEP = 0.3
@@ -75,6 +93,7 @@ def packument_repo(pkg: str) -> str:
 
 
 def github_request(url: str) -> tuple[int, dict | None, str]:
+    """Returns (status_code, json_payload, error_detail)."""
     last_err = ""
     for attempt, backoff in enumerate([0, *BACKOFFS]):
         if backoff > 0:
@@ -89,7 +108,7 @@ def github_request(url: str) -> tuple[int, dict | None, str]:
             if r.status_code == 404:
                 return 404, None, ""
             if r.status_code == 403:
-
+                # Rate limit?
                 rem = r.headers.get("X-RateLimit-Remaining", "?")
                 if rem == "0":
                     reset = int(r.headers.get("X-RateLimit-Reset", "0"))
@@ -114,7 +133,7 @@ def github_request(url: str) -> tuple[int, dict | None, str]:
 
 
 def main() -> int:
-
+    # Load existing rows (resume)
     done: set[str] = set()
     existing_rows: list[dict] = []
     if OUT_CSV.exists():
@@ -124,7 +143,7 @@ def main() -> int:
                 existing_rows.append(row)
         print(f"Loaded {len(done)} pre-existing rows (resume)", flush=True)
 
-
+    # Load package list + repo_url (with packument fallback)
     pkg_repo: dict[str, str] = {}
     with PACKAGES_FILE.open() as f:
         header = next(f).rstrip("\n").split("\t")
@@ -134,9 +153,9 @@ def main() -> int:
             parts = line.rstrip("\n").split("\t")
             if len(parts) > idx_repo:
                 pkg_repo[parts[idx_name]] = parts[idx_repo]
-    print(f"Loaded {len(pkg_repo)} packagerepo_url mappings", flush=True)
+    print(f"Loaded {len(pkg_repo)} package→repo_url mappings", flush=True)
 
-
+    # Pre-check rate limit
     sc, payload, _ = github_request(f"{GITHUB_API}/rate_limit")
     if sc == 200 and isinstance(payload, dict):
         c = payload["resources"]["core"]
@@ -147,7 +166,7 @@ def main() -> int:
 
     fields = ["package", "owner", "repo", "stargazers_count", "forks_count",
               "has_dependabot", "has_issue_template", "status", "error_detail"]
-
+    # Open for append if exists; otherwise write header
     write_header = not OUT_CSV.exists()
     fh = OUT_CSV.open("a", newline="")
     writer = csv.DictWriter(fh, fieldnames=fields)
@@ -160,7 +179,7 @@ def main() -> int:
                 counts["skipped"] += 1
                 continue
 
-
+            # Resolve owner/repo (with packument fallback)
             parsed = parse_github(url)
             if parsed is None:
                 pkmt = packument_repo(pkg)
@@ -179,7 +198,7 @@ def main() -> int:
                 continue
 
             owner, repo = parsed
-
+            # 1. Repo info (stars, forks)
             sc, payload, err = github_request(f"{GITHUB_API}/repos/{owner}/{repo}")
             if sc == 404:
                 row = {
@@ -212,17 +231,17 @@ def main() -> int:
             forks = payload.get("forks_count", 0)
             time.sleep(SLEEP)
 
-
+            # 2. has_dependabot
             sc, _, _ = github_request(f"{GITHUB_API}/repos/{owner}/{repo}/contents/.github/dependabot.yml")
             has_dependabot = "true" if sc == 200 else "false"
             time.sleep(SLEEP)
 
-
+            # 3. has_issue_template (dir form first)
             sc, _, _ = github_request(f"{GITHUB_API}/repos/{owner}/{repo}/contents/.github/ISSUE_TEMPLATE")
             if sc == 200:
                 has_issue_template = "true"
             else:
-
+                # Try single file form
                 sc2, _, _ = github_request(f"{GITHUB_API}/repos/{owner}/{repo}/contents/.github/ISSUE_TEMPLATE.md")
                 has_issue_template = "true" if sc2 == 200 else "false"
             time.sleep(SLEEP)
@@ -240,7 +259,7 @@ def main() -> int:
             new_rows.append(row)
 
             if i % 50 == 0 or i == len(pkg_repo):
-                print(f"  [{i:>4}/{len(pkg_repo)}] {pkg[:40]:<40s}  "
+                print(f"  [{i:>4}/{len(pkg_repo)}] {pkg[:40]:<40s} → "
                       f"ok={counts['ok']} 404={counts['repo_404']} "
                       f"no_gh={counts['no_github']} err={counts['repo_error']}", flush=True)
     finally:
@@ -251,7 +270,7 @@ def main() -> int:
         if counts.get(k, 0):
             print(f"  {k}: {counts[k]}", flush=True)
 
-
+    # Summary (over the union of existing + new ok rows)
     all_rows = existing_rows + new_rows
     ok_rows = [r for r in all_rows if r["status"] == "ok"]
     if ok_rows:
@@ -267,7 +286,7 @@ def main() -> int:
         print(f"  has_dependabot=true:      {dep}/{n} ({dep/n*100:.1f}%)", flush=True)
         print(f"  has_issue_template=true:  {tpl}/{n} ({tpl/n*100:.1f}%)", flush=True)
 
-
+    # Final rate
     sc, payload, _ = github_request(f"{GITHUB_API}/rate_limit")
     if sc == 200 and isinstance(payload, dict):
         c = payload["resources"]["core"]

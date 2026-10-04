@@ -1,5 +1,43 @@
+"""
+Pre-submission strengthening — Temporal-split out-of-sample check for the
+Task 5 version-level logistic model (mock-review Package C item, promoted
+to the draft by acting-PI decision 2026-07-08).
+
+Design (frozen rows only; no new collection):
+  Train: versions published BEFORE 2025-12-09 (pre-deadline split).
+  Test:  versions published ON/AFTER 2025-12-09 through 2026-05-10 cutoff.
+  Specification: identical to scripts/30 EXCEPT `post_deadline` is dropped
+  (it is constant within each split by construction; disclosed in prose).
+
+Reported on the post-deadline test split:
+  - ROC AUC (bootstrap 95% CI, B=200, seed 42) + Brier
+  - Decile ECE (expected calibration error, equal-frequency bins)
+  - Calibration-in-the-large (mean observed - mean predicted)
+  - Logistic recalibration slope/intercept (Cox 1958 style:
+    logit(y_test) ~ a + b * logit(p_hat))
+  - Hosmer-Lemeshow on the test split (large-n caveat carried)
+
+Inputs:
+  data/versions.csv                       (100,168 in-window version rows)
+  data/influence_metrics.csv              (package-level covariates)
+  data/depsdev_dependents_2026_05_05.csv  (primary tier frame)
+
+Outputs:
+  data/temporal_split_calibration.csv     (metric, value)
+  reports/presub_temporal_split_calibration.md
+  paper/figures/temporal_calibration.png  (replication artifact; not a
+                                           numbered paper figure)
+
+Carried-forward caveats: deps.dev primary tier frame; 62 missing-dd
+packages excluded; anti-causal firewall (out-of-sample discrimination is
+still predictive association, never a Dec-9 causal claim); data cutoff
+2026-05-10 untouched.
+
+Run: conda run --no-capture-output -n stage2c python scripts/47_temporal_split_calibration.py
+"""
 from __future__ import annotations
 
+import argparse
 import csv
 import sys
 from pathlib import Path
@@ -13,7 +51,7 @@ from sklearn.metrics import brier_score_loss, roc_auc_score
 
 import figstyle
 
-figstyle.apply()
+figstyle.apply()  # shared publication style (rcParams) before any plotting
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 REPORTS_DIR = Path(__file__).parent.parent / "reports"
@@ -26,31 +64,55 @@ OUT_CSV = DATA_DIR / "temporal_split_calibration.csv"
 OUT_MD = REPORTS_DIR / "presub_temporal_split_calibration.md"
 OUT_FIG = PAPER_DIR / "temporal_calibration.png"
 
+# TSE R1: optional extended-window run via scripts/52's configure(); defaults inert.
+_ap = argparse.ArgumentParser()
+_ap.add_argument("--origin", default="2025-08-01")
+_ap.add_argument("--versions-csv", default="versions.csv")
+_ap.add_argument("--out-suffix", default="")
+_ARGS, _ = _ap.parse_known_args()
+if (_ARGS.origin, _ARGS.versions_csv) != ("2025-08-01", "versions.csv") and not _ARGS.out_suffix:
+    raise SystemExit("--out-suffix is required whenever --origin or --versions-csv is "
+                     "non-default (protects the as-submitted artefacts)")
+if _ARGS.out_suffix:
+    OUT_CSV = DATA_DIR / f"temporal_split_calibration{_ARGS.out_suffix}.csv"
+    OUT_MD = REPORTS_DIR / f"presub_temporal_split_calibration{_ARGS.out_suffix}.md"
+    OUT_FIG = PAPER_DIR / f"temporal_calibration{_ARGS.out_suffix}.png"
+
 DEADLINE = pd.Timestamp("2025-12-09", tz="UTC")
 
-
+# Batch-9: reuse the SINGLE primary frame builder + covariate list from
+# scripts/52 so the temporal split evaluates the paper's actual primary spec
+# (missingness-explicit + clean pre-window opportunity), not a stale copy.
 import importlib.util as _ilu
 _spec = _ilu.spec_from_file_location(
     "rq3_primary", str(Path(__file__).parent / "52_rq3_sensitivity.py"))
 _rq3 = _ilu.module_from_spec(_spec)
 _spec.loader.exec_module(_rq3)
+if (_ARGS.origin, _ARGS.versions_csv) != ("2025-08-01", "versions.csv"):
+    _rq3.configure(_ARGS.origin, _ARGS.versions_csv, _ARGS.out_suffix)
 
-
+# post_deadline is constant within each temporal split, so it is dropped.
 COV_COLS = [c for c in _rq3.LOGIT_COLS_PRIMARY if c != "post_deadline"]
 
 
 def build_frame() -> pd.DataFrame:
+    """The exact scripts/52 primary version-level frame (12 covariates incl.
+    github_unobserved + pre-window opportunity)."""
     prewin = _rq3.prewindow_release_counts()
     df = _rq3.build_version_frame(prewin)
-
-    assert len(df) == 97_672, f"joined frame {len(df):,} != frozen 97,672"
-    assert df["package"].nunique() == 1_585, (
-        f"package count {df['package'].nunique()} != frozen 1,585"
+    # Guard: must be the exact Task 5 modeling frame.
+    expected_rows = 97_672 if _ARGS.versions_csv == "versions.csv" else 271_222
+    assert len(df) == expected_rows, \
+        f"joined frame {len(df):,} != expected {expected_rows:,} (frozen frame check)"
+    expected_pkgs = 1_585 if _ARGS.versions_csv == "versions.csv" else 2_072
+    assert df["package"].nunique() == expected_pkgs, (
+        f"package count {df['package'].nunique()} != expected {expected_pkgs:,}"
     )
     return df
 
 
 def decile_ece(y: np.ndarray, p: np.ndarray, n_bins: int = 10) -> float:
+    """Equal-frequency-bin expected calibration error (weighted)."""
     df = pd.DataFrame({"y": y, "p": p})
     df["bin"] = pd.qcut(df["p"], q=n_bins, duplicates="drop", labels=False)
     g = df.groupby("bin").agg(n=("y", "size"), obs=("y", "mean"), exp=("p", "mean"))
@@ -98,13 +160,14 @@ def main() -> int:
     citl = float(y_te.mean() - p_te.mean())
     hl_chi2, hl_p = hosmer_lemeshow(y_te, p_te)
 
-
+    # Logistic recalibration slope/intercept on the test split.
     logit_p = np.log(np.clip(p_te, 1e-12, 1 - 1e-12) / (1 - np.clip(p_te, 1e-12, 1 - 1e-12)))
     recal = sm.Logit(y_te, sm.add_constant(logit_p)).fit(disp=False)
     cal_intercept = float(recal.params[0])
     cal_slope = float(recal.params[1])
 
-
+    # Batch-8: PACKAGE-cluster bootstrap on the test split (rows within a
+    # package are dependent; the old row bootstrap understated variability).
     rng = np.random.default_rng(42)
     post_r = post.reset_index(drop=True)
     idx_by_pkg = post_r.groupby("package").indices
@@ -119,7 +182,7 @@ def main() -> int:
             continue
     boot = np.array(sorted(boot))
     auc_lo, auc_hi = float(boot[5]), float(boot[-6])
-
+    # Row bootstrap kept only as the misleading-narrow contrast.
     row_boot = []
     n = len(y_te)
     for _ in range(200):
@@ -161,13 +224,13 @@ def main() -> int:
         w = csv.writer(f)
         w.writerow(["metric", "value"])
         w.writerows(rows)
-    print(f" Saved {OUT_CSV}", flush=True)
+    print(f"✓ Saved {OUT_CSV}", flush=True)
 
-
+    # Calibration curve figure (test split, deciles).
     dfc = pd.DataFrame({"y": y_te, "p": p_te})
     dfc["bin"] = pd.qcut(dfc["p"], q=10, duplicates="drop", labels=False)
     g = dfc.groupby("bin").agg(obs=("y", "mean"), exp=("p", "mean"))
-    fig, ax = plt.subplots(figsize=(6, 5.5))
+    fig, ax = plt.subplots(figsize=(4.6, 3.6))
     ax.plot(g["exp"], g["obs"], "o-", color=figstyle.ACCENT, markersize=7,
             zorder=3, label="Post-deadline test deciles (obs vs pred)")
     ax.plot([0, 1], [0, 1], "--", color=figstyle.REF, linewidth=1,
@@ -178,7 +241,7 @@ def main() -> int:
     fig.tight_layout()
     fig.savefig(OUT_FIG)
     plt.close(fig)
-    print(f" Saved {OUT_FIG}", flush=True)
+    print(f"✓ Saved {OUT_FIG}", flush=True)
 
     hl_verdict = "PASS (p > 0.05)" if hl_p > 0.05 else "FAIL — mis-calibrated out of sample too"
     OUT_MD.write_text("\n".join([
@@ -197,15 +260,15 @@ def main() -> int:
         f"- Recalibration slope = {cal_slope:.3f}, intercept = {cal_intercept:+.3f}",
         f"- Hosmer-Lemeshow (test) χ² = {hl_chi2:.1f}, p = {hl_p:.2e} — {hl_verdict}",
         "",
-        "## Reading (descriptive-only)",
+        "## Reading (firewall-compliant)",
         "",
         "Discrimination transfers across the boundary; calibration status per the",
         "numbers above. Either way the verdict of Section 5.3.2 is unchanged:",
         "odds ratios remain predictive associations, never Dec-9 causal claims.",
         "The `post_deadline` covariate is necessarily excluded from the pre-period",
-        "fit (constant within split); its OR is unaffected.",
+        "fit (constant within split); its Task 5 OR is unaffected.",
     ]) + "\n")
-    print(f" Saved {OUT_MD}", flush=True)
+    print(f"✓ Saved {OUT_MD}", flush=True)
     return 0
 
 

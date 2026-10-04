@@ -1,0 +1,7 @@
+frame_a,frame_b,n_both_known,n_agree,n_disagree,agreement_pct
+deps.dev PRIMARY,ecosyste.ms,2072,1136,936,54.826254826254825
+deps.dev PRIMARY,downloads quantile,2072,802,1270,38.706563706563706
+deps.dev PRIMARY,PCA composite,2030,803,1227,39.556650246305416
+ecosyste.ms,downloads quantile,2109,1118,991,53.01090564248459
+ecosyste.ms,PCA composite,2061,1629,432,79.03930131004367
+downloads quantile,PCA composite,2061,1192,869,57.83600194080544

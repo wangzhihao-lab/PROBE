@@ -1,0 +1,16 @@
+eco_tier,class,packages,share_pct,n_AE
+top,A,11,8.5,129
+top,B,16,12.4,129
+top,C,13,10.1,129
+top,D,0,0.0,129
+top,E,89,69.0,129
+mid,A,17,11.6,146
+mid,B,31,21.2,146
+mid,C,17,11.6,146
+mid,D,0,0.0,146
+mid,E,81,55.5,146
+tail,A,16,17.0,94
+tail,B,29,30.9,94
+tail,C,6,6.4,94
+tail,D,1,1.1,94
+tail,E,42,44.7,94

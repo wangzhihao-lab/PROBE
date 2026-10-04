@@ -1,3 +1,25 @@
+"""
+Rebuttal B1 — Cox left-truncation sensitivity (incident-only + prevalent indicator).
+
+B1 audit (scripts/42) found that 336 of 661 Cox events (50.8%) are PREVALENT
+adopters: packages already carrying dist.attestations before the 2025-08-01
+window origin. The main Cox (scripts/29) anchors duration at 2025-08-01 and
+treats these as in-window incident adoptions -> left-truncation.
+
+This script does NOT modify scripts/29. It re-fits three Cox models on the same
+covariate set and compares hazard ratios:
+
+  M-main      : full cohort (reproduces scripts/29)
+  M-incident  : exclude prevalent adopters (incident-only cohort)
+  M-indicator : full cohort + a binary `prevalent` covariate
+
+If the key HRs (log_age_days, tier_top, log_maintainers) are stable across
+M-main and M-incident, the main Cox description survives and the sensitivity
+佐证s the rebuttal. If they move materially, the main interpretation must be
+re-scoped. Either way this is survival-method rigor, not a causal claim.
+
+Run: conda run --no-capture-output -n stage2c python scripts/44_cox_incident_only_sensitivity.py
+"""
 from __future__ import annotations
 
 import json
@@ -43,6 +65,7 @@ def dpc_tier(dpc: int) -> str:
 
 
 def prevalent_packages() -> set[str]:
+    """Packages with >=1 attested version published before 2025-08-01 (full history)."""
     prevalent: set[str] = set()
     for fp in RAW.glob("*.json"):
         try:
@@ -65,6 +88,7 @@ def prevalent_packages() -> set[str]:
 
 
 def build_survival(prevalent: set[str]) -> pd.DataFrame:
+    """Mirror scripts/29 build_survival_data, but keep `package` and a `prevalent` flag."""
     v = pd.read_csv(VERSIONS_CSV, parse_dates=["published_at"])
     v["published_at"] = pd.to_datetime(v["published_at"], utc=True)
     v = v[(v["published_at"] >= ORIGIN) & (v["published_at"] <= CENSOR)].copy()
@@ -129,7 +153,7 @@ def main() -> int:
     m_inc = fit_cox(sd_inc, COX_COLS)
     m_ind = fit_cox(sd, COX_COLS + ["prevalent"])
 
-
+    # ---- comparison table ----
     rows = []
     for cov in COX_COLS:
         hr_main = m_main.loc[cov, "HR"]
@@ -166,7 +190,7 @@ def main() -> int:
                    f"keep main Cox but foreground the incident-only sensitivity and the prevalent share.")
     print(f"\nVERDICT: {verdict}", flush=True)
 
-
+    # ---- markdown ----
     md = [
         "# Rebuttal B1 — Cox left-truncation sensitivity",
         "",
@@ -189,7 +213,7 @@ def main() -> int:
     for r in rows:
         md.append(f"| `{r['covariate']}` | {r['HR_main']} | {r['p_main']} | "
                   f"{r['HR_incident']} | {r['p_incident']} | {r['HR_pct_change']:+} | "
-                  f"{' YES' if r['sign_flip'] else 'no'} |")
+                  f"{'⚠ YES' if r['sign_flip'] else 'no'} |")
     md += [
         "",
         f"**Prevalent-adopter indicator** (M-indicator): HR = {prev_hr:.3f}, p = {prev_p:.4g} "
@@ -211,8 +235,8 @@ def main() -> int:
         "time-averaged descriptive associations (not causal).",
     ]
     OUT_MD.write_text("\n".join(md) + "\n")
-    print(f"\n Saved {OUT_CSV}", flush=True)
-    print(f" Saved {OUT_MD}", flush=True)
+    print(f"\n✓ Saved {OUT_CSV}", flush=True)
+    print(f"✓ Saved {OUT_MD}", flush=True)
     return 0
 
 

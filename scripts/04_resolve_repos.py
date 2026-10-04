@@ -1,3 +1,20 @@
+"""
+Task 2 Step 2.1 — Resolve repo URLs for the 500-row non-provenance sample.
+
+For each version in `data/non_provenance_sample.csv`:
+1. First try `repository_url` from `data/packages_full.txt` (ecosyste.ms)
+2. If empty / non-github, fall back to packument `repository.url`
+   (covers @types/* and other packages where ecosyste.ms missed the field)
+3. Parse the URL — accept GitHub variants (git+https://, ssh://, github.com/owner/repo[.git])
+4. Classify F class when: empty URL, malformed, or non-github.com host
+5. Leave preliminary_class='pending' when GitHub repo successfully extracted
+
+Output: `data/classification_step21.csv` with columns:
+  package, version, repo_url, repo_url_source, host, github_owner, github_repo,
+  is_github, preliminary_class
+
+Run: conda run --no-capture-output -n stage2c python scripts/04_resolve_repos.py
+"""
 from __future__ import annotations
 
 import csv
@@ -21,30 +38,34 @@ GITHUB_RE = re.compile(
 
 
 def parse_repo_url(raw: str) -> tuple[str, str, str]:
+    """
+    Returns: (host, owner, repo).
+    host is "" when URL is empty/malformed; owner/repo only populated for github.com.
+    """
     if not raw:
         return "", "", ""
     s = raw.strip()
     if s.lower() in {"none", "null", "n/a"}:
         return "", "", ""
 
-
+    # Strip common prefixes
     if s.startswith("git+"):
         s = s[4:]
 
-
+    # Try github regex first (handles github.com/foo/bar.git, ssh, etc.)
     m = GITHUB_RE.search(s)
     if m:
         owner = m.group(1)
         repo = m.group(2).removesuffix(".git")
         return "github.com", owner, repo
 
-
+    # Fall through: extract host for non-github
     if s.startswith("ssh://"):
         s_for_parse = s
     elif s.startswith(("git://", "git@", "http://", "https://")):
         s_for_parse = s
     else:
-
+        # Unrecognized scheme (e.g., "git:foo/bar" — invalid)
         return "unknown", "", ""
 
     try:
@@ -60,6 +81,7 @@ def safe_fname(pkg: str) -> str:
 
 
 def packument_repo(pkg: str) -> str:
+    """Return packument repository.url for pkg (top-level), or ''."""
     fpath = RAW_DIR / safe_fname(pkg)
     if not fpath.exists():
         return ""
@@ -78,7 +100,7 @@ def packument_repo(pkg: str) -> str:
 
 
 def main() -> int:
-
+    # Load package → repo_url
     pkg_repo: dict[str, str] = {}
     with PACKAGES_FILE.open() as f:
         header = next(f).rstrip("\n").split("\t")
@@ -88,9 +110,9 @@ def main() -> int:
             parts = line.rstrip("\n").split("\t")
             if len(parts) > idx_repo:
                 pkg_repo[parts[idx_name]] = parts[idx_repo]
-    print(f"Loaded {len(pkg_repo):,} packagerepo_url mappings", flush=True)
+    print(f"Loaded {len(pkg_repo):,} package→repo_url mappings", flush=True)
 
-
+    # Read sample
     rows: list[dict] = []
     with SAMPLE_CSV.open() as f:
         reader = csv.DictReader(f)
@@ -98,7 +120,7 @@ def main() -> int:
             rows.append(r)
     print(f"Loaded {len(rows)} sample rows", flush=True)
 
-
+    # Resolve
     out_rows: list[dict] = []
     miss_lookup = 0
     fallback_used = 0
@@ -111,7 +133,7 @@ def main() -> int:
             miss_lookup += 1
         host, owner, repo = parse_repo_url(eco_url)
 
-
+        # Fall back to packument when ecosyste.ms missed or non-github
         repo_url = eco_url
         source = "ecosyste.ms" if eco_url else "missing"
         if host != "github.com":
@@ -149,11 +171,11 @@ def main() -> int:
         })
 
     if miss_lookup:
-        print(f" {miss_lookup} sample rows had no matching package in packages_full.txt", flush=True)
+        print(f"⚠ {miss_lookup} sample rows had no matching package in packages_full.txt", flush=True)
     if fallback_used:
         print(f"  packument fallback salvaged {fallback_used} packages", flush=True)
 
-
+    # Save
     fields = ["package", "version", "repo_url", "repo_url_source", "host",
               "github_owner", "github_repo", "is_github", "preliminary_class"]
     with OUT_CSV.open("w", newline="") as f:
@@ -161,9 +183,9 @@ def main() -> int:
         w.writeheader()
         for r in out_rows:
             w.writerow(r)
-    print(f"\n Saved {OUT_CSV} ({len(out_rows)} rows)", flush=True)
+    print(f"\n✓ Saved {OUT_CSV} ({len(out_rows)} rows)", flush=True)
 
-
+    # Summary
     print(f"\n=== Summary ===", flush=True)
     print(f"  F (empty repo_url):   {counts['F_empty']}", flush=True)
     print(f"  F (non-github host):  {counts['F_non_github']}", flush=True)
@@ -172,7 +194,7 @@ def main() -> int:
     print(f"  F total:              {total_f}", flush=True)
     print(f"  pending (github):     {counts['pending_github']}", flush=True)
 
-
+    # Tier × class breakdown (for later sample-bias check)
     sample_pkg_tier: dict[str, str] = {}
     with SAMPLE_CSV.open() as f:
         for r in csv.DictReader(f):
@@ -191,7 +213,7 @@ def main() -> int:
         pct = (tier_f[t] / total * 100) if total else 0
         print(f"  {t}: F={tier_f[t]:>3} / total={total:>3} ({pct:.1f}%)", flush=True)
 
-
+    # Sample preview of F cases
     f_rows = [r for r in out_rows if r["preliminary_class"] == "F"][:5]
     if f_rows:
         print(f"\n=== F sample preview (5) ===", flush=True)

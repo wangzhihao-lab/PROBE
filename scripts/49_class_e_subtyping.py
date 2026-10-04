@@ -1,3 +1,42 @@
+"""
+Pre-submission Batch-4 — Deterministic sub-typing of the 286 Class-E rows
+(acting-PI batch, 2026-07-08; frozen artifacts only, no new collection).
+
+Class E = "no visible package-publish workflow in inspected sources". This
+script splits the E pool by two deterministic frozen signals, WITHOUT any
+new rater judgment (so no kappa applies; this is signal counting, not a
+validated construct):
+
+  Signal 1 — monorepo directory marker: the sampled version's packument
+    entry (or the packument top level) carries repository.directory,
+    indicating the package lives in a subdirectory of a larger repository
+    whose publish tooling may sit outside the package root.
+  Signal 2 — release-automation hint: the repository's cached workflow YAML
+    (data/workflows_raw/, frozen at collection time) mentions a
+    release-automation tool (release-please, changesets, semantic-release,
+    lerna) that the layered publish detector deliberately does NOT count as
+    publish evidence (weak-hint tier).
+
+Priority partition (mutually exclusive): E-dir (signal 1, regardless of 2)
+> E-auto (signal 2 only) > E-plain (neither). Overlap reported separately.
+
+Inputs:
+  data/classification.csv            (500-row final labels)
+  data/non_provenance_sample.csv     (sampled rows)
+  data/packuments_raw/*.json         (frozen packuments)
+  data/workflows_raw/*.yml|yaml      (frozen workflow cache)
+  data/depsdev_dependents_2026_05_05.csv (primary tier frame)
+
+Outputs:
+  data/class_e_subtypes.csv          (per-row subtype + signals + tier)
+  reports/presub_class_e_subtyping.md
+
+Caveats carried: presence-only signals (same epistemic level as Class C);
+sub-types are hypothesis-generating descriptions, not verified publish
+paths; anti-causal firewall intact.
+
+Run: conda run --no-capture-output -n stage2c python scripts/49_class_e_subtyping.py
+"""
 from __future__ import annotations
 
 import csv
@@ -20,6 +59,7 @@ GITHUB_URL_PAT = re.compile(r"github\.com[:/]+([^/]+)/([^/#?\s]+)", re.IGNORECAS
 
 
 def cache_filename(package: str) -> str:
+    """Mirror scripts/34 packument cache naming (@scope/name -> at_scope_name)."""
     return package.replace("@", "at_").replace("/", "_") + ".json"
 
 
@@ -42,6 +82,7 @@ def load_packument(package: str) -> dict | None:
 
 
 def repo_directory(pack: dict, version: str) -> str:
+    """repository.directory from the sampled version first, top level fallback."""
     for repo in (
         (pack.get("versions", {}).get(version, {}) or {}).get("repository"),
         pack.get("repository"),
@@ -52,6 +93,7 @@ def repo_directory(pack: dict, version: str) -> str:
 
 
 def repo_slug(pack: dict, version: str) -> str:
+    """owner__repo slug from the packument repository URL (version first)."""
     for repo in (
         (pack.get("versions", {}).get(version, {}) or {}).get("repository"),
         pack.get("repository"),
@@ -114,7 +156,7 @@ def main() -> int:
         w = csv.DictWriter(f, fieldnames=list(out_rows[0].keys()))
         w.writeheader()
         w.writerows(out_rows)
-    print(f" Saved {OUT_CSV}", flush=True)
+    print(f"✓ Saved {OUT_CSV}", flush=True)
 
     def dist(rs):
         n = len(rs)
@@ -130,7 +172,7 @@ def main() -> int:
     lines = [
         "# Pre-submission — Deterministic Class-E sub-typing (frozen signals)",
         "",
-        "**Date**: 2026-07-08 (acting-PI ; frozen artifacts only)",
+        "**Date**: 2026-07-08 (acting-PI Batch-4; frozen artifacts only)",
         "",
         f"- Class-E rows: {n_all} (missing packument: {missing_pack})",
         f"- **All tiers**: E-dir {c_all['E-dir']} ({c_all['E-dir']/n_all*100:.1f}%), "
@@ -150,7 +192,7 @@ def main() -> int:
     ]
     OUT_MD.write_text("\n".join(lines) + "\n")
     print("\n".join(lines[4:10]), flush=True)
-    print(f" Saved {OUT_MD}", flush=True)
+    print(f"✓ Saved {OUT_MD}", flush=True)
     return 0
 
 

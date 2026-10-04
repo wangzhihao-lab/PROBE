@@ -1,3 +1,43 @@
+"""Pre-submission B2 — All-admissible-cutoff placebo rank for the top-tier ITS.
+
+Batch-8 canonical convention (2026-07-11, Anomaly 9 repair): every candidate
+cutoff is placed at the DEADLINE'S OWN WEEKDAY inside each week of the
+41-week series (Dec-9 2025 is a Tuesday, so candidates are the Tuesdays
+week_start + 1 day). Each candidate is fitted with the shared calendar-time,
+cutoff-date-centered ITS of scripts/its_spec.py, which excludes the
+candidate's own straddling week — so the actual Dec-9 partition and every
+placebo partition are treated EXACTLY symmetrically (each loses one week,
+each is centered at its own date). The earlier convention enumerated
+cutoffs at week starts (Mondays), which dropped no week and put the 12-08
+straddling week into pre — a different partition from the canonical Dec-9
+fit; ranks from that convention were not the rank of the published beta2.
+
+Rank statistics are reported for BOTH |beta2| (level change at the cutoff
+date) and |beta3| (slope change), with randomization-inference-style
+p-values = (# candidates with |coef| >= actual) / N.
+
+Admissibility is pre-declared, not post-hoc: a candidate is admissible iff
+its fit retains >= 8 clean pre weeks and >= 5 clean post weeks (the extremes
+of the PI-approved B4b grid).
+
+A built-in assertion re-derives the (Batch-8 regenerated) B4b top-tier grid
+values with the shared helper and fails loudly on any divergence > 1e-6 pp.
+
+Inputs:
+  data/versions.csv                          (frozen; cutoff 2026-05-10)
+  data/depsdev_dependents_2026_05_05.csv     (primary tier frame)
+  data/baselines/task_7_b4_its_placebo_grid.csv  (consistency reference)
+
+Outputs:
+  data/placebo_cutoff_rank.csv
+  reports/presub_placebo_rank.md
+
+Carried-forward caveats: data cutoff 2026-05-10 (untouched); anti-causal
+firewall applies — the rank statistic quantifies non-specificity of the
+Dec-9 partition and cannot promote any estimate to causal.
+
+Run: conda run --no-capture-output -n stage2c python scripts/46_placebo_cutoff_rank.py
+"""
 from __future__ import annotations
 
 import logging
@@ -28,13 +68,13 @@ GRID_CSV = DATA_DIR / "baselines" / "task_7_b4_its_placebo_grid.csv"
 OUT_CSV = DATA_DIR / "placebo_cutoff_rank.csv"
 OUT_MD = REPORTS_DIR / "presub_placebo_rank.md"
 
-
+# Constants identical to scripts/37_baseline_time_models.py.
 DEADLINE = pd.Timestamp("2025-12-09", tz="UTC")
 ORIGIN = pd.Timestamp("2025-08-01", tz="UTC")
 CENSOR = pd.Timestamp("2026-05-10 23:59:59", tz="UTC")
 
-MIN_PRE_WEEKS = 8
-MIN_POST_WEEKS = 5
+MIN_PRE_WEEKS = 8   # matches B4b grid extreme (2025-09-21 cutoff)
+MIN_POST_WEEKS = 5  # matches B4b grid extreme (2026-04-05 cutoff)
 
 TIERS = ["top", "mid", "tail"]
 
@@ -47,6 +87,7 @@ def dd_tier(n) -> str:
 
 
 def load_versions_with_tier() -> pd.DataFrame:
+    """Identical loading path to scripts/37 (Task 7 B4)."""
     versions = pd.read_csv(VERSIONS_CSV)
     versions["published_at"] = pd.to_datetime(versions["published_at"], utc=True, errors="coerce")
     versions = versions.dropna(subset=["published_at"])
@@ -61,6 +102,7 @@ def load_versions_with_tier() -> pd.DataFrame:
 
 
 def aggregate_weekly(df: pd.DataFrame) -> pd.DataFrame:
+    """Weekly rate by tier; identical to scripts/37 aggregate_period('W')."""
     df = df.copy()
     df["period_start"] = (df["published_at"] -
                           pd.to_timedelta(df["published_at"].dt.weekday, unit="D")).dt.normalize()
@@ -73,6 +115,8 @@ def aggregate_weekly(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def run_its(weekly: pd.DataFrame, tier: str, cutoff: pd.Timestamp) -> Optional[dict]:
+    """Canonical Batch-8 fit (scripts/its_spec.py): calendar-time axis,
+    cutoff-DATE-centered, the cutoff's straddling week excluded."""
     sub = weekly[weekly["tier"] == tier].copy()
     if len(sub) < 8:
         return None
@@ -99,6 +143,7 @@ def run_its(weekly: pd.DataFrame, tier: str, cutoff: pd.Timestamp) -> Optional[d
 
 
 def check_grid_consistency(weekly: pd.DataFrame) -> None:
+    """Re-derive the approved B4b top-tier grid; abort on divergence."""
     grid = pd.read_csv(GRID_CSV)
     top = grid[grid["tier"] == "top"]
     for _, ref in top.iterrows():
@@ -123,7 +168,11 @@ def main() -> int:
     logger.info("Series: %d weeks, %s .. %s", n_weeks,
                 pd.Timestamp(week_starts[0]).date(), pd.Timestamp(week_starts[-1]).date())
 
-
+    # Batch-8 symmetric candidates: one cutoff per week, at the deadline's own
+    # weekday inside that week (Dec-9 is week_start + 1 day). Each candidate's
+    # fit drops its own straddling week (week k), so retained pre = k weeks and
+    # retained post = n_weeks - k - 1 weeks; admissibility applies to RETAINED
+    # clean weeks.
     weekday_offset = (DEADLINE.date()
                       - min(d for d in (pd.Timestamp(w).date() for w in week_starts)
                             if d <= DEADLINE.date() and (DEADLINE.date() - d).days < 7)).days
@@ -160,7 +209,7 @@ def main() -> int:
     df[fields].to_csv(OUT_CSV, index=False)
     logger.info("Saved %s", OUT_CSV)
 
-
+    # Rank statistics (top tier primary) for BOTH beta2 and beta3.
     summary_lines: List[str] = []
     for tier in TIERS:
         sub = df[df["tier"] == tier].copy()
@@ -170,7 +219,7 @@ def main() -> int:
                             ("beta3_slope_change", "beta3")]:
             absv = sub[coef].abs()
             a = abs(actual[coef])
-            n_geq = int((absv >= a).sum())
+            n_geq = int((absv >= a).sum())  # includes actual
             n_strict = int((absv > a).sum())
             p_rand = n_geq / n_adm
             line = (f"{tier}: actual {label}={actual[coef]:+.2f}, "
@@ -182,13 +231,13 @@ def main() -> int:
     lines = [
         "# Pre-submission B2 — All-admissible-cutoff placebo rank (top-tier ITS)",
         "",
-        "canonical convention: one candidate cutoff per week, at the",
+        "Batch-8 canonical convention: one candidate cutoff per week, at the",
         "deadline's own weekday (Tuesday = week_start + 1 day); every candidate",
         "fitted with the shared calendar-time cutoff-date-centered ITS",
         "(scripts/its_spec.py), each dropping its own straddling week — the",
         "actual Dec-9 partition and every placebo are treated symmetrically.",
         "Pre-declared admissibility: >= 8 retained pre weeks and >= 5 retained",
-        "post weeks (the extremes of the approved grid). Ranks are",
+        "post weeks (the extremes of the approved Task 7 B4b grid). Ranks are",
         "reported for BOTH |beta2| (level change at the cutoff date) and",
         "|beta3| (slope change).",
         "",

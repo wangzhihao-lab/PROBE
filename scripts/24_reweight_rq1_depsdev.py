@@ -1,3 +1,24 @@
+"""
+Task 4 Round 3 Step 1 — RQ1 monthly+weekly attestation rate under deps.dev-tier.
+
+Mirrors scripts/17 but uses deps.dev `dependents_count` (snapshot 2026-05-05) as
+the tier source per PI Round 2 (c).
+
+Tier definition (same thresholds as ecosyste.ms, applied to deps.dev DPC):
+  top:  dpc > 500
+  mid:  10 < dpc ≤ 500
+  tail: dpc ≤ 10
+  missing: package not in deps.dev 2026-05-05 snapshot (62 packages)
+
+Versions whose package has tier='missing' are excluded from primary tier-stratified
+aggregates (denominator-honest) but counted in `tier='all'`.
+
+Outputs:
+  data/rq1_monthly_attestation_rate_depsdev.csv  (cols: month, tier, total, attested, rate)
+  data/rq1_weekly_attestation_rate_depsdev.csv   (cols: week_start, tier, total, attested, rate)
+
+Run: conda run --no-capture-output -n stage2c python scripts/24_reweight_rq1_depsdev.py
+"""
 from __future__ import annotations
 
 import csv
@@ -29,7 +50,7 @@ def parse_dt(s: str) -> datetime | None:
 
 
 def main() -> int:
-
+    # Build pkg → depsdev_tier mapping
     pkg_tier: dict[str, str] = {}
     with DEPSDEV_CSV.open() as f:
         for r in csv.DictReader(f):
@@ -39,7 +60,7 @@ def main() -> int:
                 continue
     print(f"Loaded {len(pkg_tier)} packages with deps.dev tier", flush=True)
 
-
+    # Aggregate versions.csv with the new tier
     monthly: dict[tuple[str, str], Counter] = defaultdict(Counter)
     weekly: dict[tuple[str, str], Counter] = defaultdict(Counter)
     stats = {"rows_read": 0, "missing_tier": 0, "parse_fail": 0}
@@ -67,16 +88,16 @@ def main() -> int:
 
     def write(out_path: Path, bucket: dict, key_field: str):
         rows = []
-
+        # Per-tier rows (including 'missing')
         for (key, tier), c in sorted(bucket.items()):
             total = c["total"]
             attested = c["attested"]
             rate = attested / total if total else 0
             rows.append({key_field: key, "tier": tier, "total": total,
                          "attested": attested, "rate": f"{rate:.4f}"})
-
+        # Combined rows excluding 'missing' (denominator-honest tier='all')
         combined_excl: dict[str, Counter] = defaultdict(Counter)
-
+        # Combined rows including all (tier='all_incl_missing')
         combined_incl: dict[str, Counter] = defaultdict(Counter)
         for (key, t), c in bucket.items():
             combined_incl[key]["total"] += c["total"]
@@ -96,7 +117,7 @@ def main() -> int:
             rate = attested / total if total else 0
             rows.append({key_field: key, "tier": "all", "total": total,
                          "attested": attested, "rate": f"{rate:.4f}"})
-
+        # Stable sort
         tier_order = {"all": 0, "all_excl_missing": 1, "top": 2, "mid": 3, "tail": 4, "missing": 5}
         rows.sort(key=lambda r: (r[key_field], tier_order.get(r["tier"], 99)))
         with out_path.open("w", newline="") as f:
@@ -104,7 +125,7 @@ def main() -> int:
             w.writeheader()
             for r in rows:
                 w.writerow(r)
-        print(f" Saved {out_path} ({len(rows)} rows)", flush=True)
+        print(f"✓ Saved {out_path} ({len(rows)} rows)", flush=True)
         return rows
 
     monthly_rows = write(MONTHLY_OUT, monthly, "month")

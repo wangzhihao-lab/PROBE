@@ -1,3 +1,13 @@
+"""
+Task 4 Round 3 Step 3 — Re-generate RQ1 + RQ2 figures under deps.dev-tier.
+
+Outputs:
+  paper/figures/rq1_timeline_depsdev.png + .pdf
+  paper/figures/rq2_classification_depsdev.png + .pdf
+  paper/figures/tier_comparison_eco_vs_depsdev.png + .pdf  (NEW comparison panel)
+
+Run: conda run --no-capture-output -n stage2c python scripts/26_reweight_charts_depsdev.py
+"""
 from __future__ import annotations
 
 import csv
@@ -10,7 +20,7 @@ import numpy as np
 
 import figstyle
 
-figstyle.apply()
+figstyle.apply()  # shared publication style (rcParams) before any plotting
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 PAPER_DIR = Path(__file__).parent.parent / "paper" / "figures"
@@ -25,7 +35,7 @@ def _save(fig, stem: str) -> None:
 
 
 def main() -> int:
-
+    # ---- RQ1 timeline under deps.dev-tier ----
     series: dict[str, list[tuple[str, float]]] = defaultdict(list)
     with (DATA_DIR / "rq1_monthly_attestation_rate_depsdev.csv").open() as f:
         for r in csv.DictReader(f):
@@ -39,7 +49,7 @@ def main() -> int:
     markers = ["s", "o", "D", "^"]
 
     x = np.arange(len(months))
-    fig, ax = plt.subplots(figsize=(5.0, 3.1))
+    fig, ax = plt.subplots(figsize=plt.rcParams["figure.figsize"])
     for t, name, col, mk in zip(series_order, series_names, colors, markers):
         m_to_r = dict(series[t])
         y = np.array([m_to_r.get(m, np.nan) for m in months])
@@ -57,7 +67,7 @@ def main() -> int:
     ax.legend(loc="lower left", ncol=2, framealpha=0.85, edgecolor="0.8")
     _save(fig, "rq1_timeline_depsdev")
 
-
+    # ---- RQ2 grouped bar under deps.dev-tier ----
     cls: dict[tuple[str, str], str] = {}
     with (DATA_DIR / "classification.csv").open() as f:
         for r in csv.DictReader(f):
@@ -89,7 +99,7 @@ def main() -> int:
 
     def grouped_bar(mat, cats, seriesnames, xlabel, ylabel, stem, ymax=None,
                     ymin=0.0):
-        fig, ax = plt.subplots(figsize=(5.0, 3.1))
+        fig, ax = plt.subplots(figsize=plt.rcParams["figure.figsize"])
         ncat, nser = mat.shape
         span, xc = 0.72, np.arange(ncat)
         bw = span / nser
@@ -113,7 +123,7 @@ def main() -> int:
                 "Tier (deps.dev DPC; missing rows excluded)", "% of A-E pool",
                 "rq2_classification_depsdev", ymax=max(80, data2.max() + 16))
 
-
+    # ---- Comparison panel: eco vs dd, A-E pool % per (tier, class) ----
     eco_class: dict[str, Counter] = {"top": Counter(), "mid": Counter(), "tail": Counter()}
     with (DATA_DIR / "rq2_class_distribution.csv").open() as f:
         for r in csv.DictReader(f):

@@ -1,3 +1,49 @@
+"""Task 7 Baseline 1 (B1) — Data collection sensitivity.
+
+Validates the `has_attestation` outcome construction, window edges, version
+inclusion rules, and packument freshness BEFORE downstream baselines (B2, B3,
+B4) re-fit Task 5 models on this outcome. If a non-trivial drift surfaces here
+(>5%), halt and re-run downstream on the validated outcome.
+
+Sub-baselines:
+  B1a: outcome construction
+    - structural self-consistency: for each version where versions.csv says
+      has_attestation=True, verify the cached packument's dist.attestations
+      field is well-formed (full sample)
+    - Rekor-adjacent slice cross-validation: reuse C-3 dryrun's 30 parsed
+      attestation bundles as the cross-check slice; report coverage-gap vs
+      validated-mismatch separately (per PI Round 0.5 minor)
+  B1b: window edges
+    - 4 starts × 2 ends = 8 DISTINCT windows. Start grid revised 2026-07-11:
+      data collection begins 2025-08-01, so the originally planned 2025-07-01
+      start produced windows identical to the 2025-08-01 windows; it is
+      replaced by 2025-08-15.
+      starts = (2025-08-01 reference, 2025-08-15, 2025-09-01, 2025-10-01)
+      ends   = (2026-04-10, 2026-05-10 reference)
+    - re-run ITS β2 per tier under each window (cutoff-centered spec)
+    - re-fit the FULL Task 5 main models per window (2026-07-11 fix; earlier
+      revisions used reduced 4-covariate mirrors): Cox = scripts/29
+      9-covariate package-level spec (event = first in-window attested
+      release, robust SE); Logistic = scripts/30 10-covariate version-level
+      spec incl. post_deadline (plain MLE in the grid; canonical scripts/30
+      uses package-cluster SEs — identical point estimates)
+  B1c: version inclusion
+    - count versions with NaT published_at (currently excluded)
+    - sensitivity audit only; NOT a canonical replacement (PI Round 0.5 minor)
+  B1d: packument freshness
+    - re-pull 20 random tier-proportional packuments from registry.npmjs.org
+    - compare cached n_versions and per-version has_attestation flag drift
+
+Outputs:
+  data/baselines/task_7_b1_outcome_structural.csv
+  data/baselines/task_7_b1_outcome_rekor_slice.csv
+  data/baselines/task_7_b1_window_grid.csv
+  data/baselines/task_7_b1_inclusion_diff.csv
+  data/baselines/task_7_b1_packument_drift.csv
+  reports/task_7_baseline_1.md
+
+Run: conda run --no-capture-output -n stage2c python scripts/34_baseline_data_collection.py
+"""
 from __future__ import annotations
 
 import json
@@ -43,21 +89,29 @@ OUT_REPORT = REPORTS_DIR / "task_7_baseline_1.md"
 DEADLINE = pd.Timestamp("2025-12-09", tz="UTC")
 END_DATE = pd.Timestamp("2026-05-10 23:59:59", tz="UTC")
 
-
+# Window grid (PI Round 1 Major fix): vary both start AND end dates.
+# 4 starts × 2 ends = 8 (start, end) combinations.
+# Start grid revised 2026-07-11: the Round 0.5 plan listed 2025-07-01, but data
+# collection begins 2025-08-01, so the two 2025-07-01 windows were IDENTICAL to
+# the 2025-08-01 windows. 2025-07-01 is replaced by 2025-08-15 so that all 8
+# windows are distinct.
 _STARTS = [
-    ("start_2025-08-01", pd.Timestamp("2025-08-01", tz="UTC")),
+    ("start_2025-08-01", pd.Timestamp("2025-08-01", tz="UTC")),  # canonical
     ("start_2025-08-15", pd.Timestamp("2025-08-15", tz="UTC")),
     ("start_2025-09-01", pd.Timestamp("2025-09-01", tz="UTC")),
     ("start_2025-10-01", pd.Timestamp("2025-10-01", tz="UTC")),
 ]
 _ENDS = [
     ("end_2026-04-10", pd.Timestamp("2026-04-10 23:59:59", tz="UTC")),
-    ("end_2026-05-10", pd.Timestamp("2026-05-10 23:59:59", tz="UTC")),
+    ("end_2026-05-10", pd.Timestamp("2026-05-10 23:59:59", tz="UTC")),  # canonical
 ]
 WINDOW_GRID = [(f"{s_lbl}__{e_lbl}", s_ts, e_ts)
                for s_lbl, s_ts in _STARTS for e_lbl, e_ts in _ENDS]
 
-
+# Full Task 5 main-model covariate sets, refit per window (2026-07-11 fix; the
+# previous reduced 4-covariate "headline mirrors" did not match the paper's
+# claim that the models are re-fit per window). Construction copied from
+# scripts/29 (Cox, 9 covariates) / scripts/30 (Logistic, +post_deadline = 10).
 COX_COVS = [
     "log_weekly_downloads", "log_age_days", "log_maintainers",
     "owner_is_org", "has_dependabot_int", "has_issue_template_int",
@@ -69,7 +123,13 @@ RANDOM_SEED = 42
 DRIFT_AUDIT_N = 20
 
 
+# --- B1a: outcome construction -------------------------------------------------
+
 def cache_filename(pkg: str) -> str:
+    """Map npm package name → cache filename stem.
+    `axios` → `axios`; `@types/sinon` → `at_types_sinon`;
+    `@types/sinonjs__fake-timers` → `at_types_sinonjs__fake-timers`.
+    """
     if pkg.startswith("@") and "/" in pkg:
         scope, name = pkg[1:].split("/", 1)
         return f"at_{scope}_{name}"
@@ -77,6 +137,8 @@ def cache_filename(pkg: str) -> str:
 
 
 def b1a_structural_audit(versions: pd.DataFrame) -> pd.DataFrame:
+    """For each has_attestation=True row, verify cached packument has well-formed
+    dist.attestations. Returns per-version structural validity."""
     rows: list[dict] = []
     attested = versions[versions["has_attestation"].astype(str).str.lower() == "true"]
     logger.info(f"B1a structural: scanning {len(attested):,} attested versions across packuments")
@@ -153,11 +215,13 @@ def b1a_structural_audit(versions: pd.DataFrame) -> pd.DataFrame:
 
 
 def b1a_rekor_slice() -> pd.DataFrame:
+    """Cross-check using C-3 dryrun's 30 parsed attestation bundles. Report
+    coverage-gap vs validated-mismatch distinctly (PI minor)."""
     if not C3_PARSE.exists():
         logger.warning(f"C-3 parse CSV not found at {C3_PARSE}; Rekor-slice cross-check SKIPPED")
         return pd.DataFrame()
     df = pd.read_csv(C3_PARSE)
-
+    # Map dryrun pkg format `at_actions_github` → npm name `@actions/github` heuristically
     def unwrap_pkg(p: str) -> str:
         if p.startswith("at_"):
             tail = p[3:].replace("_", "/", 1)
@@ -174,7 +238,11 @@ def b1a_rekor_slice() -> pd.DataFrame:
                "coverage_status", "parse_error"]]
 
 
+# --- B1b: window edges --------------------------------------------------------
+
 def run_its_at_window(df_weekly: pd.DataFrame, tier: str) -> dict:
+    """Window-filtered ITS via the canonical Batch-8 spec (scripts/its_spec.py):
+    true calendar axis, Dec-9-date-centered, straddling week excluded."""
     sub = df_weekly[df_weekly["tier"] == tier].copy()
     if len(sub) < 8:
         return {"tier": tier, "n_weeks": len(sub), "skipped": "too_few_weeks"}
@@ -200,6 +268,10 @@ def run_its_at_window(df_weekly: pd.DataFrame, tier: str) -> dict:
 
 
 def _build_pkg_covariates(inf: pd.DataFrame, depsdev_map: dict) -> pd.DataFrame:
+    """Package-level covariate frame; construction copied from scripts/29 /
+    scripts/30 so per-window refits use the EXACT main-model specs: log1p
+    transforms, owner_is_org, boolean ints, deps.dev tier dummies (tail
+    reference; 'missing' tier excluded), complete-case on all 9 covariates."""
     pc = inf.copy()
     pc["depsdev_dependents_count"] = pc["package"].map(depsdev_map)
     pc["depsdev_tier"] = pc["depsdev_dependents_count"].apply(
@@ -221,6 +293,10 @@ def _build_pkg_covariates(inf: pd.DataFrame, depsdev_map: dict) -> pd.DataFrame:
 
 def _fit_cox_in_window(v: pd.DataFrame, start_ts: pd.Timestamp, end_ts: pd.Timestamp,
                        pkg_cov: pd.DataFrame) -> Optional[dict]:
+    """Cox PH per window — FULL scripts/29 main-model spec (9 covariates,
+    robust SE). Package-level; event = first in-window attested release;
+    right-censored at window end; duration from window start (min 1 day).
+    Reports tier_top and log_age_days HRs."""
     try:
         from lifelines import CoxPHFitter
     except ImportError:
@@ -258,6 +334,10 @@ def _fit_cox_in_window(v: pd.DataFrame, start_ts: pd.Timestamp, end_ts: pd.Times
 
 def _fit_logit_in_window(v: pd.DataFrame, start_ts: pd.Timestamp, end_ts: pd.Timestamp,
                          pkg_cov: pd.DataFrame) -> Optional[dict]:
+    """Version-level Logistic per window — FULL scripts/30 main-model spec
+    (10 covariates incl. post_deadline). Plain MLE in the grid (canonical
+    scripts/30 uses package-cluster SEs; point estimates are identical, only
+    the CIs here are un-clustered). Reports tier_top and log_age_days ORs."""
     v_win = v[(v["published_at"] >= start_ts) & (v["published_at"] <= end_ts)].copy()
     if v_win.empty:
         return None
@@ -287,6 +367,11 @@ def _fit_logit_in_window(v: pd.DataFrame, start_ts: pd.Timestamp, end_ts: pd.Tim
 
 def b1b_window_grid(versions: pd.DataFrame, depsdev: pd.DataFrame,
                     inf: pd.DataFrame) -> pd.DataFrame:
+    """Re-aggregate weekly rate per tier under 4 starts × 2 ends = 8 distinct
+    windows. Per window: ITS β2 (3 tiers, cutoff-centered) plus FULL-spec
+    re-fits of the Task 5 main models — Cox (scripts/29, 9 covariates, robust
+    SE) and version-level Logistic (scripts/30, 10 covariates incl.
+    post_deadline; plain MLE) — reporting tier_top and log_age_days HR/OR."""
     v = versions.copy()
     v["published_at"] = pd.to_datetime(v["published_at"], utc=True, errors="coerce")
     v = v[v["published_at"].notna()]
@@ -300,7 +385,8 @@ def b1b_window_grid(versions: pd.DataFrame, depsdev: pd.DataFrame,
         return "top" if n > 500 else "mid" if n > 10 else "tail"
     v["dd_tier"] = v["package"].map(dd_map).apply(dd_tier)
 
-
+    # Package-level covariate frame (window-independent): built ONCE with the
+    # exact scripts/29 / scripts/30 construction, reused for all 8 windows.
     pkg_cov = _build_pkg_covariates(inf, dd_map)
     logger.info(f"B1b: package covariate frame (scripts/29-30 spec): {len(pkg_cov)} packages")
 
@@ -314,7 +400,7 @@ def b1b_window_grid(versions: pd.DataFrame, depsdev: pd.DataFrame,
         weekly["rate"] = weekly["n_attested"] / weekly["n_versions"]
         weekly = weekly.rename(columns={"dd_tier": "tier"})
 
-
+        # Cox + Logistic FULL-spec refits for this window (single fits each)
         cox_headline = _fit_cox_in_window(v, start_ts, end_ts, pkg_cov) or {}
         logit_headline = _fit_logit_in_window(v, start_ts, end_ts, pkg_cov) or {}
 
@@ -325,14 +411,18 @@ def b1b_window_grid(versions: pd.DataFrame, depsdev: pd.DataFrame,
             r["window"] = win_name
             r["window_start"] = str(start_ts.date())
             r["window_end"] = str(end_ts.date())
-
+            # Attach Cox + Logistic headline (window-level, repeated per tier row)
             r.update(cox_headline)
             r.update(logit_headline)
             rows.append(r)
     return pd.DataFrame(rows)
 
 
+# --- B1c: version inclusion ---------------------------------------------------
+
 def b1c_inclusion_audit(versions: pd.DataFrame) -> pd.DataFrame:
+    """Count versions with NaT published_at; report % attested. Sensitivity audit
+    only — NOT a canonical replacement of any inclusion rule."""
     v = versions.copy()
     v["published_at_parsed"] = pd.to_datetime(v["published_at"], utc=True, errors="coerce")
     nat = v[v["published_at_parsed"].isna()]
@@ -351,7 +441,10 @@ def b1c_inclusion_audit(versions: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+# --- B1d: packument freshness -------------------------------------------------
+
 def fetch_packument_fresh(pkg: str, timeout: int = 15) -> Optional[dict]:
+    """Pull a packument fresh from registry.npmjs.org. Returns None on failure."""
     url = f"https://registry.npmjs.org/{pkg}"
     req = urllib.request.Request(url, headers={"User-Agent": "stage2c-task7-b1d"})
     try:
@@ -363,6 +456,7 @@ def fetch_packument_fresh(pkg: str, timeout: int = 15) -> Optional[dict]:
 
 
 def b1d_packument_freshness(packages: list[str]) -> pd.DataFrame:
+    """Re-pull 20 tier-proportional packuments; compare cached vs fresh."""
     rng = np.random.default_rng(RANDOM_SEED)
     rows = []
     sample = rng.choice(packages, size=min(DRIFT_AUDIT_N, len(packages)), replace=False)
@@ -385,7 +479,7 @@ def b1d_packument_freshness(packages: list[str]) -> pd.DataFrame:
         cached_versions = set(cached.get("versions", {}).keys())
         fresh_versions = set(fresh.get("versions", {}).keys())
         new_in_fresh = fresh_versions - cached_versions
-
+        # Per-version attestation flag drift on intersection
         intersect = cached_versions & fresh_versions
         att_drift = 0
         for v in intersect:
@@ -404,18 +498,21 @@ def b1d_packument_freshness(packages: list[str]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+# --- main ---------------------------------------------------------------------
+
 def write_report(struct_df: pd.DataFrame, rekor_df: pd.DataFrame,
                  window_df: pd.DataFrame, inclusion_df: pd.DataFrame,
                  drift_df: pd.DataFrame) -> None:
+    """Write reports/task_7_baseline_1.md summarizing all 4 sub-baselines."""
     lines = [
-        "# Baseline 1 — Data Collection Sensitivity",
+        "# Task 7 Baseline 1 — Data Collection Sensitivity",
         "",
         "**Date**: auto-generated 2026-05-18 by `scripts/34_baseline_data_collection.py` "
         "(B1b revised 2026-07-11: full-spec per-window model refits; start-grid fix "
-        "2025-07-01  2025-08-15)",
+        "2025-07-01 → 2025-08-15)",
         "**Scope**: B1 validates `has_attestation` outcome construction, window edges, "
         "version inclusion rules, and packument freshness BEFORE B2/B3/B4 model refits.",
-        "**Framing**: descriptive / construct-validity only; NO causal claims.",
+        "**Framing**: descriptive / construct-validity only; NO causal claims (Task 5 PI Round 2 mandate carried).",
         "",
         "## B1a — Outcome construction",
         "",
@@ -438,19 +535,20 @@ def write_report(struct_df: pd.DataFrame, rekor_df: pd.DataFrame,
         flip_share = 100 * flips / n_total if n_total else 0
         lines += [
             "",
-            f"**Decision gate**: if structural-invalid share > 5%, "
+            f"**Decision gate** (PI Round 0.5 minor): if structural-invalid share > 5%, "
             f"halt downstream baselines. Observed share: **{flip_share:.2f}%**.",
             "",
         ]
         if flip_share > 5:
-            lines.append(" Structural drift exceeds 5% — flag for downstream halt review.")
+            lines.append("⚠ Structural drift exceeds 5% — flag for downstream halt review.")
         else:
-            lines.append(" Structural drift ≤ 5% — downstream baselines may proceed on this outcome.")
+            lines.append("✓ Structural drift ≤ 5% — downstream baselines may proceed on this outcome.")
     lines += ["", "### B1a-2: Rekor-adjacent slice cross-validation", ""]
     if rekor_df.empty:
         lines += [
             "- C-3 parse CSV not available; cross-validation slice SKIPPED",
-            "-",
+            "- (per PI Round 0.5 minor: absence from Rekor/Sigstore slice ≠ packument mismatch; "
+            "no claim is asserted here)",
         ]
     else:
         n = len(rekor_df)
@@ -463,11 +561,11 @@ def write_report(struct_df: pd.DataFrame, rekor_df: pd.DataFrame,
             f"- In-slice non-validated (parse_error or other status): **{non_validated}** "
             f"({100*non_validated/n:.1f}%)",
             "",
-            "**Coverage gap vs validated mismatch**:",
+            "**Coverage gap vs validated mismatch** (PI Round 0.5 minor):",
             "- This slice covers only ~30 versions out of ~100k in versions.csv.",
             "- For versions NOT in the slice, `has_attestation=True` claims remain "
             "**unvalidated**, not **disconfirmed**.",
-            "- A larger Rekor cross-check is out of scope (would require "
+            "- A larger Rekor cross-check is out of Task 7 scope (would require "
             "ecosystem-scale Rekor querying).",
         ]
     lines += ["", "## B1b — Window edges (4 starts × 2 ends)", "",
@@ -475,7 +573,7 @@ def write_report(struct_df: pd.DataFrame, rekor_df: pd.DataFrame,
               "(2026-04-10/2026-05-10) = 8 distinct windows. Start grid revised 2026-07-11: "
               "data collection begins 2025-08-01, so the originally planned 2025-07-01 start "
               "duplicated the 2025-08-01 windows; it is replaced by 2025-08-15. Per window "
-              "we report ITS β2 per tier PLUS full re-fits of the main models: Cox "
+              "we report ITS β2 per tier PLUS full re-fits of the Task 5 main models: Cox "
               "(scripts/29 spec, 9 covariates, robust SE) and version-level Logistic "
               "(scripts/30 spec, 10 covariates incl. post_deadline; plain-MLE SEs in the "
               "grid vs package-cluster SEs in canonical scripts/30 — identical point "
@@ -484,7 +582,7 @@ def write_report(struct_df: pd.DataFrame, rekor_df: pd.DataFrame,
     if window_df.empty:
         lines.append("- (no rows generated)")
     else:
-
+        # ITS β2 table
         lines += ["### ITS β2 per tier under each window",
                   "",
                   "| Window | Tier | n weeks | β2 (pp) | 95% CI | DW | LB min-p |",
@@ -499,7 +597,7 @@ def write_report(struct_df: pd.DataFrame, rekor_df: pd.DataFrame,
                 f"[{r['ci95_beta2_low']:.2f}, {r['ci95_beta2_high']:.2f}] | "
                 f"{r['DW']:.2f} | {lb} |"
             )
-
+        # Cox + Logistic full-spec refit tables (one row per window, deduped)
         unique_windows = window_df.drop_duplicates("window")
         lines += ["",
                   "### Cox per window — FULL scripts/29 spec (9 covariates, robust SE)",
@@ -536,7 +634,7 @@ def write_report(struct_df: pd.DataFrame, rekor_df: pd.DataFrame,
         lines += [
             "",
             "**Reading**: if ITS β2 + Cox HRs + Logistic ORs all stay in the same sign and "
-            "order-of-magnitude across all 8 windows, the association-only framing "
+            "order-of-magnitude across all 8 windows, the Task 5 association-only framing "
             "is window-robust. Both models are refit per window with the FULL Task 5 "
             "main-model covariate sets (2026-07-11 fix; earlier revisions of this table "
             "used reduced 4-covariate mirrors). tier_top and log_age_days are the reported "
@@ -552,9 +650,9 @@ def write_report(struct_df: pd.DataFrame, rekor_df: pd.DataFrame,
                          f"{100*r['share_attested']:.2f}% |")
         lines += [
             "",
-            "**Boundary**: NaT-published-at rows are reported here "
+            "**Boundary** (PI Round 0.5 minor): NaT-published-at rows are reported here "
             "as sensitivity-only. No imputed `published_at` is being substituted into "
-            "the canonical analysis. The current Task 5 / analyses exclude these "
+            "the canonical analysis. The current Task 5 / Task 6 analyses exclude these "
             "rows; this audit only confirms what would change if they were included.",
         ]
     lines += ["", "## B1d — Packument freshness (20-package drift audit)", ""]
@@ -597,20 +695,20 @@ def write_report(struct_df: pd.DataFrame, rekor_df: pd.DataFrame,
         "- **B1d freshness audit** flags packument staleness if any package shows "
         "attestation-flag drift > 0",
         "",
-        "If ALL gates pass  proceed to scripts/35 (B2 classification).",
+        "If ALL gates pass → proceed to scripts/35 (B2 classification).",
         "",
         "## Closure status",
         "",
-        " B1 contributed: outcome "
+        "Task 7 closed at PI review round 2 (approved 2026-05-19). B1 contributed: outcome "
         "construction is structurally robust (100% OK), Rekor-adjacent slice validated where "
         "covered, 8-window grid (4 starts × 2 ends) shows top-tier headlines stable, and "
         "packument freshness is sufficient. See `reports/task_7_report.md` for the combined "
         "cross-baseline summary.",
         "",
-        "**Post-closure revision (2026-07-11)**: B1b start grid corrected (2025-07-01  "
+        "**Post-closure revision (2026-07-11)**: B1b start grid corrected (2025-07-01 → "
         "2025-08-15; data begin 2025-08-01, so the two 2025-07-01 windows duplicated the "
         "2025-08-01 windows), and the per-window Cox/Logistic were upgraded from reduced "
-        "4-covariate mirrors to the FULL main-model specs (scripts/29 / scripts/30).",
+        "4-covariate mirrors to the FULL Task 5 main-model specs (scripts/29 / scripts/30).",
     ]
     OUT_REPORT.write_text("\n".join(lines) + "\n")
     logger.info(f"wrote {OUT_REPORT}")
@@ -625,32 +723,32 @@ def main() -> int:
     packages = pd.read_csv(PACKAGES_FULL, sep="\t")
     depsdev = pd.read_csv(DEPSDEV_CSV)
 
-
+    # B1a-1
     logger.info("B1a-1: structural self-consistency...")
     struct_df = b1a_structural_audit(versions)
     struct_df.to_csv(OUT_STRUCT, index=False)
     logger.info(f"wrote {OUT_STRUCT}")
 
-
+    # B1a-2
     logger.info("B1a-2: Rekor-adjacent slice...")
     rekor_df = b1a_rekor_slice()
     rekor_df.to_csv(OUT_REKOR, index=False)
     logger.info(f"wrote {OUT_REKOR} (rows={len(rekor_df)})")
 
-
+    # B1b
     logger.info("B1b: window edges grid (4 starts × 2 ends)...")
     inf = pd.read_csv(INFLUENCE_CSV)
     window_df = b1b_window_grid(versions, depsdev, inf)
     window_df.to_csv(OUT_WINDOW, index=False)
     logger.info(f"wrote {OUT_WINDOW} (rows={len(window_df)})")
 
-
+    # B1c
     logger.info("B1c: inclusion audit...")
     inclusion_df = b1c_inclusion_audit(versions)
     inclusion_df.to_csv(OUT_INCLUSION, index=False)
     logger.info(f"wrote {OUT_INCLUSION}")
 
-
+    # B1d
     logger.info("B1d: packument freshness (20 packages)...")
     drift_df = b1d_packument_freshness(packages["name"].tolist())
     drift_df.to_csv(OUT_DRIFT, index=False)

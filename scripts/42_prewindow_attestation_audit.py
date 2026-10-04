@@ -1,3 +1,26 @@
+"""
+Rebuttal B1 — Pre-window attestation audit (Cox left-truncation severity).
+
+Reviewer concern: the Cox time origin is 2025-08-01 and the event is the first
+*in-window* attested release. Because `dist.attestations` has existed on npm
+since 2023 (provenance metadata from 2023; trusted-publisher mechanism in 2025,
+see reports/task_7_plan.md), some packages were ALREADY attesting BEFORE the
+window. The window-anchored Cox treats such "prevalent adopters" as if they
+adopt inside the window -> left-truncation, which can bias the in-window hazard.
+
+This script COUNTS; it does not re-fit. It answers, from the full version
+history in data/packuments_raw/*.json:
+  1. How many packages have >= 1 attested version published BEFORE 2025-08-01?
+  2. How many of those sit in the Cox modeling subset (window-active +
+     deps.dev-tiered + covariate-complete, mirroring scripts/29)?
+  3. What is the earliest-attested-year distribution (2023 / 2024 / 2025-H1)?
+
+The count decides the downstream rebuttal action (per user):
+  exclude-prevalent sensitivity, prevalent-adopter indicator, or clarify the
+  event as "first in-window attested release" only.
+
+Run: conda run --no-capture-output -n stage2c python scripts/42_prewindow_attestation_audit.py
+"""
 from __future__ import annotations
 
 import csv
@@ -38,6 +61,7 @@ def dpc_tier(dpc: int) -> str:
 
 
 def earliest_attested_per_package() -> dict[str, datetime]:
+    """Scan FULL version history; return {package: earliest attested publish dt}."""
     earliest: dict[str, datetime] = {}
     n_scanned = n_404 = n_err = 0
     for fp in RAW.glob("*.json"):
@@ -70,6 +94,9 @@ def earliest_attested_per_package() -> dict[str, datetime]:
 
 
 def cox_subset_packages() -> set[str]:
+    """Reproduce the scripts/29 Cox modeling subset at package granularity:
+    window-active (in versions.csv) + deps.dev tier in {top,mid,tail} +
+    covariate-complete (same dropna columns as scripts/29)."""
     versions = pd.read_csv(VERSIONS_CSV)
     active = set(versions["package"].unique())
 
@@ -82,7 +109,7 @@ def cox_subset_packages() -> set[str]:
     inf["tier"] = inf["dd"].apply(lambda x: dpc_tier(int(x)) if pd.notna(x) else "missing")
     inf = inf[inf["tier"].isin(["top", "mid", "tail"])].copy()
 
-
+    # same covariates / dropna as scripts/29 build_survival_data
     inf["log_weekly_downloads"] = np.log1p(pd.to_numeric(inf["weekly_downloads_avg"], errors="coerce"))
     inf["log_age_days"] = np.log1p(pd.to_numeric(inf["package_age_days"], errors="coerce"))
     inf["log_maintainers"] = np.log1p(pd.to_numeric(inf["maintainers_count"], errors="coerce"))
@@ -100,7 +127,7 @@ def main() -> int:
     versions = pd.read_csv(VERSIONS_CSV)
     active_pkgs = set(versions["package"].unique())
 
-
+    # window-internal first-attested (what Cox currently uses as the "event")
     vv = versions.copy()
     vv["att"] = vv["has_attestation"].astype(str).str.lower() == "true"
     in_window_first = (vv[vv["att"]].assign(pub=pd.to_datetime(vv.loc[vv["att"], "published_at"], utc=True))
@@ -111,14 +138,14 @@ def main() -> int:
     pw_active = prewindow.keys() & active_pkgs
     pw_cox = prewindow.keys() & cox_pkgs
 
-
+    # year distribution of earliest-ever attestation among prevalent adopters
     yr = Counter(dt.year for dt in prewindow.values())
 
-
+    # among the Cox subset, how many events (in-window first-attested) are actually prevalent?
     cox_events = {p for p in cox_pkgs if p in in_window_first}
     cox_event_prevalent = cox_events & prewindow.keys()
 
-
+    # per-package audit rows (prevalent adopters in cox subset)
     rows = []
     for p in sorted(pw_cox):
         rows.append({
@@ -137,7 +164,7 @@ def main() -> int:
         w.writeheader()
         w.writerows(rows)
 
-
+    # ---- console summary ----
     print("\n=== PRE-WINDOW ATTESTATION AUDIT ===", flush=True)
     print(f"packages ever attested (any time):           {len(earliest):,}", flush=True)
     print(f"  ... attested BEFORE 2025-08-01 (prevalent): {len(prewindow):,}", flush=True)
@@ -162,7 +189,7 @@ def main() -> int:
                    f"sensitivity AND/OR a prevalent-adopter indicator; report HR deltas.")
     print(f"\nVERDICT: {verdict}", flush=True)
 
-
+    # ---- markdown ----
     md = [
         "# Rebuttal B1 — Pre-window attestation audit (Cox left-truncation)",
         "",
@@ -206,8 +233,8 @@ def main() -> int:
         f"({len(rows)} rows).",
     ]
     OUT_MD.write_text("\n".join(md) + "\n")
-    print(f"\n Saved {OUT_CSV} ({len(rows)} rows)", flush=True)
-    print(f" Saved {OUT_MD}", flush=True)
+    print(f"\n✓ Saved {OUT_CSV} ({len(rows)} rows)", flush=True)
+    print(f"✓ Saved {OUT_MD}", flush=True)
     return 0
 
 

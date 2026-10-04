@@ -1,3 +1,24 @@
+"""
+Task 3 Step 3.4 — Merge influence metrics into data/influence_metrics.csv.
+
+Joins on `package` (left-join packages_full.txt to ensure 3000 row count):
+  packument_metrics.csv     (Step 3.1: age, maintainers, release_freq, is_scoped_package)
+  npm_downloads_metrics.csv (Step 3.2: weekly_downloads_avg, total_downloads, days_with_data)
+  github_repo_meta.csv      (Step 3.3: stars, forks, has_dependabot, has_issue_template)
+  github_owner_type.csv     (Step 3.6 Round 1: owner.type from /users/{owner})
+
+Adds:
+  depsdev_dependents_count = "pending"  (post-2026-06-01 BQ enrichment;
+                                          methodologist + Task 1 mandate)
+  tier = top/mid/tail                   (from packages_full.txt)
+  github_owner_type                     (User / Organization / unknown; the rigorous
+                                          org-owner field — `is_scoped_package` is the
+                                          weaker @scope heuristic, not an org indicator)
+
+Output: data/influence_metrics.csv (3000 rows × 16 cols)
+
+Run: conda run --no-capture-output -n stage2c python scripts/14_merge_influence.py
+"""
 from __future__ import annotations
 
 import csv
@@ -10,13 +31,13 @@ PACKUMENT_CSV = DATA_DIR / "packument_metrics.csv"
 DOWNLOADS_CSV = DATA_DIR / "npm_downloads_metrics.csv"
 GITHUB_CSV = DATA_DIR / "github_repo_meta.csv"
 OWNER_TYPE_CSV = DATA_DIR / "github_owner_type.csv"
-DEPSDEV_CSV = DATA_DIR / "depsdev_dependents_2026_05_05.csv"
+DEPSDEV_CSV = DATA_DIR / "depsdev_dependents_2026_05_05.csv"   # Task 3.7 BQ enrichment 2026-05-18
 OUT_CSV = DATA_DIR / "influence_metrics.csv"
 
 
 def load_csv(path: Path, key: str = "package") -> dict[str, dict]:
     if not path.exists():
-        print(f" missing: {path}", file=sys.stderr)
+        print(f"⚠ missing: {path}", file=sys.stderr)
         return {}
     out: dict[str, dict] = {}
     with path.open() as f:
@@ -44,7 +65,7 @@ def main() -> int:
     print(f"  downloads rows: {len(downloads)}", flush=True)
     print(f"  github rows:    {len(github)}", flush=True)
 
-
+    # owner_type cache (Round 1 PI #3)
     owner_type: dict[str, str] = {}
     if OWNER_TYPE_CSV.exists():
         with OWNER_TYPE_CSV.open() as f:
@@ -52,7 +73,7 @@ def main() -> int:
                 owner_type[r["owner"]] = r["type"]
         print(f"  owner_type rows: {len(owner_type)}", flush=True)
 
-
+    # depsdev dependents enrichment (Task 3.7 BQ, 2026-05-18)
     depsdev: dict[str, str] = {}
     if DEPSDEV_CSV.exists():
         with DEPSDEV_CSV.open() as f:
@@ -66,8 +87,8 @@ def main() -> int:
         "depsdev_dependents_count",
         "github_stars", "github_forks",
         "package_age_days", "maintainers_count", "release_freq_12m",
-        "is_scoped_package",
-        "github_owner_type",
+        "is_scoped_package",                # Round 1 PI rename (was `has_org_owner`)
+        "github_owner_type",                # Round 1 PI new field
         "has_dependabot", "has_issue_template",
         "github_status",
     ]
@@ -111,14 +132,14 @@ def main() -> int:
         w.writeheader()
         for r in rows:
             w.writerow(r)
-    print(f"\n Saved {OUT_CSV} ({len(rows)} rows × {len(fields)} cols)", flush=True)
+    print(f"\n✓ Saved {OUT_CSV} ({len(rows)} rows × {len(fields)} cols)", flush=True)
 
-
+    # Missing-data report
     print(f"\n=== Missing-count per column ===", flush=True)
     for fk, c in missing.items():
         print(f"  {fk:32s}: {c:>4} missing", flush=True)
 
-
+    # Tier × downloads_status crosstab
     from collections import Counter
     cross: dict[str, Counter] = {"top": Counter(), "mid": Counter(), "tail": Counter()}
     for r in rows:
