@@ -61,7 +61,8 @@ def timeline() -> None:
                    alpha=0.45, linewidth=0.7)
     ax.set_ylabel("Attestation rate (%)")
     ax.set_ylim(0, 68)
-    ax.xaxis.set_major_locator(mdates.MonthLocator(interval=4))
+    # Ticks on January, May and September so the first label is the series start (2024-01).
+    ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=(1, 5, 9)))
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
     ax.tick_params(axis="x", labelrotation=30)
     ax.legend(loc="upper left", framealpha=0.85, edgecolor="0.8")
