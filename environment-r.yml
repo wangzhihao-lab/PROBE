@@ -1,0 +1,9 @@
+# R environment for the proportional-hazards check on the primary delayed-entry Cox fit
+# (scripts/79_cox_zph.R, called by scripts/79_cox_ph_primary.py).
+# Create: conda env create -f environment-r.yml
+name: rsurv
+channels:
+  - conda-forge
+dependencies:
+  - r-base=4.5.3
+  - r-survival=3.8_12

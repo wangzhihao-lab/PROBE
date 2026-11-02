@@ -31,8 +31,8 @@ request. `SHA256_MANIFEST.txt` identifies the exact snapshot analyzed.
 ## Layout
 
 ```
-scripts/         analysis pipeline, scripts/01_*.py … scripts/76_*.py
-                 (+ its_spec.py, figstyle.py shared modules)
+scripts/         analysis pipeline, scripts/01_*.py … scripts/79_*.py
+                 (+ its_spec.py, figstyle.py shared modules; scripts/79_cox_zph.R)
 data/            frozen derived tables (CSV/JSON) the scripts consume
                  - versions.csv .............. per-version has_attestation outcome (protocol window)
                  - versions_extended.csv ..... same, 2024-01-01 → 2026-05-10 (revision; re-read from the frozen packuments)
@@ -42,6 +42,7 @@ data/            frozen derived tables (CSV/JSON) the scripts consume
                  - CODEBOOK_classification.md . reason-trace codebook
                  - influence_metrics.csv, depsdev_dependents_2026_05_05.csv, …
 environment.yml  conda environment (Python 3.11.13) pinned to analysis versions
+environment-r.yml conda environment (R 4.5.3, survival 3.8-12) for scripts/79_cox_zph.R
 SHA256_MANIFEST.txt   checksums of every file in this artifact
 ```
 
@@ -49,6 +50,7 @@ SHA256_MANIFEST.txt   checksums of every file in this artifact
 
 ```bash
 conda env create -f environment.yml      # creates env "stage2c"
+conda env create -f environment-r.yml    # creates env "rsurv" (only for script 79)
 conda activate stage2c
 ```
 
@@ -120,6 +122,18 @@ reported counts:
 ```bash
 python scripts/75_protocol_window_estimand_its.py   # equal-package / drop-top-5 ITS companions on the protocol window
 python scripts/76_provenance_flag_read.py          # explicit --provenance request in the cached publish workflows (needs the raw slice)
+```
+
+The proportional-hazards check on the primary delayed-entry Cox model computes
+Schoenfeld residuals on the counting-process (entry, stop] risk sets with R's
+`survival::cox.zph`. Script 79 rebuilds the analysis frame through `scripts/52`
+when the raw packument slice is present and otherwise runs from the frozen
+frame shipped here (`cox_primary_frame_tse_r1_long.csv`); it calls the R script
+in the `rsurv` environment and cross-checks the R coefficients against the
+lifelines fit:
+
+```bash
+python scripts/79_cox_ph_primary.py   # Schoenfeld tests on the primary delayed-entry Cox fit (calls scripts/79_cox_zph.R)
 ```
 
 Scripts that need the access-gated raw slice (`data/packuments_raw/`,

@@ -7,6 +7,8 @@ paper_tse/sections/05_results.tex (an \\input inside tabular breaks the
 alignment scanner -- verified by minimal repro, 2026-09-01).
 
 Inputs:  data/cox_incident_primary_tse_r1_long.csv,
+         data/cox_zph_primary_tse_r1_long.csv (Schoenfeld p: R survival::cox.zph,
+         Kaplan-Meier transform, on the primary delayed-entry fit; scripts/79),
          data/logistic_sensitivity_tse_r1_long.csv
 Run: conda run --no-capture-output -n stage2c python scripts/68_gen_rq3_table.py
 """
@@ -18,6 +20,8 @@ import pandas as pd
 
 ROOT = Path(__file__).parent.parent
 cox = pd.read_csv(ROOT / "data" / "cox_incident_primary_tse_r1_long.csv").set_index("covariate")
+zph = pd.read_csv(ROOT / "data" / "cox_zph_primary_tse_r1_long.csv")
+zph = zph[zph["transform"] == "km"].set_index("term")["p"]
 log = pd.read_csv(ROOT / "data" / "logistic_sensitivity_tse_r1_long.csv")
 log = log[(log["model"] == "primary") & (log["kind"] == "OR")].set_index("name")
 
@@ -33,7 +37,7 @@ def pfmt(p: float) -> str:
     if p < 1e-4:
         return "$<10^{-4}$"
     if p < 0.001:
-        return "$<0.001$"
+        return "$<.001$"
     return f"{p:.3f}".lstrip("0") if p < 1 else f"{p:.2f}"
 
 
@@ -45,10 +49,10 @@ lines = []
 for cov in ORDER:
     if cov in cox.index:
         r = cox.loc[cov]
-        sch = r.get("schoenfeld_p", float("nan"))
-        flag = " \\textbf{(fl.)}" if pd.notna(sch) and sch < FLAG_ALPHA else ""
+        sch = float(zph[cov])
+        flag = " \\textbf{(fl.)}" if sch < FLAG_ALPHA else ""
         cx = (f"{r['HR']:.3f} & $[{r['HR_ci_low']:.3f}, {r['HR_ci_high']:.3f}]$ & "
-              f"{pfmt(r['p'])} & {sch:.3f}{flag}")
+              f"{pfmt(r['p'])} & {pfmt(sch)}{flag}")
     else:
         cx = "\\multicolumn{4}{c}{(not in model)}"
     l = log.loc[cov]
