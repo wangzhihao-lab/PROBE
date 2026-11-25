@@ -2,9 +2,12 @@
 
 **Provenance Revocation Observational Boundary Evaluation**
 
-Replication package for *"Measuring npm Provenance Adoption
-Around the 2025 Classic-Token Revocation: Coincidence Is Not
-Identification"*.
+Replication package for *"A Measurement Study of npm Provenance
+Adoption Around the 2025 Classic-Token Revocation: Coincidence Is Not
+Identification"*, IEEE Transactions on Software Engineering, 2026
+(early access), doi:
+[10.1109/TSE.2026.3756475](https://doi.org/10.1109/TSE.2026.3756475).
+See [Citation](#citation).
 
 ## What this artifact reproduces
 
@@ -21,7 +24,7 @@ The paper measures a specific window (2025-08-01 to 2026-05-10) around the
 2025-12-09 npm classic-token revocation deadline. The npm registry, GitHub
 repositories, and deps.dev / ecosyste.ms are **live systems**: re-fetching
 them today returns post-collection state and will **not** reproduce the
-paper's numbers (this is a disclosed limitation, paper Section 12). The
+paper's numbers (this is a disclosed limitation, supplement Section S6). The
 analysis therefore ships the **frozen derived data** in `data/`, which the
 analysis scripts consume directly. The raw API pulls (~2.6 GB of packument
 JSON and workflow YAML) are **not** included here; they are access-gated
@@ -161,11 +164,34 @@ needs the access-gated raw packument history.
   repository status) and is recomputable from the access-gated raw slice.
 - The `reason` column carries the rule engine's historical shorthand
   (e.g. "OIDC failed", "classic publish"), which predates the paper's final
-  construct language; `CODEBOOK_classification.md` maps it to the Section-4.3
+  construct language; `CODEBOOK_classification.md` maps it to the Section IV-D
   semantics, and `classification_construct_reasons.csv` carries the final
   phrasing per row.
 - The `rater` column uses neutral labels (`rater_A`, `rater_B`) for the two
   independent applications of the classification rule set.
+
+## Citation
+
+If you use this artifact, please cite the paper:
+
+> Z. Wang, M. Ren, X. Liang, G. Li, and D. Ding, "A Measurement Study of
+> npm Provenance Adoption Around the 2025 Classic-Token Revocation:
+> Coincidence Is Not Identification," *IEEE Transactions on Software
+> Engineering*, 2026, early access, doi: 10.1109/TSE.2026.3756475.
+
+```bibtex
+@article{wang2026npmprovenance,
+  author  = {Wang, Zhihao and Ren, Min and Liang, Xia and Li, Gaoyong and Ding, Ding},
+  title   = {A Measurement Study of npm Provenance Adoption Around the 2025
+             Classic-Token Revocation: Coincidence Is Not Identification},
+  journal = {IEEE Transactions on Software Engineering},
+  year    = {2026},
+  doi     = {10.1109/TSE.2026.3756475},
+  note    = {Early access}
+}
+```
+
+Volume, issue and page numbers are not yet assigned.
 
 ## License
 

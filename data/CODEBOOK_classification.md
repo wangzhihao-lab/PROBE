@@ -5,7 +5,7 @@
 | column | meaning |
 |---|---|
 | `package`, `version` | sampled non-attested release (post-deadline, on/after 2025-12-10 UTC) |
-| `class` | final adjudicated A–F evidence-state label — **the analyzed artifact**; semantics per paper Section 4.3 / Table 2 |
+| `class` | final adjudicated A–F evidence-state label — **the analyzed artifact**; semantics per paper Section IV-D / Table I |
 | `reason` | the classifier rule engine's machine-generated trace for the fired rule — **historical shorthand, retained unmodified for auditability** |
 | `rater` | rater/version tag of the labeling pass |
 
@@ -28,15 +28,15 @@ untouched). Its `construct_reason` column applies the six class-level
 templates below to each row — it is a semantics bridge, **not** a fresh
 per-row re-justification from the workflow evidence. **Read `reason` through this mapping:**
 
-| historical shorthand in `reason` | final construct meaning (paper Section 4.3) |
+| historical shorthand in `reason` | final construct meaning (paper Section IV-D) |
 |---|---|
 | `OIDC failed` (65 Class-B rows) | workflow-side `id-token: write` capability present AND sampled version non-attested — a capability/outcome **mismatch state**. NOT an observed publish-time OIDC failure event: whether the publish attempted OIDC, whether an npm-side trusted-publisher registration existed, and whether the configuration postdates the release are all unobservable from these sources. |
 | `OIDC mis-config` (29 Class-B rows) | same mismatch state, fired when `NPM_TOKEN` is co-present with `id-token: write`. NOT a verified misconfiguration. |
-| `classic publish` / `classic` (48 Class-A rows) | long-lived token secret (`NPM_TOKEN` / `NODE_AUTH_TOKEN`) referenced at the publish job with no `id-token: write`. The token's class (classic vs granular) is NOT observable from the YAML; post-deadline, a still-working long-lived secret could not have been a revoked classic token (paper Section 4.3, Class-A boundary). |
+| `classic publish` / `classic` (48 Class-A rows) | long-lived token secret (`NPM_TOKEN` / `NODE_AUTH_TOKEN`) referenced at the publish job with no `id-token: write`. The token's class (classic vs granular) is NOT observable from the YAML; post-deadline, a still-working long-lived secret could not have been a revoked classic token (paper Section IV-D; token-class detail in supplement Section S1). |
 | `strong-keyword`, `id-token scope=...` | detector internals: which publish signal fired and at which permission scope the `id-token` grant was found (job vs workflow). |
 
-The authoritative construct definitions are the paper's Table 2 and
-Section 4.3; where a `reason` string and the paper disagree, the paper's
+The authoritative construct definitions are the paper's Table I and
+Section IV-D; where a `reason` string and the paper disagree, the paper's
 final language governs and this codebook is the bridge.
 
 Created 2026-07-16 during pre-submission review (external round 10, item:
